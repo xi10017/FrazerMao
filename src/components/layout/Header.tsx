@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   signOut,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
 } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import {
@@ -22,7 +21,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 function getInitials(name?: string | null) {
@@ -39,41 +38,31 @@ function UserAuth() {
   const { toast } = useToast();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      // Avoid running this on every render, only after a redirect.
-      // A simple check like this might not be enough in complex scenarios, but works here.
-      if (sessionStorage.getItem('firebase_redirect_in_progress') !== '1') {
-        return;
-      }
-
-      setIsAuthLoading(true);
-      sessionStorage.removeItem('firebase_redirect_in_progress');
-
-      try {
-        await getRedirectResult(auth);
-        // User is now signed in. The onAuthStateChanged listener will handle the UI update.
-      } catch (error: any) {
-        console.error('Error handling redirect result', error);
-        toast({
-          variant: 'destructive',
-          title: 'Sign In Failed',
-          description: error.message || 'An unknown error occurred.',
-        });
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-
-    handleRedirectResult();
-  }, [auth, toast]);
-
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/');
   };
 
-  if (isUserLoading || isAuthLoading) {
+  const handleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    setIsAuthLoading(true);
+    try {
+      await signInWithPopup(auth, provider);
+      // The onAuthStateChanged listener will handle the UI update.
+    } catch (error: any) {
+      console.error('Error during sign-in:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Sign In Failed',
+        description: error.message || 'An unknown error occurred.',
+      });
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+
+  if (isUserLoading) {
     return <Skeleton className="h-10 w-28" />;
   }
 
@@ -111,13 +100,6 @@ function UserAuth() {
       </DropdownMenu>
     );
   }
-
-  const handleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
-    // Set a flag in session storage to check for redirect result later
-    sessionStorage.setItem('firebase_redirect_in_progress', '1');
-    await signInWithRedirect(auth, provider);
-  };
 
   return (
     <Button onClick={handleSignIn} disabled={isAuthLoading}>
