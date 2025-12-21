@@ -46,8 +46,7 @@ function HistoryPage() {
   const submissionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid || !testId) return null;
     return query(
-      collection(firestore, 'submissions'),
-      where('userId', '==', user.uid),
+      collection(firestore, 'users', user.uid, 'submissions'),
       where('testId', '==', testId),
       orderBy('submittedAt', 'desc')
     );

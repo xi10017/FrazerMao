@@ -153,7 +153,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
     setIsSubmitted(true);
 
     try {
-      await addDoc(collection(firestore, 'submissions'), {
+      const submissionsCollectionRef = collection(firestore, 'users', user.uid, 'submissions');
+      await addDoc(submissionsCollectionRef, {
         testId: test.id,
         userId: user.uid,
         answers: userAnswers,

@@ -1,161 +1,30 @@
-/**
- * Core Philosophy: This ruleset establishes a security model that balances public data access with strict user-owned data boundaries.
- * The core principle is that users have complete control over their own data (profiles and scores), while publicly accessible data
- * like tests and solutions are read-only for clients, intended to be managed by a trusted backend process or admin.
- *
- * Data Structure:
- * - /tests/{testId}: Publicly readable collection of tests.
- * - /solutions/{solutionId}: A protected collection, inaccessible to clients, holding test answers.
- * - /users/{userId}: A user-specific document for profile information.
- * - /users/{userId}/scores/{userScoreId}: A user-specific subcollection for individual test scores.
- *
- * Key Security Decisions:
- * - User Isolation: All data under `/users/{userId}` is strictly controlled by the user whose UID matches the `{userId}` wildcard.
- *   This prevents users from seeing or modifying each other's private information and scores.
- * - Public Read-Only Content: The `/tests` collection is world-readable to allow any user (authenticated or not) to browse available
- *   tests. Writes to this collection are blocked, as there is no defined admin role. This data must be populated via the Firebase Console or a trusted server environment.
- * - Segregated Sensitive Data: Test solutions are stored in a separate `/solutions` collection and are completely locked down from client access.
- *   This is a critical security measure to prevent cheating.
- * - No User Listing: The ability to list all documents in the `/users` collection is disabled to protect user privacy.
- *
- * Denormalization for Authorization: The rules enforce that when a `UserScore` document is created under `/users/{userId}/scores`,
- * its internal `userId` field must match the `{userId}` from the path. This creates a redundant but verifiable link, simplifying
- * security rules by ensuring data integrity without needing extra `get` calls.
- *
- * Structural Segregation: The separation of `/tests` (public) and `/solutions` (private) is a prime example of structural segregation.
- * This pattern is more secure and performant than storing them in a single collection with a boolean flag (e.g., `isSolutionVisible`),
- * especially for list operations, as it guarantees that a query for tests can never accidentally leak solution data.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // -------------------------------------------------------------------------
-    // Helper Functions
-    // -------------------------------------------------------------------------
-
-    /**
-     * Checks if the user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
-
-    /**
-     * Checks if the authenticated user's UID matches the provided userId.
-     * This is the foundation of the ownership model.
-     * @param userId The UID of the resource owner.
-     */
+    
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * Checks for ownership on an existing document. Used for update and delete
-     * operations to prevent acting on non-existent data.
-     * @param userId The UID of the resource owner.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * Validates that the user is creating their own user document and that
-     * the document's internal `id` field matches their UID.
-     * @param userId The UID of the user being created.
-     */
-    function isCreatingSelf(userId) {
-      return isOwner(userId) && request.resource.data.id == userId;
-    }
-
-    /**
-     * Validates that the user is updating their own profile and ensures the
-     * unique `id` field remains immutable.
-     * @param userId The UID of the user being updated.
-     */
-    function isUpdatingSelf(userId) {
-      return isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-    }
-
-    /**
-     * Validates that a user is creating a score for themselves and that the
-     * score document's internal `userId` field is correctly set to their own UID.
-     * @param userId The UID of the user creating the score.
-     */
-    function isCreatingOwnScore(userId) {
-      return isOwner(userId) && request.resource.data.userId == userId;
-    }
-
-    /**
-     * Validates that a user is updating their own score and that the `userId`
-     * field, which links the score to the user, cannot be changed.
-     * @param userId The UID of the score's owner.
-     */
-    function isUpdatingOwnScore(userId) {
-      return isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-    }
-
-
-    // -------------------------------------------------------------------------
-    // Collection Rules
-    // -------------------------------------------------------------------------
-
-    /**
-     * @description Test documents are public for anyone to read, but cannot be modified by clients.
-     * @path /tests/{testId}
-     * @allow (get, list) by any user, signed in or not.
-     * @deny (create, update, delete) by any client.
-     * @principle Public read-only data. Writes are disabled pending an admin implementation.
-     */
     match /tests/{testId} {
-      allow get, list: if true;
-      allow create: if false; // TODO: Implement admin-only write access.
-      allow update: if false; // TODO: Implement admin-only write access.
-      allow delete: if false; // TODO: Implement admin-only write access.
+      allow read: if isSignedIn();
+      allow write: if false; 
     }
 
-    /**
-     * @description Solutions are highly sensitive and completely locked down from all client access.
-     * @path /solutions/{solutionId}
-     * @allow No client operations are permitted.
-     * @deny (get, list, create, update, delete) by any client.
-     * @principle Segregation of sensitive data. This collection must only be accessed by a trusted backend service.
-     */
     match /solutions/{solutionId} {
-      allow get: if false;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow read: if isSignedIn();
+      allow write: if false;
     }
 
-    /**
-     * @description A user's own profile document. Users can create, read, update, and delete their own profile.
-     * @path /users/{userId}
-     * @allow (create, get, update, delete) only if the authenticated user's ID matches {userId}.
-     * @deny (list) to prevent enumeration of all application users.
-     * @principle Enforces strict document ownership and validates relational integrity on create/update.
-     */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isCreatingSelf(userId);
-      allow update: if isUpdatingSelf(userId);
-      allow delete: if isExistingOwner(userId);
-
-      /**
-       * @description A user's score on a given test. A user can manage their own scores.
-       * @path /users/{userId}/scores/{userScoreId}
-       * @allow (create, get, list, update, delete) only if the authenticated user's ID matches {userId}.
-       * @deny Any access by other users.
-       * @principle Restricts access to a user's own data tree and enforces ownership consistency.
-       */
-      match /scores/{userScoreId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isCreatingOwnScore(userId);
-        allow update: if isUpdatingOwnScore(userId);
-        allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
+      
+      match /submissions/{submissionId} {
+        allow read, write: if isOwner(userId);
       }
     }
   }
