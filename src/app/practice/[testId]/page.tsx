@@ -6,7 +6,7 @@ import PracticeArena from '@/components/pages/practice/PracticeArena';
 
 type Props = {
   params: { testId: string };
-  searchParams: { fromHistory?: string, submission?: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export default function PracticePage({ params, searchParams }: Props) {
@@ -24,11 +24,14 @@ export default function PracticePage({ params, searchParams }: Props) {
 
   const solution = findSolutionForTest(test);
   
-  const isReviewFromHistory = !!searchParams.fromHistory;
+  const fromHistoryParam = searchParams?.fromHistory;
+  const isReviewFromHistory = fromHistoryParam === 'true';
+
   let initialAnswers: UserAnswers | undefined = undefined;
-  if(searchParams.submission) {
+  const submissionParam = searchParams?.submission;
+  if(typeof submissionParam === 'string') {
     try {
-        initialAnswers = JSON.parse(decodeURIComponent(searchParams.submission));
+        initialAnswers = JSON.parse(decodeURIComponent(submissionParam));
     } catch(e) {
         console.error("Failed to parse submission data from URL");
     }

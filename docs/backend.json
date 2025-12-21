@@ -1,94 +1,5 @@
 {
   "entities": {
-    "Test": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Test",
-      "type": "object",
-      "description": "Represents a Mu Alpha Theta test.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Test entity."
-        },
-        "year": {
-          "type": "number",
-          "description": "The year the test was administered."
-        },
-        "division": {
-          "type": "string",
-          "description": "The division of the test (e.g., Algebra I, Geometry)."
-        },
-        "month": {
-          "type": "string",
-          "description": "The month the test was administered (e.g., January, February)."
-        },
-        "test_type": {
-          "type": "string",
-          "description": "The type of the test (e.g., Regional, Invitational, Individual)."
-        },
-        "pdfUrl": {
-          "type": "string",
-          "description": "URL of the PDF document for the test.",
-          "format": "uri"
-        },
-        "solutionId": {
-          "type": "string",
-          "description": "Reference to the Solution entity. (Relationship: Test 1:1 Solution)"
-        }
-      },
-      "required": [
-        "id",
-        "year",
-        "division",
-        "month",
-        "test_type",
-        "pdfUrl",
-        "solutionId"
-      ]
-    },
-    "Solution": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Solution",
-      "type": "object",
-      "description": "Represents the solution key for a Mu Alpha Theta test.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Solution entity."
-        },
-        "year": {
-          "type": "number",
-          "description": "The year the solution key is for."
-        },
-        "month": {
-          "type": "string",
-          "description": "The month the solution key is for."
-        },
-        "division": {
-          "type": "string",
-          "description": "The division the solution key is for (e.g., Algebra I)."
-        },
-        "test_type": {
-          "type": "string",
-          "description": "The type of test the solution is for(e.g. Regional)."
-        },
-        "answers": {
-          "type": "array",
-          "description": "An array containing the correct answers for the test.",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "id",
-        "year",
-        "month",
-        "division",
-        "test_type",
-        "answers"
-      ]
-    },
     "TestSubmission": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "TestSubmission",
@@ -97,27 +8,24 @@
       "properties": {
         "userId": {
           "type": "string",
-          "description": "Reference to the User entity. (Relationship: User 1:N UserScore)"
+          "description": "Reference to the User entity."
         },
         "testId": {
           "type": "string",
-          "description": "Reference to the Test entity. (Relationship: Test 1:N UserScore)"
+          "description": "Reference to the Test entity."
         },
         "score": {
-          "type": "number",
-          "description": "The user's score on the test."
+          "type": "object",
+          "properties": {
+            "totalScore": {"type": "number"},
+            "correctCount": {"type": "number"},
+            "incorrectCount": {"type": "number"},
+            "omitCount": {"type": "number"}
+          }
         },
-        "correctCount": {
-          "type": "number",
-          "description": "Number of correct answers."
-        },
-        "incorrectCount": {
-          "type": "number",
-          "description": "Number of incorrect answers."
-        },
-        "omitCount": {
-          "type": "number",
-          "description": "Number of omitted answers."
+         "answers": {
+          "type": "object",
+          "description": "A map of question numbers to user answers."
         },
         "submittedAt": {
           "type": "string",
@@ -129,9 +37,7 @@
         "userId",
         "testId",
         "score",
-        "correctCount",
-        "incorrectCount",
-        "omitCount",
+        "answers",
         "submittedAt"
       ]
     }
@@ -142,25 +48,7 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/tests/{testId}",
-        "definition": {
-          "schema": {
-            "$ref": "#/entities/Test"
-          },
-          "description": "Stores Mu Alpha Theta test details."
-        }
-      },
-      {
-        "path": "/solutions/{solutionId}",
-        "definition": {
-          "schema": {
-            "$ref": "#/entities/Solution"
-          },
-          "description": "Stores the solution keys for the tests."
-        }
-      },
+     "structure": [
       {
         "path": "/users/{userId}/submissions/{submissionId}",
         "definition": {

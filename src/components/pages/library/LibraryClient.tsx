@@ -13,7 +13,7 @@ interface LibraryClientProps {
 }
 
 const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   
   const submissionsQuery = useMemoFirebase(() => {
@@ -24,10 +24,10 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     );
   }, [firestore, user?.uid]);
 
-  const { data: submissions, loading: submissionsLoading } = useCollection<TestSubmission>(submissionsQuery);
+  const { data: submissions, isLoading: submissionsLoading } = useCollection<TestSubmission>(submissionsQuery);
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
-    if (submissionsLoading || !submissions) {
+    if (submissionsLoading || !submissions || !user) {
       return tests.map(t => ({...t, history: []}));
     }
 
@@ -44,13 +44,13 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         history: submissionsByTestId[test.id] || []
     }));
 
-  }, [tests, submissions, submissionsLoading]);
+  }, [tests, submissions, submissionsLoading, user]);
 
 
   const uniqueValues = useMemo(() => {
-    const divisions = [...new Set(tests.map((t) => t.division))];
-    const months = [...new Set(tests.map((t) => t.month))];
-    const testTypes = [...new Set(tests.map((t) => t.test_type))];
+    const divisions = [...new Set(tests.map((t) => t.division))].sort();
+    const months = [...new Set(tests.map((t) => t.month))].sort();
+    const testTypes = [...new Set(tests.map((t) => t.test_type))].sort();
     const years = [...new Set(tests.map((t) => t.year))].sort((a, b) => a - b);
     return {
       divisions,
@@ -68,7 +68,6 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>([]);
   
-  // Ensure startYear is not greater than endYear
   useEffect(() => {
     if (startYear > endYear) {
       setEndYear(startYear);
@@ -89,10 +88,20 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           selectedCompetitions.includes(test.test_type);
         return yearMatch && divisionMatch && monthMatch && competitionMatch;
       })
-      .sort((a, b) => b.year - a.year);
+      .sort((a, b) => b.year - a.year || a.division.localeCompare(b.division));
   }, [testsWithHistory, startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
 
-  if (!user && !submissionsLoading) {
+  if (isUserLoading) {
+     return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">Loading...</h2>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="text-center">

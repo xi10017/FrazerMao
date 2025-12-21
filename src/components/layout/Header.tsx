@@ -1,16 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, User as UserIcon, LogIn } from 'lucide-react';
+import { BookOpen, LogIn } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { getAuth, signOut } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 function UserAuth() {
-  const { user, loading } = useUser();
-  const auth = getAuth();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
 
-  if (loading) {
+  if (isUserLoading) {
     return null; // Or a loading spinner
   }
 

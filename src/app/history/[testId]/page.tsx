@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, CheckCircle, XCircle, MinusCircle } from 'lucide-react';
+import { ArrowRight, ChevronLeft } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -33,7 +33,7 @@ function HistoryPage() {
   const router = useRouter();
   const testId = params.testId as string;
 
-  const { user, loading: userLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
   const test = useMemo(() => {
@@ -54,11 +54,11 @@ function HistoryPage() {
 
   const {
     data: submissions,
-    loading: submissionsLoading,
+    isLoading: submissionsLoading,
     error,
   } = useCollection<TestSubmission>(submissionsQuery);
 
-  if (userLoading || submissionsLoading) {
+  if (isUserLoading || submissionsLoading) {
     return (
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="mb-6">
