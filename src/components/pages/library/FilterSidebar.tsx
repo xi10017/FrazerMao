@@ -4,7 +4,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const FilterSection: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
@@ -17,17 +23,16 @@ const FilterSection: React.FC<{ title: string; children: React.ReactNode }> = ({
 );
 
 const CheckboxFilter: React.FC<{
-  filterKey: string;
   items: string[];
   selectedItems: string[];
   onSelectionChange: (items: string[]) => void;
-}> = ({ filterKey, items, selectedItems, onSelectionChange }) => {
+}> = ({ items, selectedItems, onSelectionChange }) => {
   return (
     <>
       {items.map((item) => (
-        <div key={`${filterKey}-${item}`} className="flex items-center space-x-2">
+        <div key={item} className="flex items-center space-x-2">
           <Checkbox
-            id={`${filterKey}-${item}-filter`}
+            id={`${item}-filter`}
             checked={selectedItems.includes(item)}
             onCheckedChange={(checked) => {
               if (checked) {
@@ -37,7 +42,7 @@ const CheckboxFilter: React.FC<{
               }
             }}
           />
-          <Label htmlFor={`${filterKey}-${item}-filter`} className="font-normal">
+          <Label htmlFor={`${item}-filter`} className="font-normal">
             {item}
           </Label>
         </div>
@@ -46,17 +51,17 @@ const CheckboxFilter: React.FC<{
   );
 };
 
-
 interface FilterSidebarProps {
   uniqueValues: {
     divisions: string[];
     months: string[];
     competitions: string[];
-    minYear: number;
-    maxYear: number;
+    years: number[];
   };
-  yearRange: [number, number];
-  setYearRange: (range: [number, number]) => void;
+  startYear: number;
+  setStartYear: (year: number) => void;
+  endYear: number;
+  setEndYear: (year: number) => void;
   selectedDivisions: string[];
   setSelectedDivisions: (divisions: string[]) => void;
   selectedMonths: string[];
@@ -67,8 +72,10 @@ interface FilterSidebarProps {
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   uniqueValues,
-  yearRange,
-  setYearRange,
+  startYear,
+  setStartYear,
+  endYear,
+  setEndYear,
   selectedDivisions,
   setSelectedDivisions,
   selectedMonths,
@@ -76,6 +83,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   selectedCompetitions,
   setSelectedCompetitions,
 }) => {
+  const years = uniqueValues.years.sort((a, b) => b - a);
+
   return (
     <aside className="w-full md:w-64 lg:w-72">
       <Card>
@@ -85,7 +94,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <CardContent className="space-y-6">
           <FilterSection title="Division">
             <CheckboxFilter
-              filterKey="division"
               items={uniqueValues.divisions}
               selectedItems={selectedDivisions}
               onSelectionChange={setSelectedDivisions}
@@ -93,33 +101,56 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </FilterSection>
 
           <FilterSection title="Year Range">
-            <div className="px-1">
-              <Slider
-                min={2015}
-                max={2025}
-                step={1}
-                value={yearRange}
-                onValueChange={(value) => setYearRange(value as [number, number])}
-              />
-              <div className="mt-2 flex justify-between text-sm text-muted-foreground">
-                <span>{yearRange[0]}</span>
-                <span>{yearRange[1]}</span>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="start-year">Start Year</Label>
+                <Select
+                  value={String(startYear)}
+                  onValueChange={(value) => setStartYear(Number(value))}
+                >
+                  <SelectTrigger id="start-year">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={String(year)}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="end-year">End Year</Label>
+                <Select
+                  value={String(endYear)}
+                  onValueChange={(value) => setEndYear(Number(value))}
+                >
+                  <SelectTrigger id="end-year">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={String(year)}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </FilterSection>
 
           <FilterSection title="Month">
             <CheckboxFilter
-              filterKey="month"
               items={uniqueValues.months}
               selectedItems={selectedMonths}
               onSelectionChange={setSelectedMonths}
             />
           </FilterSection>
-          
+
           <FilterSection title="Competition">
             <CheckboxFilter
-              filterKey="competition"
               items={uniqueValues.competitions}
               selectedItems={selectedCompetitions}
               onSelectionChange={setSelectedCompetitions}
