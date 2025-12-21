@@ -300,14 +300,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                              <Button
                               variant="outline"
                               size="icon"
-                              disabled
+                              className="pointer-events-none opacity-50"
                             >
                               <Bot className="h-5 w-5 line-through" />
                               <span className="sr-only">Toggle AI Tutor (disabled)</span>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>AI not available right now.</p>
+                            <p>AI not available.</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
