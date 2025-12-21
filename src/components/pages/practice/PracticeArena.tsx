@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, Suspense } from 'react';
-import { Maximize, Minimize, Bot } from 'lucide-react';
+import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -35,13 +35,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PDFViewer } from './PDFViewer';
-import { ChatTutorPanel } from './ChatTutorPanel';
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -61,7 +54,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
-  const [isTutorOpen, setIsTutorOpen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
   const [isClient, setIsClient] = useState(false);
 
@@ -209,14 +201,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
-
-  let mainContentWidth = `${dividerPosition}%`;
-  if (isTutorOpen) {
-    mainContentWidth = `calc(${dividerPosition}% - 200px)`; // Assuming tutor panel is 400px, so we split the diff
-  }
-
-  const scantronWidth = `calc(${100 - dividerPosition}% - 2px)`; // 2px for divider
-
+  
   return (
     <>
       <div
@@ -228,7 +213,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             'relative h-full transition-all duration-300',
             isPdfFullScreen && 'w-full'
           )}
-          style={{ width: isPdfFullScreen ? '100%' : mainContentWidth }}
+          style={{ width: isPdfFullScreen ? '100%' : `${dividerPosition}%` }}
         >
           <PDFViewer url={test.url} />
           <Button
@@ -246,65 +231,58 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             <DraggableDivider
               onMouseDown={(e) => handleMouseDown(e, setDividerPosition)}
             />
-            <div className="flex h-full flex-1">
-              <div className="h-full" style={{ width: scantronWidth }}>
-                <Scantron
-                  userAnswers={userAnswers}
-                  onAnswerSelect={handleAnswerSelect}
-                  reviewData={reviewData}
-                  headerContent={
-                    <div className="flex items-center gap-2">
-                      {isClient && (
-                        <>
-                          {isPracticeMode ? (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button disabled={!isSubmittable}>
-                                  Submit Test
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Are you sure?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Once you submit, you will not be able to
-                                    change your answers.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleSubmit}>
-                                    Submit
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          ) : (
-                            <>
-                              <Button
-                                variant="outline"
-                                onClick={() => setIsScoreModalOpen(true)}
-                              >
-                                Review Score
+            <div className="h-full flex-1">
+              <Scantron
+                userAnswers={userAnswers}
+                onAnswerSelect={handleAnswerSelect}
+                reviewData={reviewData}
+                headerContent={
+                  <div className="flex items-center gap-2">
+                    {isClient && (
+                      <>
+                        {isPracticeMode ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button disabled={!isSubmittable}>
+                                Submit Test
                               </Button>
-                              <Button onClick={handleBackToLibrary}>
-                                Back to Library
-                              </Button>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  }
-                />
-              </div>
-              {isTutorOpen && (
-                <div className="h-full w-[400px] flex-shrink-0">
-                  <ChatTutorPanel onClose={() => setIsTutorOpen(false)} />
-                </div>
-              )}
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Are you sure?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Once you submit, you will not be able to
+                                  change your answers.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleSubmit}>
+                                  Submit
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsScoreModalOpen(true)}
+                            >
+                              Review Score
+                            </Button>
+                            <Button onClick={handleBackToLibrary}>
+                              Back to Library
+                            </Button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                }
+              />
             </div>
           </>
         )}
