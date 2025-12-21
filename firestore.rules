@@ -5,13 +5,13 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    // Allow users to read and write only their own documents and subcollections
+
+    // Allow users to read and write only their own documents and any subcollections under it
     match /users/{userId}/{allPaths=**} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Rules for tests and solutions remain unchanged
+    // These collections are not used in the app, but are good to have for future use.
     match /tests/{testId} {
       allow read: if isSignedIn();
       allow write: if false; // Nobody should write directly to tests

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -16,8 +16,8 @@ import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
 import { gradeTest } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +57,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
   const router = useRouter();
 
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isReviewFromHistory && solution) {
       const report = gradeTest(userAnswers, solution.answers);
       setScoreReport(report);
@@ -129,7 +129,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!solution) {
       toast({
         variant: 'destructive',
@@ -152,28 +152,19 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
     setScoreReport(report);
     setIsSubmitted(true);
 
-    try {
-      const submissionsCollectionRef = collection(firestore, 'users', user.uid, 'submissions');
-      await addDoc(submissionsCollectionRef, {
-        testId: test.id,
-        userId: user.uid,
-        answers: userAnswers,
-        score: report,
-        submittedAt: serverTimestamp(),
-      });
-      toast({
-        title: 'Success!',
-        description: 'Your test results have been saved.',
-      });
-    } catch (error) {
-      console.error('Error saving submission: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Submission Error',
-        description: 'There was a problem saving your results.',
-      });
-    }
-
+    const submissionsCollectionRef = collection(firestore, 'users', user.uid, 'submissions');
+    addDocumentNonBlocking(submissionsCollectionRef, {
+      testId: test.id,
+      userId: user.uid,
+      answers: userAnswers,
+      score: report,
+      submittedAt: serverTimestamp(),
+    });
+    
+    toast({
+      title: 'Success!',
+      description: 'Your test results have been saved.',
+    });
 
     const newReviewData: ReviewData = {};
     for (let i = 0; i < solution.answers.length; i++) {
@@ -212,11 +203,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
   const getScantronHeader = () => {
     if(isReviewFromHistory) {
       return (
-        <Button onClick={handleExitReviewMode}>Back to History</Button>
+        <Button onClick={() => router.push('/')}>Back to Library</Button>
       )
     }
     if (isReviewMode) {
-      return <p className="text-sm text-muted-foreground">Reviewing your results.</p>;
+      return <Button onClick={handleExitReviewMode}>Back to History</Button>;
     }
     return (
       <AlertDialog>
@@ -268,8 +259,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
                   <Scantron
                     userAnswers={userAnswers}
                     onAnswerSelect={handleAnswerSelect}
-                    isReviewMode={isReviewMode}
-                    reviewData={reviewData}
+                    isReviewMode={false}
+                    reviewData={null}
                     isSubmitted={isSubmitted}
                     headerContent={getScantronHeader()}
                   />
@@ -284,16 +275,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
             </div>
             <DraggableDivider onMouseDown={handleMouseDown('review1')} />
             <div className="relative h-full" style={{ width: `${reviewDivider2 - reviewDivider1}%` }}>
-                {solution?.url && <PDFViewer url={solution.url} />}
+                {solution?.url ? <PDFViewer url={solution.url} /> : <div className="flex h-full items-center justify-center bg-muted"><p>No solution PDF available.</p></div>}
             </div>
             <DraggableDivider onMouseDown={handleMouseDown('review2')} />
             <div className="h-full" style={{ width: `${100 - reviewDivider2}%` }}>
                 <Scantron
                     userAnswers={userAnswers}
                     onAnswerSelect={handleAnswerSelect}
-                    isReviewMode={isReviewMode}
+                    isReviewMode={true}
                     reviewData={reviewData}
-                    isSubmitted={isSubmitted}
+                    isSubmitted={true}
                     headerContent={getScantronHeader()}
                 />
             </div>
@@ -301,7 +292,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
         )}
       </div>
 
-      {scoreReport && !isReviewFromHistory && (
+      {scoreReport && !isReviewMode && (
         <ScoreModal
           isOpen={!!scoreReport}
           onClose={() => setScoreReport(null)}
