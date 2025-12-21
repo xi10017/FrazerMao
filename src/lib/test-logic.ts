@@ -1,4 +1,11 @@
-import type { FamatTest, FamatSolution, AnyFamatTest, UserAnswers } from './types';
+import type {
+  FamatTest,
+  FamatSolution,
+  AnyFamatTest,
+  UserAnswers,
+  FamatTestBase,
+  TestSubmission,
+} from './types';
 import famatTests from '@/data/famat_tests.json';
 
 const allTests: AnyFamatTest[] = famatTests;
@@ -7,7 +14,9 @@ const allTests: AnyFamatTest[] = famatTests;
  * Generates a unique, URL-friendly ID for a test.
  */
 export function getTestId(test: FamatTestBase): string {
-    return `${test.year}-${test.month}-${test.division}-${test.competition}-${test.format}`.toLowerCase().replace(/\s+/g, '-');
+  return `${test.year}-${test.month}-${test.division}-${test.competition}-${test.format}`
+    .toLowerCase()
+    .replace(/\s+/g, '-');
 }
 
 /**
@@ -21,7 +30,9 @@ export function getTestName(test: FamatTest): string {
 /**
  * Finds the corresponding solution object for a given test object.
  */
-export function findSolutionForTest(test: FamatTest): FamatSolution | undefined {
+export function findSolutionForTest(
+  test: FamatTest
+): FamatSolution | undefined {
   return allTests.find(
     (item) =>
       item.document_type === 'Solution' &&
@@ -45,7 +56,10 @@ export function getAnswerKey(solution: FamatSolution): string[] {
  * Blank: +1 point
  * Incorrect: 0 points
  */
-export function gradeTest(userAnswers: UserAnswers, answerKey: string[]) {
+export function gradeTest(
+  userAnswers: UserAnswers,
+  answerKey: string[]
+): TestSubmission['score'] {
   let correctCount = 0;
   let incorrectCount = 0;
   let omitCount = 0;

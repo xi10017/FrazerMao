@@ -37,3 +37,19 @@ export type ReviewData = {
     isCorrect: boolean;
   };
 };
+
+export type TestSubmission = {
+  id: string; // submission id
+  testId: string;
+  userId: string;
+  answers: UserAnswers;
+  score: ScoreReport;
+  submittedAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
+};
+
+export interface FamatTestWithHistory extends FamatTest {
+    history?: TestSubmission[];
+}
