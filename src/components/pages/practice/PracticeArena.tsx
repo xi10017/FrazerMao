@@ -46,9 +46,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
   const [reviewDivider2, setReviewDivider2] = useState(66.66);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isSubmitted, setIsSubmitted] = useState(!!isReviewFromHistory);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
-  const [isReviewMode, setIsReviewMode] = useState(!!isReviewFromHistory);
+  const [isReviewMode, setIsReviewMode] = useState(false);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
 
   const { toast } = useToast();
@@ -76,6 +76,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
         };
       }
       setReviewData(newReviewData);
+    } else {
+        // Reset state if not in review mode from history
+        setUserAnswers(initialAnswers || {});
+        setIsSubmitted(!!initialAnswers);
+        setIsReviewMode(!!initialAnswers);
+        setScoreReport(null);
+        setReviewData(null);
     }
   }, [isReviewFromHistory, solution, initialAnswers]);
 
@@ -249,8 +256,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
                   <Scantron
                     userAnswers={userAnswers}
                     onAnswerSelect={handleAnswerSelect}
-                    isReviewMode={false}
-                    reviewData={null}
                     isSubmitted={isSubmitted}
                     headerContent={getScantronHeader()}
                   />
@@ -271,10 +276,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
             <div className="h-full" style={{ width: `${100 - reviewDivider2}%` }}>
                 <Scantron
                     userAnswers={userAnswers}
-                    onAnswerSelect={handleAnswerSelect}
-                    isReviewMode={true}
-                    reviewData={reviewData}
+                    onAnswerSelect={() => {}}
                     isSubmitted={true}
+                    reviewData={reviewData}
                     headerContent={getScantronHeader()}
                 />
             </div>
@@ -282,9 +286,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
         )}
       </div>
 
-      {scoreReport && !isReviewMode && !isReviewFromHistory && (
+      {scoreReport && !isReviewMode && (
         <ScoreModal
-          isOpen={!!scoreReport}
+          isOpen={!!scoreReport && !isReviewMode}
           onClose={() => setScoreReport(null)}
           scoreReport={scoreReport}
           onEnterReviewMode={handleEnterReviewMode}
