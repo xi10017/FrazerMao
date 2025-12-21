@@ -2,13 +2,20 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { Maximize, Minimize } from 'lucide-react';
-import type { FamatTest, FamatSolution, UserAnswers, ScoreReport, ReviewData } from '@/lib/types';
+import type {
+  FamatTest,
+  FamatSolution,
+  UserAnswers,
+  ScoreReport,
+  ReviewData,
+} from '@/lib/types';
 import { PDFViewer } from './PDFViewer';
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
 import { gradeTest } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -19,8 +26,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [reviewDivider1, setReviewDivider1] = useState(33.33);
+  const [reviewDivider2, setReviewDivider2] = useState(66.66);
   
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -41,18 +50,33 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
     });
   };
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleMouseDown = (divider: 'main' | 'review1' | 'review2') => (e: React.MouseEvent) => {
     e.preventDefault();
     const startX = e.clientX;
-    const startWidth = (containerRef.current?.offsetWidth ?? 0) * (dividerPosition / 100);
+    const containerWidth = containerRef.current?.offsetWidth ?? 0;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (containerRef.current) {
-        const dx = moveEvent.clientX - startX;
-        const newWidth = startWidth + dx;
-        const newPosition = (newWidth / containerRef.current.offsetWidth) * 100;
-        setDividerPosition(Math.max(20, Math.min(80, newPosition)));
-      }
+        if (containerRef.current) {
+            const dx = moveEvent.clientX - startX;
+            if (divider === 'main') {
+                const startWidth = containerWidth * (dividerPosition / 100);
+                const newWidth = startWidth + dx;
+                const newPosition = (newWidth / containerWidth) * 100;
+                setDividerPosition(Math.max(20, Math.min(80, newPosition)));
+            } else if (divider === 'review1') {
+                const startWidth1 = containerWidth * (reviewDivider1 / 100);
+                const newWidth = startWidth1 + dx;
+                let newPos1 = (newWidth / containerWidth) * 100;
+                newPos1 = Math.max(15, Math.min(reviewDivider2 - 15, newPos1));
+                setReviewDivider1(newPos1);
+            } else if (divider === 'review2') {
+                const startWidth2 = containerWidth * (reviewDivider2 / 100);
+                const newWidth = startWidth2 + dx;
+                let newPos2 = (newWidth / containerWidth) * 100;
+                newPos2 = Math.max(reviewDivider1 + 15, Math.min(85, newPos2));
+                setReviewDivider2(newPos2);
+            }
+        }
     };
 
     const handleMouseUp = () => {
@@ -62,8 +86,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [dividerPosition]);
-  
+  };
+
   const handleSubmit = () => {
     if (!solution) {
       toast({
@@ -79,14 +103,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
 
     const newReviewData: ReviewData = {};
     for (let i = 0; i < solution.answers.length; i++) {
-        const qNum = i + 1;
-        const userAnswer = userAnswers[qNum];
-        const correctAnswer = solution.answers[i];
-        newReviewData[qNum] = {
-            userAnswer,
-            correctAnswer,
-            isCorrect: userAnswer === correctAnswer
-        };
+      const qNum = i + 1;
+      const userAnswer = userAnswers[qNum];
+      const correctAnswer = solution.answers[i];
+      newReviewData[qNum] = {
+        userAnswer,
+        correctAnswer,
+        isCorrect: userAnswer === correctAnswer,
+      };
     }
     setReviewData(newReviewData);
   };
@@ -96,34 +120,64 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
     setScoreReport(null); // Close the modal
   };
 
+  const DraggableDivider: React.FC<{onMouseDown: (e: React.MouseEvent) => void}> = ({ onMouseDown }) => (
+    <div
+      onMouseDown={onMouseDown}
+      className="group h-full w-2 cursor-col-resize bg-border/50 transition hover:bg-primary"
+    >
+      <div className="h-full w-0.5 bg-transparent group-hover:bg-primary-foreground mx-auto"></div>
+    </div>
+  );
+
   return (
     <>
       <div ref={containerRef} className="flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-        <div 
-            className="relative h-full" 
-            style={{ width: isFullScreen ? '100%' : `${dividerPosition}%` }}
-        >
-          <PDFViewer url={test.url} />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
-            onClick={() => setIsFullScreen(!isFullScreen)}
-          >
-            {isFullScreen ? <Minimize /> : <Maximize />}
-          </Button>
-        </div>
-        
-        {!isFullScreen && (
+        {!isReviewMode ? (
           <>
             <div
-              onMouseDown={handleMouseDown}
-              className="group h-full w-2 cursor-col-resize bg-border/50 transition hover:bg-primary"
+              className="relative h-full"
+              style={{ width: isFullScreen ? '100%' : `${dividerPosition}%` }}
             >
-                <div className="h-full w-0.5 bg-transparent group-hover:bg-primary-foreground mx-auto"></div>
+              <PDFViewer url={test.url} />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
+                onClick={() => setIsFullScreen(!isFullScreen)}
+              >
+                {isFullScreen ? <Minimize /> : <Maximize />}
+              </Button>
             </div>
-            <div className="h-full flex-1">
-                <Scantron 
+
+            {!isFullScreen && (
+              <>
+                <DraggableDivider onMouseDown={handleMouseDown('main')} />
+                <div className="h-full flex-1">
+                  <Scantron
+                    userAnswers={userAnswers}
+                    onAnswerSelect={handleAnswerSelect}
+                    isReviewMode={isReviewMode}
+                    reviewData={reviewData}
+                    isSubmitted={isSubmitted}
+                    isSubmittable={!!solution}
+                    onSubmit={handleSubmit}
+                  />
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="relative h-full" style={{ width: `${reviewDivider1}%` }}>
+                <PDFViewer url={test.url} />
+            </div>
+            <DraggableDivider onMouseDown={handleMouseDown('review1')} />
+            <div className="relative h-full" style={{ width: `${reviewDivider2 - reviewDivider1}%` }}>
+                {solution?.url && <PDFViewer url={solution.url} />}
+            </div>
+            <DraggableDivider onMouseDown={handleMouseDown('review2')} />
+            <div className="h-full" style={{ width: `${100 - reviewDivider2}%` }}>
+                <Scantron
                     userAnswers={userAnswers}
                     onAnswerSelect={handleAnswerSelect}
                     isReviewMode={isReviewMode}
@@ -138,11 +192,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
       </div>
 
       {scoreReport && (
-        <ScoreModal 
-            isOpen={!!scoreReport}
-            onClose={() => setScoreReport(null)}
-            scoreReport={scoreReport}
-            onEnterReviewMode={handleEnterReviewMode}
+        <ScoreModal
+          isOpen={!!scoreReport}
+          onClose={() => setScoreReport(null)}
+          scoreReport={scoreReport}
+          onEnterReviewMode={handleEnterReviewMode}
         />
       )}
     </>
