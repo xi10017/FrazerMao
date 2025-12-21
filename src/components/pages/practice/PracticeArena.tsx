@@ -59,11 +59,17 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
   const [chatDividerPosition, setChatDividerPosition] = useState(70);
+  const [isClient, setIsClient] = useState(false);
+
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (isReviewFromHistory && solution && initialAnswers) {
@@ -248,6 +254,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                   reviewData={reviewData}
                   headerContent={
                     <div className="flex items-center gap-2">
+                       {isClient && (
+                         <>
                       {isPracticeMode ? (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -303,6 +311,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                      </>
+                      )}
                     </div>
                   }
                 />
