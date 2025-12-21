@@ -78,12 +78,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       const userAnswer = answers[qNum];
       const correctAnswer = correctAnswers[i];
       let isCorrect = false;
-      if(userAnswer) {
+      if (userAnswer) {
         isCorrect = Array.isArray(correctAnswer)
-        ? correctAnswer.includes(userAnswer)
-        : userAnswer === correctAnswer;
+          ? correctAnswer.includes(userAnswer)
+          : userAnswer === correctAnswer;
       }
-      
+
       data[qNum] = {
         userAnswer,
         correctAnswer,
