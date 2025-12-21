@@ -6,9 +6,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Allow users to read and write only their own documents and any subcollections under it
-    match /users/{userId}/{allPaths=**} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    // Allow users to read their own user document
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      // Writes to the user document itself are disallowed for now
+      allow write: if false;
+
+      // Explicitly allow read and write access to the submissions subcollection
+      match /submissions/{submissionId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
     }
 
     // These collections are not used in the app, but are good to have for future use.
