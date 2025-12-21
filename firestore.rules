@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /submissions/{submissionId} {
+      // Users can create their own submissions
+      allow create: if isOwner(request.resource.data.userId);
+
+      // Users can only read their own submissions
+      allow get: if isOwner(resource.data.userId);
+      
+      // Users can query for their own submissions
+      allow list: if isSignedIn() && request.query.get("userId") == request.auth.uid;
+
+      // Users cannot update or delete submissions
+      allow update, delete: if false;
+    }
+  }
+}

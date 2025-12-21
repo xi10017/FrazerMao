@@ -205,6 +205,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
       <div className="h-full w-0.5 bg-transparent group-hover:bg-primary-foreground mx-auto"></div>
     </div>
   );
+  
+  const isSubmittable = Object.keys(userAnswers).length > 0;
 
   const getScantronHeader = () => {
     if(isReviewFromHistory) {
