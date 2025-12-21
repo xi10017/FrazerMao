@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Maximize, Minimize, Bot } from 'lucide-react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
+import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import type {
   FamatTest,
   FamatSolution,
@@ -10,7 +11,6 @@ import type {
   ScoreReport,
   ReviewData,
 } from '@/lib/types';
-import { PDFViewer } from './PDFViewer';
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
@@ -34,9 +34,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ChatTutorPanel } from './ChatTutorPanel';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const PDFViewer = dynamic(() => import('./PDFViewer').then(mod => mod.PDFViewer), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+});
+
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -56,9 +61,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
-  const [chatDividerPosition, setChatDividerPosition] = useState(70);
   const [isClient, setIsClient] = useState(false);
 
 
@@ -136,8 +139,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     e.preventDefault();
     const startX = e.clientX;
     const containerWidth = containerRef.current?.offsetWidth ?? 0;
-    const initialPosition =
-      setter === setDividerPosition ? dividerPosition : chatDividerPosition;
+    const initialPosition = dividerPosition;
     const startWidth = containerWidth * (initialPosition / 100);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
@@ -208,14 +210,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
 
-  const mainContentWidth = isChatOpen
-    ? `calc(${dividerPosition}% - 1rem)`
-    : `${dividerPosition}%`;
-  const scantronWidth = isChatOpen
-    ? `calc(${100 - dividerPosition}% - ${chatDividerPosition}%)`
-    : `${100 - dividerPosition}%`;
-  const chatWidth = isChatOpen ? `${100 - chatDividerPosition}%` : '0%';
-
+  const mainContentWidth = `${dividerPosition}%`;
+  const scantronWidth = `${100 - dividerPosition}%`;
+  
   return (
     <>
       <div
@@ -246,7 +243,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             <div className="flex h-full flex-1">
               <div
                 className="h-full"
-                style={{ width: isChatOpen ? `${chatDividerPosition}%` : '100%' }}
+                style={{ width: '100%' }}
               >
                 <Scantron
                   userAnswers={userAnswers}
@@ -300,18 +297,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                   }
                 />
               </div>
-
-              {isChatOpen && (
-                <>
-                  <DraggableDivider onMouseDown={(e) => handleMouseDown(e, setChatDividerPosition)} />
-                  <div
-                    className="h-full"
-                    style={{ width: `${100-chatDividerPosition}%` }}
-                  >
-                    <ChatTutorPanel onClose={() => setIsChatOpen(false)} />
-                  </div>
-                </>
-              )}
             </div>
           </>
         )}
