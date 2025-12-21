@@ -12,7 +12,6 @@ interface ScantronProps {
   onAnswerSelect: (question: number, answer: string | null) => void;
   reviewData: ReviewData | null;
   headerContent: React.ReactNode;
-  onAskAI: (questionNumber: number) => void;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -36,7 +35,6 @@ export const Scantron: React.FC<ScantronProps> = ({
   onAnswerSelect,
   reviewData,
   headerContent,
-  onAskAI,
 }) => {
   const questionNumbers = Array.from(
     { length: TOTAL_QUESTIONS },
@@ -106,15 +104,6 @@ export const Scantron: React.FC<ScantronProps> = ({
                   </div>
                 ) : (
                    <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onAskAI(qNum)}
-                      className="h-8 w-8"
-                    >
-                      <Lightbulb className="h-4 w-4" />
-                      <span className="sr-only">Ask AI</span>
-                    </Button>
                     <Button
                         variant="ghost"
                         size="sm"

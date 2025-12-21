@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Maximize, Minimize } from 'lucide-react';
+import { Maximize, Minimize, Bot } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -34,8 +34,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { AIAssistantDialog } from './AIAssistantDialog';
-import { getQuestionExplanation } from '@/ai/flows/get-question-explanation';
+import { ChatTutorPanel } from './ChatTutorPanel';
+import { cn } from '@/lib/utils';
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -55,19 +55,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
-
-  const [aiState, setAiState] = useState<{
-    isOpen: boolean;
-    questionNumber: number | null;
-    explanation: string | null;
-    isLoading: boolean;
-  }>({
-    isOpen: false,
-    questionNumber: null,
-    explanation: null,
-    isLoading: false,
-  });
+  const [chatDividerPosition, setChatDividerPosition] = useState(70);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -95,6 +85,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   }, [isReviewFromHistory, solution, initialAnswers, user, test.id]);
 
   useEffect(() => {
+    // Only save progress if we are in practice mode (not reviewing)
     if (user && reviewData === null) {
       saveInProgressAnswers(user.uid, test.id, userAnswers);
     }
@@ -119,7 +110,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    if (reviewData) return;
+    if (reviewData) return; // Disallow changes in review mode
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
@@ -131,17 +122,22 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     });
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (
+    e: React.MouseEvent,
+    setter: React.Dispatch<React.SetStateAction<number>>
+  ) => {
     e.preventDefault();
     const startX = e.clientX;
     const containerWidth = containerRef.current?.offsetWidth ?? 0;
-    const startWidth = containerWidth * (dividerPosition / 100);
+    const initialPosition =
+      setter === setDividerPosition ? dividerPosition : chatDividerPosition;
+    const startWidth = containerWidth * (initialPosition / 100);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const dx = moveEvent.clientX - startX;
       const newWidth = startWidth + dx;
       const newPosition = (newWidth / containerWidth) * 100;
-      setDividerPosition(Math.max(20, Math.min(80, newPosition)));
+      setter(Math.max(20, Math.min(80, newPosition)));
     };
 
     const handleMouseUp = () => {
@@ -187,37 +183,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setIsScoreModalOpen(true);
   };
 
-  const handleAskAI = async (questionNumber: number) => {
-    setAiState({
-      isOpen: true,
-      questionNumber,
-      explanation: null,
-      isLoading: true,
-    });
-    try {
-      const response = await getQuestionExplanation({
-        questionNumber,
-        testName: test.name,
-      });
-      setAiState((prev) => ({
-        ...prev,
-        explanation: response.explanation,
-        isLoading: false,
-      }));
-    } catch (error) {
-      console.error('Error getting AI explanation:', error);
-      setAiState((prev) => ({
-        ...prev,
-        explanation: 'Sorry, I was unable to get an explanation at this time.',
-        isLoading: false,
-      }));
-    }
-  };
-
-  const handleViewHistory = () => {
-    router.push(`/history/${test.id}`);
-  };
-
   const handleBackToLibrary = () => {
     router.push(`/`);
   };
@@ -236,6 +201,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
 
+  const mainContentWidth = isChatOpen
+    ? `calc(${dividerPosition}% - 1rem)`
+    : `${dividerPosition}%`;
+  const scantronWidth = isChatOpen
+    ? `calc(${100 - dividerPosition}% - ${chatDividerPosition}%)`
+    : `${100 - dividerPosition}%`;
+  const chatWidth = isChatOpen ? `${100 - chatDividerPosition}%` : '0%';
+
   return (
     <>
       <div
@@ -243,8 +216,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         className="flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background"
       >
         <div
-          className="relative h-full"
-          style={{ width: isPdfFullScreen ? '100%' : `${dividerPosition}%` }}
+          className={cn(
+            'relative h-full transition-all duration-300',
+            isPdfFullScreen && 'w-full'
+          )}
+          style={{ width: isPdfFullScreen ? '100%' : mainContentWidth }}
         >
           <PDFViewer url={test.url} />
           <Button
@@ -259,52 +235,81 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
         {!isPdfFullScreen && (
           <>
-            <DraggableDivider onMouseDown={handleMouseDown} />
-            <div className="h-full flex-1">
-              <Scantron
-                userAnswers={userAnswers}
-                onAnswerSelect={handleAnswerSelect}
-                reviewData={reviewData}
-                onAskAI={handleAskAI}
-                headerContent={
-                  <div className="flex items-center gap-2">
-                    {isPracticeMode ? (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button disabled={!isSubmittable}>Submit Test</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Once you submit, you will not be able to change
-                              your answers.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleSubmit}>
-                              Submit
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsScoreModalOpen(true)}
-                        >
-                          Review Test
-                        </Button>
-                        <Button onClick={handleBackToLibrary}>
-                          Back to Library
-                        </Button>
-                      </>
-                    )}
+            <DraggableDivider onMouseDown={(e) => handleMouseDown(e, setDividerPosition)} />
+            <div className="flex h-full flex-1">
+              <div
+                className="h-full"
+                style={{ width: isChatOpen ? `${chatDividerPosition}%` : '100%' }}
+              >
+                <Scantron
+                  userAnswers={userAnswers}
+                  onAnswerSelect={handleAnswerSelect}
+                  reviewData={reviewData}
+                  headerContent={
+                    <div className="flex items-center gap-2">
+                      {isPracticeMode ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button disabled={!isSubmittable}>
+                              Submit Test
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you sure?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Once you submit, you will not be able to change
+                                your answers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleSubmit}>
+                                Submit
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsScoreModalOpen(true)}
+                          >
+                            Review Score
+                          </Button>
+                          <Button onClick={handleBackToLibrary}>
+                            Back to Library
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setIsChatOpen(!isChatOpen)}
+                        className={cn(isChatOpen && 'bg-accent')}
+                      >
+                        <Bot className="h-5 w-5" />
+                        <span className="sr-only">Toggle AI Tutor</span>
+                      </Button>
+                    </div>
+                  }
+                />
+              </div>
+
+              {isChatOpen && (
+                <>
+                  <DraggableDivider onMouseDown={(e) => handleMouseDown(e, setChatDividerPosition)} />
+                  <div
+                    className="h-full"
+                    style={{ width: `${100-chatDividerPosition}%` }}
+                  >
+                    <ChatTutorPanel onClose={() => setIsChatOpen(false)} />
                   </div>
-                }
-              />
+                </>
+              )}
             </div>
           </>
         )}
@@ -317,14 +322,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           scoreReport={scoreReport}
         />
       )}
-
-      <AIAssistantDialog
-        isOpen={aiState.isOpen}
-        onClose={() => setAiState({ ...aiState, isOpen: false })}
-        questionNumber={aiState.questionNumber}
-        explanation={aiState.explanation}
-        isLoading={aiState.isLoading}
-      />
     </>
   );
 };
