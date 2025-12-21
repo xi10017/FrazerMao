@@ -34,6 +34,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { AIAssistantDialog } from './AIAssistantDialog';
+import { getQuestionExplanation } from '@/ai/flows/get-question-explanation';
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -52,42 +54,51 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
-
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
-  const containerRef = useRef<HTMLDivElement>(null);
 
+  const [aiState, setAiState] = useState<{
+    isOpen: boolean;
+    questionNumber: number | null;
+    explanation: string | null;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    questionNumber: null,
+    explanation: null,
+    isLoading: false,
+  });
+
+  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
 
-  // Load initial answers for practice or review mode
   useEffect(() => {
     if (isReviewFromHistory && solution && initialAnswers) {
-      // Review mode from history
       const report = gradeTest(initialAnswers, solution.answers);
       const newReviewData = createReviewData(initialAnswers, solution.answers);
       setReviewData(newReviewData);
       setScoreReport(report);
       setUserAnswers(initialAnswers);
+      setIsScoreModalOpen(false); // Don't show modal when reviewing from history
     } else if (user) {
-      // Practice mode, check for in-progress answers
       const savedProgress = getInProgressAnswers(user.uid, test.id);
       if (savedProgress) {
         setUserAnswers(savedProgress);
+      } else {
+        setUserAnswers({}); // ensure it's a clean slate
       }
+      setReviewData(null);
+      setScoreReport(null);
     }
   }, [isReviewFromHistory, solution, initialAnswers, user, test.id]);
 
-
-  // Auto-save progress
   useEffect(() => {
-    // Only save progress if we are in practice mode (not reviewing)
-    if (user && !reviewData) {
+    if (user && reviewData === null) {
       saveInProgressAnswers(user.uid, test.id, userAnswers);
     }
   }, [userAnswers, user, test.id, reviewData]);
-
 
   const createReviewData = (
     answers: UserAnswers,
@@ -108,8 +119,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    if (reviewData) return; // Disallow changes after submission/review
-
+    if (reviewData) return;
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
@@ -164,7 +174,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
     const report = gradeTest(userAnswers, solution.answers);
     saveSubmission(user.uid, test, userAnswers, report);
-    clearInProgressAnswers(user.uid, test.id); // Clear saved progress
+    clearInProgressAnswers(user.uid, test.id);
 
     toast({
       title: 'Success!',
@@ -175,6 +185,33 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setReviewData(newReviewData);
     setScoreReport(report);
     setIsScoreModalOpen(true);
+  };
+
+  const handleAskAI = async (questionNumber: number) => {
+    setAiState({
+      isOpen: true,
+      questionNumber,
+      explanation: null,
+      isLoading: true,
+    });
+    try {
+      const response = await getQuestionExplanation({
+        questionNumber,
+        testName: test.name,
+      });
+      setAiState((prev) => ({
+        ...prev,
+        explanation: response.explanation,
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.error('Error getting AI explanation:', error);
+      setAiState((prev) => ({
+        ...prev,
+        explanation: 'Sorry, I was unable to get an explanation at this time.',
+        isLoading: false,
+      }));
+    }
   };
 
   const handleViewHistory = () => {
@@ -198,7 +235,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
-  
+
   return (
     <>
       <div
@@ -228,6 +265,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                 userAnswers={userAnswers}
                 onAnswerSelect={handleAnswerSelect}
                 reviewData={reviewData}
+                onAskAI={handleAskAI}
                 headerContent={
                   <div className="flex items-center gap-2">
                     {isPracticeMode ? (
@@ -251,10 +289,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    ) : isReviewFromHistory ? (
-                      <Button onClick={handleViewHistory}>
-                        Back to History
-                      </Button>
                     ) : (
                       <>
                         <Button
@@ -283,6 +317,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           scoreReport={scoreReport}
         />
       )}
+
+      <AIAssistantDialog
+        isOpen={aiState.isOpen}
+        onClose={() => setAiState({ ...aiState, isOpen: false })}
+        questionNumber={aiState.questionNumber}
+        explanation={aiState.explanation}
+        isLoading={aiState.isLoading}
+      />
     </>
   );
 };
