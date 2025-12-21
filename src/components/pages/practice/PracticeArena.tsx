@@ -57,14 +57,17 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
 
 
   useEffect(() => {
-    if (isReviewFromHistory && solution) {
-      const report = gradeTest(userAnswers, solution.answers);
+    if (isReviewFromHistory && solution && initialAnswers) {
+      const report = gradeTest(initialAnswers, solution.answers);
       setScoreReport(report);
+      setUserAnswers(initialAnswers);
+      setIsSubmitted(true);
+      setIsReviewMode(true);
       
       const newReviewData: ReviewData = {};
       for (let i = 0; i < solution.answers.length; i++) {
         const qNum = i + 1;
-        const userAnswer = userAnswers[qNum];
+        const userAnswer = initialAnswers[qNum];
         const correctAnswer = solution.answers[i];
         newReviewData[qNum] = {
           userAnswer,
@@ -74,7 +77,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
       }
       setReviewData(newReviewData);
     }
-  }, [isReviewFromHistory, solution, userAnswers]);
+  }, [isReviewFromHistory, solution, initialAnswers]);
 
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
@@ -193,11 +196,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
   const isSubmittable = Object.keys(userAnswers).length > 0;
 
   const getScantronHeader = () => {
-    if(isReviewFromHistory) {
-      return (
-        <Button onClick={() => router.push('/')}>Back to Library</Button>
-      )
-    }
     if (isReviewMode) {
       return <Button onClick={handleExitReviewMode}>Back to History</Button>;
     }
@@ -284,7 +282,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
         )}
       </div>
 
-      {scoreReport && !isReviewMode && (
+      {scoreReport && !isReviewMode && !isReviewFromHistory && (
         <ScoreModal
           isOpen={!!scoreReport}
           onClose={() => setScoreReport(null)}
