@@ -2,10 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /submissions/{submissionId} {
-      // Allow user to read/write their own submissions.
-      // The query from the client MUST include `where('userId', '==', request.auth.uid)`
-      allow list, get: if request.auth != null && request.query.resource.data.userId == request.auth.uid;
+      // Allow users to create submissions if the userId in the new document matches their own.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+      // Allow users to read (get, list) their own submissions.
+      // The client query MUST use `where('userId', '==', request.auth.uid)`.
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Allow users to update or delete their own submissions by checking the existing document's data.
       allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
