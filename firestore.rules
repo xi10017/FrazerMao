@@ -6,13 +6,14 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Allow users to read their own user document
     match /users/{userId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
-      // Writes to the user document itself are disallowed for now
+      // Users can read their own user document
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      // Users cannot write to their own user document for now
       allow write: if false;
 
-      // Explicitly allow read and write access to the submissions subcollection
+      // This rule explicitly allows a user to LIST their own submissions
+      // and to GET, CREATE, UPDATE, or DELETE a specific submission document.
       match /submissions/{submissionId} {
         allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
