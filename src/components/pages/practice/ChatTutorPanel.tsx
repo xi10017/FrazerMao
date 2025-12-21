@@ -21,14 +21,14 @@ interface ChatTutorPanelProps {
 
 const ChatMessageContent = ({ text }: { text: string }) => {
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+    <div className="prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
        <ReactMarkdown
         remarkPlugins={[remarkMath]}
         components={{
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          math: ({ value }: any) => <BlockMath>{value}</BlockMath>,
+          math: ({ value }: any) => <BlockMath math={String.raw`${value}`} />,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          inlineMath: ({ value }: any) => <InlineMath>{value}</InlineMath>,
+          inlineMath: ({ value }: any) => <InlineMath math={String.raw`${value}`} />,
         }}
       >
         {text}
