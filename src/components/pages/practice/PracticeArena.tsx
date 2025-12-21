@@ -289,7 +289,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                         variant="outline"
                         size="icon"
                         onClick={() => setIsChatOpen(!isChatOpen)}
-                        className={cn(isChatOpen && 'bg-accent')}
+                        className={cn(isChatOpen && 'bg-accent text-accent-foreground')}
                       >
                         <Bot className="h-5 w-5" />
                         <span className="sr-only">Toggle AI Tutor</span>

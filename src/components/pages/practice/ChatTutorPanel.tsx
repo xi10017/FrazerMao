@@ -13,11 +13,30 @@ import { cn } from '@/lib/utils';
 import type { ChatHistory } from '@/ai/flows/chat-schemas';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+import { BlockMath, InlineMath } from 'react-katex';
 
 interface ChatTutorPanelProps {
   onClose: () => void;
 }
+
+const ChatMessageContent = ({ text }: { text: string }) => {
+  const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g);
+
+  return (
+    <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap">
+      {parts.map((part, index) => {
+        if (part.startsWith('$$') && part.endsWith('$$')) {
+          return <BlockMath key={index}>{part.slice(2, -2)}</BlockMath>;
+        }
+        if (part.startsWith('$') && part.endsWith('$')) {
+          return <InlineMath key={index}>{part.slice(1, -1)}</InlineMath>;
+        }
+        return <ReactMarkdown key={index} remarkPlugins={[remarkMath]}>{part}</ReactMarkdown>;
+      })}
+    </div>
+  );
+};
+
 
 export const ChatTutorPanel: React.FC<ChatTutorPanelProps> = ({ onClose }) => {
   const [prompt, setPrompt] = useState('');
@@ -115,18 +134,13 @@ export const ChatTutorPanel: React.FC<ChatTutorPanelProps> = ({ onClose }) => {
               )}
               <div
                 className={cn(
-                  'max-w-xs md:max-w-md lg:max-w-lg rounded-lg p-3 text-sm dark:prose-invert',
+                  'max-w-xs md:max-w-md lg:max-w-lg rounded-lg p-3 text-sm',
                   entry.role === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 )}
               >
-                <ReactMarkdown
-                  remarkPlugins={[remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {entry.content[0].text}
-                </ReactMarkdown>
+                <ChatMessageContent text={entry.content[0].text} />
               </div>
               {entry.role === 'user' && (
                 <Avatar className="h-8 w-8 border">
