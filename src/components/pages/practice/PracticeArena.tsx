@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -30,7 +30,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-
 interface PracticeArenaProps {
   test: FamatTest;
   solution?: FamatSolution;
@@ -38,57 +37,53 @@ interface PracticeArenaProps {
   isReviewFromHistory?: boolean;
 }
 
+type PracticeMode = 'PRACTICE' | 'SCORED' | 'REVIEW';
+
 const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAnswers, isReviewFromHistory }) => {
-  const [userAnswers, setUserAnswers] = useState<UserAnswers>(initialAnswers || {});
+  const [mode, setMode] = useState<PracticeMode>('PRACTICE');
+  const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
+  const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
+  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
+  
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
   const [reviewDivider1, setReviewDivider1] = useState(33.33);
   const [reviewDivider2, setReviewDivider2] = useState(66.66);
-  
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
-  const [isReviewMode, setIsReviewMode] = useState(false);
-  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
 
   const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
 
-
   useEffect(() => {
     if (isReviewFromHistory && solution && initialAnswers) {
-      const report = gradeTest(initialAnswers, solution.answers);
-      setScoreReport(report);
-      setUserAnswers(initialAnswers);
-      setIsSubmitted(true);
-      setIsReviewMode(true);
-      
-      const newReviewData: ReviewData = {};
-      for (let i = 0; i < solution.answers.length; i++) {
-        const qNum = i + 1;
-        const userAnswer = initialAnswers[qNum];
-        const correctAnswer = solution.answers[i];
-        newReviewData[qNum] = {
-          userAnswer,
-          correctAnswer,
-          isCorrect: userAnswer === correctAnswer,
-        };
-      }
-      setReviewData(newReviewData);
+        const report = gradeTest(initialAnswers, solution.answers);
+        const newReviewData: ReviewData = {};
+        for (let i = 0; i < solution.answers.length; i++) {
+            const qNum = i + 1;
+            const userAnswer = initialAnswers[qNum];
+            const correctAnswer = solution.answers[i];
+            newReviewData[qNum] = {
+            userAnswer,
+            correctAnswer,
+            isCorrect: userAnswer === correctAnswer,
+            };
+        }
+        setUserAnswers(initialAnswers);
+        setScoreReport(report);
+        setReviewData(newReviewData);
+        setMode('REVIEW');
     } else {
-        // Reset state if not in review mode from history
-        setUserAnswers(initialAnswers || {});
-        setIsSubmitted(!!initialAnswers);
-        setIsReviewMode(!!initialAnswers);
+        setUserAnswers({});
         setScoreReport(null);
         setReviewData(null);
+        setMode('PRACTICE');
     }
   }, [isReviewFromHistory, solution, initialAnswers]);
 
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    if (isSubmitted) return;
+    if (mode !== 'PRACTICE') return; // Prevent changes after submission
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
@@ -159,14 +154,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
 
     const report = gradeTest(userAnswers, solution.answers);
     setScoreReport(report);
-    setIsSubmitted(true);
-
+    
     saveSubmission(user.uid, test, userAnswers, report);
     
     toast({
       title: 'Success!',
       description: 'Your test results have been saved to this device.',
     });
+    
+    setMode('SCORED');
 
     const newReviewData: ReviewData = {};
     for (let i = 0; i < solution.answers.length; i++) {
@@ -183,8 +179,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
   };
 
   const handleEnterReviewMode = () => {
-    setIsReviewMode(true);
-    setScoreReport(null); // Close the modal
+    setMode('REVIEW');
   };
   
   const handleExitReviewMode = () => {
@@ -203,13 +198,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
   const isSubmittable = Object.keys(userAnswers).length > 0;
 
   const getScantronHeader = () => {
-    if (isReviewMode) {
+    if (mode === 'REVIEW') {
       return <Button onClick={handleExitReviewMode}>Back to History</Button>;
     }
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button disabled={!isSubmittable || isSubmitted}>
+          <Button disabled={!isSubmittable || mode !== 'PRACTICE'}>
             Submit Test
           </Button>
         </AlertDialogTrigger>
@@ -232,7 +227,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
   return (
     <>
       <div ref={containerRef} className="flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-        {!isReviewMode ? (
+        {mode !== 'REVIEW' ? (
           <>
             <div
               className="relative h-full"
@@ -256,7 +251,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
                   <Scantron
                     userAnswers={userAnswers}
                     onAnswerSelect={handleAnswerSelect}
-                    isSubmitted={isSubmitted}
+                    isSubmitted={mode !== 'PRACTICE'}
                     headerContent={getScantronHeader()}
                   />
                 </div>
@@ -286,10 +281,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
         )}
       </div>
 
-      {scoreReport && !isReviewMode && (
+      {scoreReport && mode === 'SCORED' && (
         <ScoreModal
-          isOpen={!!scoreReport && !isReviewMode}
-          onClose={() => setScoreReport(null)}
+          isOpen={mode === 'SCORED'}
+          onClose={() => setMode('REVIEW')}
           scoreReport={scoreReport}
           onEnterReviewMode={handleEnterReviewMode}
         />
