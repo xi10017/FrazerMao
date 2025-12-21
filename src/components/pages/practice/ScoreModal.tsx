@@ -49,7 +49,12 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
     if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) {
+            onClose();
+            onEnterReviewMode();
+        }
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-3xl font-bold">
@@ -96,7 +101,7 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
             className="w-full sm:w-auto"
           >
             <BookOpen className="mr-2 h-4 w-4" />
-            Enter Review Mode
+            Review Your Answers
           </Button>
         </DialogFooter>
       </DialogContent>
