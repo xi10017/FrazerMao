@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser } from '@/firebase';
 import type { FamatTest, TestSubmission, AnyFamatTest } from '@/lib/types';
@@ -45,40 +45,36 @@ function HistoryPage() {
   }, [testId]);
 
   useEffect(() => {
-    if (isUserLoading) {
-        setIsLoading(true);
-        return;
-    }
+    setIsLoading(true);
     if (user && testId) {
-        const allSubmissions = getSubmissionsForUser(user.uid);
-        const testSubmissions = allSubmissions
-            .filter(sub => sub.testId === testId)
-            .sort((a, b) => (b.submittedAt as any) - (a.submittedAt as any));
-        setSubmissions(testSubmissions);
+      const allSubmissions = getSubmissionsForUser(user.uid);
+      const testSubmissions = allSubmissions
+        .filter((sub) => sub.testId === testId)
+        .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+      setSubmissions(testSubmissions);
     } else {
-        setSubmissions([]);
+      setSubmissions([]);
     }
     setIsLoading(false);
-  }, [user, isUserLoading, testId]);
+  }, [user, testId]);
 
-
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
     return (
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="mb-6">
-          <Skeleton className="h-8 w-1/2" />
+        <div className="mb-6 flex items-center">
+           <Skeleton className="h-10 w-32" />
         </div>
         <Card>
           <CardHeader>
-            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-8 w-1/2" />
             <Skeleton className="h-4 w-3/4 mt-2" />
           </CardHeader>
           <CardContent>
-             <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                ))}
-             </div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -88,15 +84,16 @@ function HistoryPage() {
   if (!test) {
     notFound();
   }
-  
+
   const handleReview = (submission: TestSubmission) => {
+    // Pass the specific answers from that submission to the practice page for review.
     const submissionData = encodeURIComponent(JSON.stringify(submission.answers));
     router.push(`/practice/${testId}?fromHistory=true&submission=${submissionData}`);
   };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-       <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+      <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
         <ChevronLeft className="mr-2 h-4 w-4" />
         Back to Library
       </Button>
@@ -115,9 +112,9 @@ function HistoryPage() {
                 <TableRow>
                   <TableHead className="w-[200px]">Date Taken</TableHead>
                   <TableHead className="text-center">Score</TableHead>
-                  <TableHead className="text-center text-green-500">Correct</TableHead>
-                  <TableHead className="text-center text-red-500">Incorrect</TableHead>
-                  <TableHead className="text-center text-yellow-500">Omitted</TableHead>
+                  <TableHead className="text-center text-green-400">Correct</TableHead>
+                  <TableHead className="text-center text-red-400">Incorrect</TableHead>
+                  <TableHead className="text-center text-yellow-400">Omitted</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -125,12 +122,20 @@ function HistoryPage() {
                 {submissions.map((sub) => (
                   <TableRow key={sub.id}>
                     <TableCell className="font-medium">
-                      {sub.submittedAt ? format(sub.submittedAt, 'PPP p') : 'Just now'}
+                      {format(sub.submittedAt, 'PPP p')}
                     </TableCell>
-                    <TableCell className="text-center text-lg font-bold text-primary">{sub.score.totalScore}</TableCell>
-                    <TableCell className="text-center font-medium">{sub.score.correctCount}</TableCell>
-                    <TableCell className="text-center font-medium">{sub.score.incorrectCount}</TableCell>
-                    <TableCell className="text-center font-medium">{sub.score.omitCount}</TableCell>
+                    <TableCell className="text-center text-lg font-bold text-primary">
+                      {sub.score.totalScore}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {sub.score.correctCount}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {sub.score.incorrectCount}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {sub.score.omitCount}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button onClick={() => handleReview(sub)}>
                         Review <ArrowRight className="ml-2 h-4 w-4" />
@@ -146,12 +151,12 @@ function HistoryPage() {
               <p className="mt-2 text-muted-foreground">
                 You haven't taken this test yet.
               </p>
-               <Button asChild className="mt-4">
-                  <Link href={`/practice/${test.id}`}>
-                    Take Test
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+              <Button asChild className="mt-4">
+                <Link href={`/practice/${test.id}`}>
+                  Take Test
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           )}
         </CardContent>

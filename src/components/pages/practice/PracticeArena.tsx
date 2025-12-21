@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -37,54 +37,59 @@ interface PracticeArenaProps {
   isReviewFromHistory?: boolean;
 }
 
-const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAnswers, isReviewFromHistory }) => {
+const PracticeArena: React.FC<PracticeArenaProps> = ({
+  test,
+  solution,
+  initialAnswers,
+  isReviewFromHistory,
+}) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>(initialAnswers || {});
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
-  
-  const [isFullScreen, setIsFullScreen] = useState(false);
+
+  const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
-  const [reviewDivider1, setReviewDivider1] = useState(33.33);
-  const [reviewDivider2, setReviewDivider2] = useState(66.66);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
 
+  // This effect runs once on load to set up the initial state for review mode.
   useEffect(() => {
     if (isReviewFromHistory && solution && initialAnswers) {
-        const report = gradeTest(initialAnswers, solution.answers);
-        const newReviewData: ReviewData = {};
-        for (let i = 0; i < solution.answers.length; i++) {
-            const qNum = i + 1;
-            const userAnswer = initialAnswers[qNum];
-            const correctAnswer = solution.answers[i];
-            newReviewData[qNum] = {
-              userAnswer,
-              correctAnswer,
-              isCorrect: userAnswer === correctAnswer,
-            };
-        }
-        setUserAnswers(initialAnswers);
-        setScoreReport(report);
-        setReviewData(newReviewData);
-        setIsScoreModalOpen(false); // Don't show modal when coming from history
-    } else {
-        // Reset for a new practice session
-        setUserAnswers({});
-        setScoreReport(null);
-        setReviewData(null);
-        setIsScoreModalOpen(false);
+      const report = gradeTest(initialAnswers, solution.answers);
+      const newReviewData = createReviewData(initialAnswers, solution.answers);
+      setReviewData(newReviewData);
+      setScoreReport(report);
+      setUserAnswers(initialAnswers);
     }
   }, [isReviewFromHistory, solution, initialAnswers]);
 
 
+  const createReviewData = (
+    answers: UserAnswers,
+    correctAnswers: string[]
+  ): ReviewData => {
+    const data: ReviewData = {};
+    for (let i = 0; i < correctAnswers.length; i++) {
+      const qNum = i + 1;
+      const userAnswer = answers[qNum];
+      const correctAnswer = correctAnswers[i];
+      data[qNum] = {
+        userAnswer,
+        correctAnswer,
+        isCorrect: userAnswer === correctAnswer,
+      };
+    }
+    return data;
+  };
+
+
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    // Prevent changes after submission (when reviewData is set)
-    if (reviewData) return;
-    
+    if (reviewData) return; // Disallow changes after submission
+
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
@@ -96,33 +101,17 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
     });
   };
 
-  const handleMouseDown = (divider: 'main' | 'review1' | 'review2') => (e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     const startX = e.clientX;
     const containerWidth = containerRef.current?.offsetWidth ?? 0;
+    const startWidth = containerWidth * (dividerPosition / 100);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (containerRef.current) {
-            const dx = moveEvent.clientX - startX;
-            if (divider === 'main') {
-                const startWidth = containerWidth * (dividerPosition / 100);
-                const newWidth = startWidth + dx;
-                const newPosition = (newWidth / containerWidth) * 100;
-                setDividerPosition(Math.max(20, Math.min(80, newPosition)));
-            } else if (divider === 'review1') {
-                const startWidth1 = containerWidth * (reviewDivider1 / 100);
-                const newWidth = startWidth1 + dx;
-                let newPos1 = (newWidth / containerWidth) * 100;
-                newPos1 = Math.max(15, Math.min(reviewDivider2 - 15, newPos1));
-                setReviewDivider1(newPos1);
-            } else if (divider === 'review2') {
-                const startWidth2 = containerWidth * (reviewDivider2 / 100);
-                const newWidth = startWidth2 + dx;
-                let newPos2 = (newWidth / containerWidth) * 100;
-                newPos2 = Math.max(reviewDivider1 + 15, Math.min(85, newPos2));
-                setReviewDivider2(newPos2);
-            }
-        }
+      const dx = moveEvent.clientX - startX;
+      const newWidth = startWidth + dx;
+      const newPosition = (newWidth / containerWidth) * 100;
+      setDividerPosition(Math.max(20, Math.min(80, newPosition)));
     };
 
     const handleMouseUp = () => {
@@ -155,125 +144,100 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
 
     const report = gradeTest(userAnswers, solution.answers);
     saveSubmission(user.uid, test, userAnswers, report);
-    
+
     toast({
       title: 'Success!',
-      description: 'Your test results have been saved to this device.',
+      description: 'Your test results have been saved.',
     });
 
-    const newReviewData: ReviewData = {};
-    for (let i = 0; i < solution.answers.length; i++) {
-      const qNum = i + 1;
-      const userAnswer = userAnswers[qNum];
-      const correctAnswer = solution.answers[i];
-      newReviewData[qNum] = {
-        userAnswer,
-        correctAnswer,
-        isCorrect: userAnswer === correctAnswer,
-      };
-    }
+    const newReviewData = createReviewData(userAnswers, solution.answers);
     setReviewData(newReviewData);
     setScoreReport(report);
     setIsScoreModalOpen(true);
   };
-  
+
   const handleExitReviewMode = () => {
     router.push(`/history/${test.id}`);
+  };
+
+  const handleEnterReviewFromModal = () => {
+    setIsScoreModalOpen(false);
   }
 
-  const DraggableDivider: React.FC<{onMouseDown: (e: React.MouseEvent) => void}> = ({ onMouseDown }) => (
+  const DraggableDivider: React.FC<{
+    onMouseDown: (e: React.MouseEvent) => void;
+  }> = ({ onMouseDown }) => (
     <div
       onMouseDown={onMouseDown}
       className="group h-full w-2 cursor-col-resize bg-border/50 transition hover:bg-primary"
     >
-      <div className="h-full w-0.5 bg-transparent group-hover:bg-primary-foreground mx-auto"></div>
+      <div className="mx-auto h-full w-0.5 bg-transparent group-hover:bg-primary-foreground"></div>
     </div>
   );
-  
+
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
 
-  const getScantronHeader = () => {
-    if (isPracticeMode) {
-      return (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button disabled={!isSubmittable}>
-              Submit Test
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Once you submit, you will not be able to change your answers.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSubmit}>Submit</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      );
-    }
-    // In review mode
-    return <Button onClick={handleExitReviewMode}>Back to History</Button>;
-  }
-
   return (
     <>
-      <div ref={containerRef} className="flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-        {isPracticeMode ? (
-          <>
-            <div
-              className="relative h-full"
-              style={{ width: isFullScreen ? '100%' : `${dividerPosition}%` }}
-            >
-              <PDFViewer url={test.url} />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
-                onClick={() => setIsFullScreen(!isFullScreen)}
-              >
-                {isFullScreen ? <Minimize /> : <Maximize />}
-              </Button>
-            </div>
+      <div
+        ref={containerRef}
+        className="flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background"
+      >
+        <div
+          className="relative h-full"
+          style={{ width: isPdfFullScreen ? '100%' : `${dividerPosition}%` }}
+        >
+          <PDFViewer url={test.url} />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
+            onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
+          >
+            {isPdfFullScreen ? <Minimize /> : <Maximize />}
+          </Button>
+        </div>
 
-            {!isFullScreen && (
-              <>
-                <DraggableDivider onMouseDown={handleMouseDown('main')} />
-                <div className="h-full flex-1">
-                  <Scantron
-                    userAnswers={userAnswers}
-                    onAnswerSelect={handleAnswerSelect}
-                    isSubmitted={!isPracticeMode}
-                    reviewData={reviewData}
-                    headerContent={getScantronHeader()}
-                  />
-                </div>
-              </>
-            )}
-          </>
-        ) : (
+        {!isPdfFullScreen && (
           <>
-            <div className="relative h-full" style={{ width: `${reviewDivider1}%` }}>
-                <PDFViewer url={test.url} />
-            </div>
-            <DraggableDivider onMouseDown={handleMouseDown('review1')} />
-            <div className="relative h-full" style={{ width: `${reviewDivider2 - reviewDivider1}%` }}>
-                {solution?.url ? <PDFViewer url={solution.url} /> : <div className="flex h-full items-center justify-center bg-muted"><p>No solution PDF available.</p></div>}
-            </div>
-            <DraggableDivider onMouseDown={handleMouseDown('review2')} />
-            <div className="h-full" style={{ width: `${100 - reviewDivider2}%` }}>
-                <Scantron
-                    userAnswers={userAnswers}
-                    onAnswerSelect={() => {}} // No-op in review mode
-                    isSubmitted={!isPracticeMode}
-                    reviewData={reviewData}
-                    headerContent={getScantronHeader()}
-                />
+            <DraggableDivider onMouseDown={handleMouseDown} />
+            <div className="h-full flex-1">
+              <Scantron
+                userAnswers={userAnswers}
+                onAnswerSelect={handleAnswerSelect}
+                reviewData={reviewData}
+                headerContent={
+                  <div className="flex items-center gap-2">
+                    {isPracticeMode ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button disabled={!isSubmittable}>Submit Test</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Once you submit, you will not be able to change
+                              your answers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleSubmit}>
+                              Submit
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <Button onClick={handleExitReviewMode}>
+                        Back to History
+                      </Button>
+                    )}
+                  </div>
+                }
+              />
             </div>
           </>
         )}
@@ -284,7 +248,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
           isOpen={isScoreModalOpen}
           onClose={() => setIsScoreModalOpen(false)}
           scoreReport={scoreReport}
-          onEnterReviewMode={() => setIsScoreModalOpen(false)}
+          onEnterReviewMode={handleEnterReviewFromModal}
         />
       )}
     </>
