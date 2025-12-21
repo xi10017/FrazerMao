@@ -24,6 +24,7 @@ export default function PracticePage({ params, searchParams }: Props) {
 
   const solution = findSolutionForTest(test);
   
+  const isReviewFromHistory = !!searchParams.fromHistory;
   let initialAnswers: UserAnswers | undefined = undefined;
   if(searchParams.submission) {
     try {
@@ -33,7 +34,7 @@ export default function PracticePage({ params, searchParams }: Props) {
     }
   }
 
-  return <PracticeArena test={test} solution={solution} initialAnswers={initialAnswers} isReviewFromHistory={!!searchParams.fromHistory} />;
+  return <PracticeArena test={test} solution={solution} initialAnswers={initialAnswers} isReviewFromHistory={isReviewFromHistory} />;
 }
 
 export function generateStaticParams() {
