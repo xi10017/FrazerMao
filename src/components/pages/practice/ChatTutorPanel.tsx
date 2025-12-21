@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { chat, type ChatRequest } from '@/ai/flows/chat';
+import { chat } from '@/ai/flows/chat';
+import type { ChatRequest } from '@/ai/flows/chat-schemas';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,8 +11,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { z } from 'zod';
+import type { ChatHistory } from '@/ai/flows/chat-schemas';
 
-type ChatHistory = z.infer<typeof import('@/ai/flows/chat').ChatHistorySchema>;
 
 interface ChatTutorPanelProps {
   onClose: () => void;
@@ -48,7 +49,8 @@ export const ChatTutorPanel: React.FC<ChatTutorPanelProps> = ({ onClose }) => {
     setPrompt('');
 
     try {
-      const responseText = await chat({ history: newHistory, prompt });
+      const request: ChatRequest = { history: newHistory, prompt };
+      const responseText = await chat(request);
       const modelMessage = {
         role: 'model' as const,
         content: [{ text: responseText }],
