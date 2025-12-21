@@ -17,6 +17,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const firestore = useFirestore();
   
   const submissionsQuery = useMemoFirebase(() => {
+    // DO NOT run the query if the user is not logged in.
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'submissions'),
@@ -28,7 +29,8 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const { data: submissions, isLoading: submissionsLoading } = useCollection<TestSubmission>(submissionsQuery);
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
-    if (submissionsLoading || !submissions || !user) {
+    // If the user isn't logged in, or submissions are still loading, just return tests without history.
+    if (isUserLoading || submissionsLoading || !user || !submissions) {
       return tests.map(t => ({...t, history: []}));
     }
 
@@ -45,7 +47,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         history: submissionsByTestId[test.id] || []
     }));
 
-  }, [tests, submissions, submissionsLoading, user]);
+  }, [tests, submissions, submissionsLoading, isUserLoading, user]);
 
 
   const uniqueValues = useMemo(() => {
