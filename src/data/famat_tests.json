@@ -1,0 +1,94 @@
+{
+  "tests": [
+    {
+      "id": "stat-reg-jan-2022-test",
+      "year": 2022,
+      "month": "January",
+      "division": "Statistics",
+      "test_type": "Test",
+      "competition": "Regional",
+      "url": "https://www.famat.org/static/media/uploads/22RegIndv/22RstatsI.pdf"
+    },
+    {
+      "id": "stat-reg-jan-2022-sol",
+      "year": 2022,
+      "month": "January",
+      "division": "Statistics",
+      "test_type": "Solution",
+      "competition": "Regional",
+      "answers": ["D", "B", "C", "A", "C", "D", "B", "E", "C", "D", "A", "C", "B", "A", "C", "D", "A", "B", "D", "B", "C", "B", "A", "B", "D", "B", "A", "D", "C", "B"]
+    },
+    {
+      "id": "stat-reg-jan-2021-test",
+      "year": 2021,
+      "month": "January",
+      "division": "Statistics",
+      "test_type": "Test",
+      "competition": "Regional",
+      "url": "https://www.famat.org/static/media/uploads/21RStatInd.pdf"
+    },
+    {
+      "id": "stat-reg-jan-2021-sol",
+      "year": 2021,
+      "month": "January",
+      "division": "Statistics",
+      "test_type": "Solution",
+      "competition": "Regional",
+      "answers": ["C", "C", "D", "A", "B", "D", "B", "B", "B", "C", "B", "D", "A", "C", "C", "B", "D", "B", "B", "C", "A", "B", "D", "A", "C", "D", "D", "D", "A", "C"]
+    },
+    {
+        "id": "stat-reg-jan-2020-test",
+        "year": 2020,
+        "month": "January",
+        "division": "Statistics",
+        "test_type": "Test",
+        "competition": "Regional",
+        "url": "https://famat.org/static/media/uploads/2020/01/20RStatInd-revised.pdf"
+      },
+      {
+        "id": "stat-reg-jan-2020-sol",
+        "year": 2020,
+        "month": "January",
+        "division": "Statistics",
+        "test_type": "Solution",
+        "competition": "Regional",
+        "answers": ["B", "C", "D", "A", "D", "C", "B", "B", "D", "A", "B", "D", "C", "C", "D", "B", "A", "C", "D", "B", "A", "B", "A", "C", "A", "B", "E", "C", "A", "A"]
+      },
+      {
+        "id": "stat-reg-jan-2019-test",
+        "year": 2019,
+        "month": "January",
+        "division": "Statistics",
+        "test_type": "Test",
+        "competition": "Regional",
+        "url": "https://famat.org/static/media/uploads/2019/01/Statistics-Individual-Solutions-Updated.pdf"
+      },
+      {
+        "id": "stat-reg-jan-2019-sol",
+        "year": 2019,
+        "month": "January",
+        "division": "Statistics",
+        "test_type": "Solution",
+        "competition": "Regional",
+        "answers": ["C", "B", "C", "D", "C", "A", "D", "D", "C", "A", "A", "B", "B", "C", "C", "D", "C", "B", "B", "A", "B", "A", "A", "D", "D", "B", "D", "C", "A", "B"]
+      },
+      {
+        "id": "stat-reg-jan-2018-test",
+        "year": 2018,
+        "month": "January",
+        "division": "Statistics",
+        "test_type": "Test",
+        "competition": "Regional",
+        "url": "https://famat.org/static/media/uploads/2018/01/18RstatsInd.pdf"
+      },
+      {
+        "id": "stat-reg-jan-2018-sol",
+        "year": 2018,
+        "month": "January",
+        "division": "Statistics",
+        "test_type": "Solution",
+        "competition": "Regional",
+        "answers": ["C", "B", "B", "D", "A", "D", "C", "C", "A", "B", "D", "C", "A", "D", "B", "B", "C", "C", "A", "A", "B", "B", "B", "D", "C", "C", "D", "A", "C", "B"]
+      }
+  ]
+}
