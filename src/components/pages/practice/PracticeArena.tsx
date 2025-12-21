@@ -152,7 +152,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
     setScoreReport(report);
     setIsSubmitted(true);
 
-    const submissionsCollectionRef = collection(firestore, 'users', user.uid, 'submissions');
+    const submissionsCollectionRef = collection(firestore, 'submissions');
     addDocumentNonBlocking(submissionsCollectionRef, {
       testId: test.id,
       userId: user.uid,

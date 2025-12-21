@@ -2,9 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // This allows you to access your specific user folder and the submissions inside it
-    match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Allow users to read/write their own submissions from the top-level collection
+    match /submissions/{submissionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
     // Allow reading the leaderboard
