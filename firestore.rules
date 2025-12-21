@@ -1,24 +1,11 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Allow authenticated users to read and write their own data.
-    // The {document=**} wildcard ensures this applies to all subcollections.
-    match /users/{userId}/{document=**} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Publicly readable collections
-    match /tests/{testId} {
-      allow read: if isSignedIn();
-    }
-
-    match /solutions/{solutionId} {
-      allow read: if isSignedIn();
+    // WARNING: This rule allows any authenticated user to read and write any data.
+    // This is insecure and should only be used for initial development.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
