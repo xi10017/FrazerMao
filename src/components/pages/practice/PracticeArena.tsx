@@ -58,6 +58,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [dividerPosition, setDividerPosition] = useState(50);
   const [isClient, setIsClient] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string>(test.url);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -100,6 +101,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setReviewData(newReviewData);
       setScoreReport(report);
       setUserAnswers(initialAnswers);
+      setPdfUrl(solution.url); // Show solution PDF on history review
       setIsScoreModalOpen(false); // Don't show modal when reviewing from history
     } else if (user) {
       const savedProgress = getInProgressAnswers(user.uid, test.id);
@@ -110,6 +112,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       }
       setReviewData(null);
       setScoreReport(null);
+      setPdfUrl(test.url); // Ensure we're showing the test PDF
     }
   }, [isReviewFromHistory, solution, initialAnswers, user, test.id]);
 
@@ -191,6 +194,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setReviewData(newReviewData);
     setScoreReport(report);
     setIsScoreModalOpen(true);
+    setPdfUrl(solution.url); // <-- SWITCH TO SOLUTION PDF
   };
 
   const handleBackToLibrary = () => {
@@ -227,7 +231,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           {isDragging && (
             <div className="absolute inset-0 z-10" />
           )}
-          <PDFViewer url={test.url} />
+          <PDFViewer url={pdfUrl} />
           <Button
             variant="ghost"
             size="icon"
