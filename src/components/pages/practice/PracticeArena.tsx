@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ChatTutorPanel } from './ChatTutorPanel';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -285,15 +286,23 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                           </Button>
                         </>
                       )}
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setIsChatOpen(!isChatOpen)}
-                        className={cn(isChatOpen && 'bg-accent text-accent-foreground')}
-                      >
-                        <Bot className="h-5 w-5" />
-                        <span className="sr-only">Toggle AI Tutor</span>
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                             <Button
+                              variant="outline"
+                              size="icon"
+                              disabled
+                            >
+                              <Bot className="h-5 w-5 line-through" />
+                              <span className="sr-only">Toggle AI Tutor (disabled)</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>AI Tutor is temporarily unavailable due to high demand.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   }
                 />
@@ -327,3 +336,5 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
+
+    
