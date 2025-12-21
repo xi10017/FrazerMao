@@ -5,20 +5,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-
-export const ChatHistorySchema = z.array(
-  z.object({
-    role: z.enum(['user', 'model']),
-    content: z.array(z.object({ text: z.string() })),
-  })
-);
-
-export const ChatRequestSchema = z.object({
-  history: ChatHistorySchema,
-  prompt: z.string(),
-});
-
-export type ChatRequest = z.infer<typeof ChatRequestSchema>;
+import {
+  type ChatRequest,
+  ChatRequestSchema,
+} from '@/ai/flows/chat-schemas';
 
 const tutorPrompt = `You are an expert math tutor specializing in subjects for the Florida Association of Mu Alpha Theta (FAMAT) math competitions, which include Geometry, Algebra 2, Pre-calculus, Statistics, and Calculus. Your students are bright and motivated high schoolers aiming for top scores.
 
