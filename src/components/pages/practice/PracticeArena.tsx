@@ -108,7 +108,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-4 bg-background/50 hover:bg-background/80"
+            className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
             onClick={() => setIsFullScreen(!isFullScreen)}
           >
             {isFullScreen ? <Minimize /> : <Maximize />}
