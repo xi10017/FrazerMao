@@ -33,8 +33,11 @@ function UserAuth() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Error signing in with Google', error);
+    } catch (error: any) {
+      // Don't log an error if the user just closes the popup
+      if (error.code !== 'auth/cancelled-popup-request') {
+        console.error('Error signing in with Google', error);
+      }
     }
   };
 
