@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -56,6 +56,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   const [dividerPosition, setDividerPosition] = useState(50);
   const [isClient, setIsClient] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -124,11 +125,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     });
   };
 
-  const handleMouseDown = (
-    e: React.MouseEvent,
-    setter: React.Dispatch<React.SetStateAction<number>>
-  ) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
+    setIsDragging(true);
+
     const startX = e.clientX;
     const containerWidth = containerRef.current?.offsetWidth ?? 0;
     const initialPosition = dividerPosition;
@@ -138,10 +138,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       const dx = moveEvent.clientX - startX;
       const newWidth = startWidth + dx;
       const newPosition = (newWidth / containerWidth) * 100;
-      setter(Math.max(20, Math.min(80, newPosition)));
+      setDividerPosition(Math.max(20, Math.min(80, newPosition)));
     };
 
     const handleMouseUp = () => {
+      setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -201,7 +202,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
-  
+
   return (
     <>
       <div
@@ -215,6 +216,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           )}
           style={{ width: isPdfFullScreen ? '100%' : `${dividerPosition}%` }}
         >
+          {isDragging && (
+            <div className="absolute inset-0 z-10" />
+          )}
           <PDFViewer url={test.url} />
           <Button
             variant="ghost"
@@ -228,9 +232,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
         {!isPdfFullScreen && (
           <>
-            <DraggableDivider
-              onMouseDown={(e) => handleMouseDown(e, setDividerPosition)}
-            />
+            <DraggableDivider onMouseDown={handleMouseDown} />
             <div className="h-full flex-1">
               <Scantron
                 userAnswers={userAnswers}
