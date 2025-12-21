@@ -1,3 +1,4 @@
+
 import { Timestamp } from 'firebase/firestore';
 
 export interface FamatTestBase {
@@ -41,12 +42,12 @@ export type ReviewData = {
 };
 
 export type TestSubmission = {
-  id: string; // submission id from firestore
+  id: string; // locally unique id
   testId: string;
   userId: string;
   answers: UserAnswers;
   score: ScoreReport;
-  submittedAt: Timestamp;
+  submittedAt: Date; // Using native Date for localStorage
 };
 
 export interface FamatTestWithHistory extends FamatTest {
