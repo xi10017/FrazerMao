@@ -11,6 +11,9 @@ import { Source_Code_Pro } from 'next/font/google';
 export const metadata: Metadata = {
   title: 'MuPractice',
   description: 'Mu Alpha Theta (FAMAT) competition prep',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
