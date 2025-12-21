@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "TestSubmission": {
+      "title": "Test Submission",
+      "description": "Represents a single attempt by a user for a specific test.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique identifier for the submission."
+        },
+        "testId": {
+          "type": "string",
+          "description": "The ID of the test that was taken."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who took the test."
+        },
+        "answers": {
+          "type": "object",
+          "description": "A map of question numbers to the user's selected answers."
+        },
+        "score": {
+          "type": "object",
+          "properties": {
+            "totalScore": { "type": "number" },
+            "correctCount": { "type": "number" },
+            "incorrectCount": { "type": "number" },
+            "omitCount": { "type": "number" }
+          },
+          "required": ["totalScore", "correctCount", "incorrectCount", "omitCount"]
+        },
+        "submittedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the test was submitted."
+        }
+      },
+      "required": ["testId", "userId", "answers", "score", "submittedAt"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/TestSubmission" },
+      "description": "Collection to store all user test submissions."
+    }
+  }
+}
