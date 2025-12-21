@@ -294,26 +294,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                           </Button>
                         </>
                       )}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span tabIndex={0}>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                disabled
-                                className="opacity-50"
-                              >
-                                <Bot className="h-5 w-5 line-through" />
-                                <span className="sr-only">Toggle AI Tutor (disabled)</span>
-                              </Button>
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>AI not available.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
                       </>
                       )}
                     </div>
