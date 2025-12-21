@@ -1,7 +1,6 @@
 'use client';
 
-import React, 'use a client';
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { chat } from '@/ai/flows/chat';
 import type { ChatRequest } from '@/ai/flows/chat-schemas';
 import { Button } from '@/components/ui/button';
