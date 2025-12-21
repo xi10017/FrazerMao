@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Maximize, Minimize, AlertTriangle } from 'lucide-react';
+import { Maximize, Minimize } from 'lucide-react';
 import type { FamatTest, FamatSolution, UserAnswers, ScoreReport, ReviewData } from '@/lib/types';
 import { PDFViewer } from './PDFViewer';
 import { Scantron } from './Scantron';
@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
 import { gradeTest } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -129,25 +128,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution }) => {
                     onAnswerSelect={handleAnswerSelect}
                     isReviewMode={isReviewMode}
                     reviewData={reviewData}
+                    isSubmitted={isSubmitted}
+                    isSubmittable={!!solution}
+                    onSubmit={handleSubmit}
                 />
             </div>
           </>
         )}
       </div>
-      
-      {!isReviewMode && (
-          <footer className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="container mx-auto flex items-center justify-end">
-                  <Button
-                    size="lg"
-                    onClick={handleSubmit}
-                    disabled={!solution || isSubmitted}
-                  >
-                    Submit Test
-                  </Button>
-              </div>
-          </footer>
-      )}
 
       {scoreReport && (
         <ScoreModal 
