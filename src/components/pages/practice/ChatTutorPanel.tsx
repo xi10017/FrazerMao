@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, 'use a client';
+import { useState, useRef, useEffect } from 'react';
 import { chat } from '@/ai/flows/chat';
 import type { ChatRequest } from '@/ai/flows/chat-schemas';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { cn } from '@/lib/utils';
 import type { ChatHistory } from '@/ai/flows/chat-schemas';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
 
 interface ChatTutorPanelProps {
@@ -21,14 +23,12 @@ interface ChatTutorPanelProps {
 
 const ChatMessageContent = ({ text }: { text: string }) => {
   return (
-    <div className="prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-       <ReactMarkdown
+    <div className="max-w-none whitespace-pre-wrap">
+      <ReactMarkdown
         remarkPlugins={[remarkMath]}
         components={{
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          math: ({ value }: any) => <BlockMath math={String.raw`${value}`} />,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          inlineMath: ({ value }: any) => <InlineMath math={String.raw`${value}`} />,
+          math: ({ value }) => <BlockMath math={String.raw`${value}`} />,
+          inlineMath: ({ value }) => <InlineMath math={String.raw`${value}`} />,
         }}
       >
         {text}
