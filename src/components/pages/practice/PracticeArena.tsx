@@ -307,7 +307,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>AI Tutor is temporarily unavailable due to high demand.</p>
+                            <p>AI not available right now.</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -346,5 +346,3 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-
-    
