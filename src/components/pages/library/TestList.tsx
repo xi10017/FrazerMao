@@ -6,7 +6,7 @@ import { getTestName } from '@/lib/test-logic';
 import type { FamatTestWithHistory } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, History, RefreshCw } from 'lucide-react';
+import { ArrowRight, History, RefreshCw, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface TestListProps {
@@ -23,7 +23,7 @@ export const TestList: React.FC<TestListProps> = ({ tests }) => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {tests.map((test) => {
             const hasHistory = test.history && test.history.length > 0;
-            const mostRecentScore = hasHistory ? test.history![0].score.totalScore : null;
+            const mostRecentScore = hasHistory ? test.history.sort((a,b) => b.submittedAt.getTime() - a.submittedAt.getTime())[0].score.totalScore : null;
 
             return (
               <Card key={test.id} className="flex flex-col justify-between transition-all hover:shadow-lg hover:border-primary">
@@ -39,23 +39,31 @@ export const TestList: React.FC<TestListProps> = ({ tests }) => {
                   <CardDescription>{getTestName(test)}</CardDescription>
                 </CardHeader>
                 <div className="grid grid-cols-2 gap-2 p-6 pt-0">
-                  {hasHistory ? (
-                    <>
-                      <Button asChild variant="outline">
-                        <Link href={`/history/${test.id}`}>
-                          <History className="mr-2 h-4 w-4" />
-                          History
+                  {hasHistory && (
+                    <Button asChild variant="outline">
+                      <Link href={`/history/${test.id}`}>
+                        <History className="mr-2 h-4 w-4" />
+                        History
+                      </Link>
+                    </Button>
+                  )}
+
+                  {test.inProgress ? (
+                     <Button asChild className={!hasHistory ? "col-span-2" : ""}>
+                        <Link href={`/practice/${test.id}`}>
+                          <Play className="mr-2 h-4 w-4" />
+                          Continue
                         </Link>
                       </Button>
-                      <Button asChild>
+                  ) : hasHistory ? (
+                     <Button asChild>
                         <Link href={`/practice/${test.id}`}>
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Retake
                         </Link>
                       </Button>
-                    </>
                   ) : (
-                    <Button asChild className="w-full col-span-2">
+                     <Button asChild className="w-full col-span-2">
                         <Link href={`/practice/${test.id}`}>
                         Start Practice <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>

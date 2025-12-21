@@ -5,7 +5,7 @@ import type { FamatTest, FamatTestWithHistory, TestSubmission } from '@/lib/type
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
 import { useUser } from '@/firebase';
-import { getSubmissionsForUser } from '@/lib/localStorage';
+import { getSubmissionsForUser, getInProgressAnswers } from '@/lib/localStorage';
 
 
 interface LibraryClientProps {
@@ -34,7 +34,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
     if (!user) {
-      return tests.map(t => ({...t, history: []}));
+      return tests.map(t => ({...t, history: [], inProgress: false}));
     }
 
     const submissionsByTestId = submissions.reduce((acc, sub) => {
@@ -45,10 +45,14 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         return acc;
     }, {} as {[key: string]: TestSubmission[]});
 
-    return tests.map(test => ({
-        ...test,
-        history: submissionsByTestId[test.id] || []
-    }));
+    return tests.map(test => {
+        const hasInProgress = !!getInProgressAnswers(user.uid, test.id);
+        return {
+            ...test,
+            history: submissionsByTestId[test.id] || [],
+            inProgress: hasInProgress
+        }
+    });
 
   }, [tests, submissions, user]);
 
