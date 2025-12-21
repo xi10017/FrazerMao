@@ -2,10 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Allow users to list their own submissions, but only if they filter by their userId.
-    // Allow them to get/create/update/delete their own specific submissions.
+    // Allow users to read and write their own submissions.
+    // A query on this collection will only succeed if it includes a `where('userId', '==', request.auth.uid)` clause.
     match /submissions/{submissionId} {
-      allow list: if request.auth != null && request.query.get('where')[0][2] == request.auth.uid;
       allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
