@@ -20,23 +20,22 @@ interface ChatTutorPanelProps {
 }
 
 const ChatMessageContent = ({ text }: { text: string }) => {
-  const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g);
-
   return (
-    <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap">
-      {parts.map((part, index) => {
-        if (part.startsWith('$$') && part.endsWith('$$')) {
-          return <BlockMath key={index}>{part.slice(2, -2)}</BlockMath>;
-        }
-        if (part.startsWith('$') && part.endsWith('$')) {
-          return <InlineMath key={index}>{part.slice(1, -1)}</InlineMath>;
-        }
-        return <ReactMarkdown key={index} remarkPlugins={[remarkMath]}>{part}</ReactMarkdown>;
-      })}
+    <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+       <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        components={{
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          math: ({ value }: any) => <BlockMath>{value}</BlockMath>,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          inlineMath: ({ value }: any) => <InlineMath>{value}</InlineMath>,
+        }}
+      >
+        {text}
+      </ReactMarkdown>
     </div>
   );
 };
-
 
 export const ChatTutorPanel: React.FC<ChatTutorPanelProps> = ({ onClose }) => {
   const [prompt, setPrompt] = useState('');
