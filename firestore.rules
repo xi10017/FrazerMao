@@ -6,23 +6,20 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    // Allow users to read and write only their own documents and subcollections
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
+    // Rules for tests and solutions remain unchanged
     match /tests/{testId} {
       allow read: if isSignedIn();
-      allow write: if false;
+      allow write: if false; // Nobody should write directly to tests
     }
 
     match /solutions/{solutionId} {
       allow read: if isSignedIn();
-      allow write: if false;
-    }
-
-    // Allow users to read and write only their own documents and subcollections
-    match /users/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
+      allow write: if false; // Nobody should write directly to solutions
     }
   }
 }
