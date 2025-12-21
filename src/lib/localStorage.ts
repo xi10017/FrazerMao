@@ -5,6 +5,8 @@ import type { TestSubmission, UserAnswers, ScoreReport, FamatTest } from './type
 // NOTE: This will only work on the client-side.
 // Ensure these functions are only called from 'use client' components.
 
+// --- Final Submissions ---
+
 /**
  * Retrieves all test submissions for a specific user from localStorage.
  * @param userId The UID of the user.
@@ -61,5 +63,65 @@ export function saveSubmission(
     } catch (error) {
         console.error("Failed to save submission to localStorage:", error);
         return null;
+    }
+}
+
+
+// --- In-Progress Answers ---
+
+const getInProgressKey = (userId: string, testId: string) => `in_progress_${userId}_${testId}`;
+
+/**
+ * Retrieves in-progress answers for a specific test and user.
+ * @param userId The UID of the user.
+ * @param testId The ID of the test.
+ * @returns The user's answers or null if none are found.
+ */
+export function getInProgressAnswers(userId: string, testId: string): UserAnswers | null {
+    if (typeof window === 'undefined') return null;
+    try {
+        const key = getInProgressKey(userId, testId);
+        const answersJSON = window.localStorage.getItem(key);
+        return answersJSON ? JSON.parse(answersJSON) : null;
+    } catch (error) {
+        console.error("Failed to get in-progress answers from localStorage:", error);
+        return null;
+    }
+}
+
+/**
+ * Saves in-progress answers for a specific test and user.
+ * @param userId The UID of the user.
+ * @param testId The ID of the test.
+ * @param answers The user's current answers.
+ */
+export function saveInProgressAnswers(userId: string, testId: string, answers: UserAnswers) {
+    if (typeof window === 'undefined') return;
+    try {
+        const key = getInProgressKey(userId, testId);
+        // Don't save if there are no answers to prevent empty records
+        if (Object.keys(answers).length === 0) {
+            window.localStorage.removeItem(key);
+        } else {
+            const answersJSON = JSON.stringify(answers);
+            window.localStorage.setItem(key, answersJSON);
+        }
+    } catch (error) {
+        console.error("Failed to save in-progress answers to localStorage:", error);
+    }
+}
+
+/**
+ * Clears any saved in-progress answers for a specific test and user.
+ * @param userId The UID of the user.
+ * @param testId The ID of the test.
+ */
+export function clearInProgressAnswers(userId: string, testId: string) {
+    if (typeof window === 'undefined') return;
+    try {
+        const key = getInProgressKey(userId, testId);
+        window.localStorage.removeItem(key);
+    } catch (error) {
+        console.error("Failed to clear in-progress answers from localStorage:", error);
     }
 }

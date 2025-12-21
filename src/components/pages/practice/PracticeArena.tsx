@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -17,7 +17,12 @@ import { ScoreModal } from './ScoreModal';
 import { gradeTest } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
-import { saveSubmission } from '@/lib/localStorage';
+import {
+  saveSubmission,
+  getInProgressAnswers,
+  saveInProgressAnswers,
+  clearInProgressAnswers,
+} from '@/lib/localStorage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,9 +48,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   initialAnswers,
   isReviewFromHistory,
 }) => {
-  const [userAnswers, setUserAnswers] = useState<UserAnswers>(
-    initialAnswers || {}
-  );
+  const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -58,16 +61,33 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const { user } = useUser();
   const router = useRouter();
 
-  // This effect runs once on load to set up the initial state for review mode.
+  // Load initial answers for practice or review mode
   useEffect(() => {
     if (isReviewFromHistory && solution && initialAnswers) {
+      // Review mode from history
       const report = gradeTest(initialAnswers, solution.answers);
       const newReviewData = createReviewData(initialAnswers, solution.answers);
       setReviewData(newReviewData);
       setScoreReport(report);
       setUserAnswers(initialAnswers);
+    } else if (user) {
+      // Practice mode, check for in-progress answers
+      const savedProgress = getInProgressAnswers(user.uid, test.id);
+      if (savedProgress) {
+        setUserAnswers(savedProgress);
+      }
     }
-  }, [isReviewFromHistory, solution, initialAnswers]);
+  }, [isReviewFromHistory, solution, initialAnswers, user, test.id]);
+
+
+  // Auto-save progress
+  useEffect(() => {
+    // Only save progress if we are in practice mode (not reviewing)
+    if (user && !reviewData) {
+      saveInProgressAnswers(user.uid, test.id, userAnswers);
+    }
+  }, [userAnswers, user, test.id, reviewData]);
+
 
   const createReviewData = (
     answers: UserAnswers,
@@ -88,7 +108,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    if (reviewData) return; // Disallow changes after submission
+    if (reviewData) return; // Disallow changes after submission/review
 
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
@@ -144,6 +164,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
     const report = gradeTest(userAnswers, solution.answers);
     saveSubmission(user.uid, test, userAnswers, report);
+    clearInProgressAnswers(user.uid, test.id); // Clear saved progress
 
     toast({
       title: 'Success!',
@@ -177,8 +198,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
-  const inReviewFromHistory = !!isReviewFromHistory;
-
+  
   return (
     <>
       <div
@@ -231,7 +251,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    ) : inReviewFromHistory ? (
+                    ) : isReviewFromHistory ? (
                       <Button onClick={handleViewHistory}>
                         Back to History
                       </Button>
