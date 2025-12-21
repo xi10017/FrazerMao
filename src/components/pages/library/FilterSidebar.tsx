@@ -26,13 +26,14 @@ const CheckboxFilter: React.FC<{
   items: string[];
   selectedItems: string[];
   onSelectionChange: (items: string[]) => void;
-}> = ({ items, selectedItems, onSelectionChange }) => {
+  title: string;
+}> = ({ items, selectedItems, onSelectionChange, title }) => {
   return (
     <>
       {items.map((item) => (
-        <div key={item} className="flex items-center space-x-2">
+        <div key={`${title}-${item}`} className="flex items-center space-x-2">
           <Checkbox
-            id={`${item}-filter`}
+            id={`${title}-${item}-filter`}
             checked={selectedItems.includes(item)}
             onCheckedChange={(checked) => {
               if (checked) {
@@ -42,7 +43,7 @@ const CheckboxFilter: React.FC<{
               }
             }}
           />
-          <Label htmlFor={`${item}-filter`} className="font-normal">
+          <Label htmlFor={`${title}-${item}-filter`} className="font-normal">
             {item}
           </Label>
         </div>
@@ -94,6 +95,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <CardContent className="space-y-6">
           <FilterSection title="Division">
             <CheckboxFilter
+              title="division"
               items={uniqueValues.divisions}
               selectedItems={selectedDivisions}
               onSelectionChange={setSelectedDivisions}
@@ -113,7 +115,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
-                      <SelectItem key={year} value={String(year)}>
+                      <SelectItem key={`start-year-${year}`} value={String(year)}>
                         {year}
                       </SelectItem>
                     ))}
@@ -131,7 +133,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
-                      <SelectItem key={year} value={String(year)}>
+                      <SelectItem key={`end-year-${year}`} value={String(year)}>
                         {year}
                       </SelectItem>
                     ))}
@@ -143,6 +145,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
           <FilterSection title="Month">
             <CheckboxFilter
+              title="month"
               items={uniqueValues.months}
               selectedItems={selectedMonths}
               onSelectionChange={setSelectedMonths}
@@ -151,6 +154,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
           <FilterSection title="Competition">
             <CheckboxFilter
+              title="competition"
               items={uniqueValues.competitions}
               selectedItems={selectedCompetitions}
               onSelectionChange={setSelectedCompetitions}
