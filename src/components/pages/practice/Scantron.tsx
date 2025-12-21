@@ -9,9 +9,8 @@ import { cn } from '@/lib/utils';
 interface ScantronProps {
   userAnswers: UserAnswers;
   onAnswerSelect: (question: number, answer: string | null) => void;
-  isReviewMode: boolean;
-  reviewData: ReviewData | null;
   isSubmitted: boolean;
+  reviewData?: ReviewData | null;
   headerContent?: React.ReactNode;
 }
 
@@ -20,10 +19,10 @@ const TOTAL_QUESTIONS = 30;
 
 const getReviewColorClasses = (
     qNum: number,
-    isReviewMode: boolean,
+    isReview: boolean,
     reviewData: ReviewData | null
   ) => {
-    if (!isReviewMode || !reviewData || !reviewData[qNum]) return '';
+    if (!isReview || !reviewData || !reviewData[qNum]) return '';
 
     const { userAnswer, isCorrect } = reviewData[qNum];
     if (userAnswer === undefined || userAnswer === null) {
@@ -41,12 +40,12 @@ const getReviewColorClasses = (
 export const Scantron: React.FC<ScantronProps> = ({ 
     userAnswers, 
     onAnswerSelect, 
-    isReviewMode, 
-    reviewData,
     isSubmitted,
+    reviewData,
     headerContent
 }) => {
   const questionNumbers = Array.from({ length: TOTAL_QUESTIONS }, (_, i) => i + 1);
+  const isReviewMode = !!reviewData;
 
   return (
     <div className="flex h-full flex-col">
@@ -73,7 +72,7 @@ export const Scantron: React.FC<ScantronProps> = ({
                                 size="icon"
                                 className="h-9 w-9 text-base"
                                 onClick={() => onAnswerSelect(qNum, choice)}
-                                disabled={isReviewMode || isSubmitted}
+                                disabled={isSubmitted}
                             >
                                 {choice}
                             </Button>
@@ -101,7 +100,7 @@ export const Scantron: React.FC<ScantronProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => onAnswerSelect(qNum, null)}
-                            disabled={isReviewMode || isSubmitted || !userAnswers[qNum]}
+                            disabled={isSubmitted || !userAnswers[qNum]}
                         >
                             Clear
                         </Button>

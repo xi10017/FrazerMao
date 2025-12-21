@@ -46,6 +46,8 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
   scoreReport,
   onEnterReviewMode,
 }) => {
+    if (!isOpen) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
