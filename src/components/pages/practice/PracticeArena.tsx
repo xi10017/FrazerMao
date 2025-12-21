@@ -16,8 +16,8 @@ import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
 import { gradeTest } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { useUser } from '@/firebase';
+import { saveSubmission } from '@/lib/localStorage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +53,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
 
   const { toast } = useToast();
   const { user } = useUser();
-  const firestore = useFirestore();
   const router = useRouter();
 
 
@@ -139,7 +138,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
       return;
     }
 
-    if (!user || !firestore) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Not Signed In',
@@ -152,18 +151,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({ test, solution, initialAn
     setScoreReport(report);
     setIsSubmitted(true);
 
-    const submissionsCollectionRef = collection(firestore, 'submissions');
-    addDocumentNonBlocking(submissionsCollectionRef, {
-      testId: test.id,
-      userId: user.uid,
-      answers: userAnswers,
-      score: report,
-      submittedAt: serverTimestamp(),
-    });
+    saveSubmission(user.uid, test, userAnswers, report);
     
     toast({
       title: 'Success!',
-      description: 'Your test results have been saved.',
+      description: 'Your test results have been saved to this device.',
     });
 
     const newReviewData: ReviewData = {};

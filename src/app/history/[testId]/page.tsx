@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { useUser } from '@/firebase';
 import type { FamatTest, TestSubmission, AnyFamatTest } from '@/lib/types';
 import famatTests from '@/data/famat_tests.json';
 import { getTestId, getTestName } from '@/lib/test-logic';
+import { getSubmissionsForUser } from '@/lib/localStorage';
 import {
   Card,
   CardContent,
@@ -34,7 +34,8 @@ function HistoryPage() {
   const testId = params.testId as string;
 
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const test = useMemo(() => {
     return (famatTests as AnyFamatTest[])
@@ -43,23 +44,25 @@ function HistoryPage() {
       .find((t) => t.id === testId) as FamatTest | undefined;
   }, [testId]);
 
-  const submissionsQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.uid || !testId) return null;
-    return query(
-      collection(firestore, 'submissions'),
-      where('userId', '==', user.uid),
-      where('testId', '==', testId),
-      orderBy('submittedAt', 'desc')
-    );
-  }, [firestore, user?.uid, testId]);
+  useEffect(() => {
+    if (isUserLoading) {
+        setIsLoading(true);
+        return;
+    }
+    if (user && testId) {
+        const allSubmissions = getSubmissionsForUser(user.uid);
+        const testSubmissions = allSubmissions
+            .filter(sub => sub.testId === testId)
+            .sort((a, b) => (b.submittedAt as any) - (a.submittedAt as any));
+        setSubmissions(testSubmissions);
+    } else {
+        setSubmissions([]);
+    }
+    setIsLoading(false);
+  }, [user, isUserLoading, testId]);
 
-  const {
-    data: submissions,
-    isLoading: submissionsLoading,
-    error,
-  } = useCollection<TestSubmission>(submissionsQuery);
 
-  if (isUserLoading || submissionsLoading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="mb-6">
@@ -106,7 +109,6 @@ function HistoryPage() {
           <CardDescription>{getTestName(test)}</CardDescription>
         </CardHeader>
         <CardContent>
-          {error && <p className="text-red-500">Error loading history: {error.message}</p>}
           {submissions && submissions.length > 0 ? (
             <Table>
               <TableHeader>
@@ -123,7 +125,7 @@ function HistoryPage() {
                 {submissions.map((sub) => (
                   <TableRow key={sub.id}>
                     <TableCell className="font-medium">
-                      {sub.submittedAt ? format(sub.submittedAt.toDate(), 'PPP p') : 'Just now'}
+                      {sub.submittedAt ? format(sub.submittedAt, 'PPP p') : 'Just now'}
                     </TableCell>
                     <TableCell className="text-center text-lg font-bold text-primary">{sub.score.totalScore}</TableCell>
                     <TableCell className="text-center font-medium">{sub.score.correctCount}</TableCell>

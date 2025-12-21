@@ -4,8 +4,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { FamatTest, FamatTestWithHistory, TestSubmission } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { useUser } from '@/firebase';
+import { getSubmissionsForUser } from '@/lib/localStorage';
 
 
 interface LibraryClientProps {
@@ -14,23 +14,26 @@ interface LibraryClientProps {
 
 const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
-  
-  const submissionsQuery = useMemoFirebase(() => {
-    // DO NOT run the query if the user is not logged in.
-    if (!firestore || !user?.uid) return null;
-    return query(
-      collection(firestore, 'submissions'),
-      where('userId', '==', user.uid),
-      orderBy('submittedAt', 'desc')
-    );
-  }, [firestore, user?.uid]);
+  const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: submissions, isLoading: submissionsLoading } = useCollection<TestSubmission>(submissionsQuery);
+  useEffect(() => {
+    if (isUserLoading) {
+        setIsLoading(true);
+        return;
+    }
+    if (user) {
+        const storedSubmissions = getSubmissionsForUser(user.uid);
+        setSubmissions(storedSubmissions);
+    } else {
+        setSubmissions([]); // Clear submissions if user logs out
+    }
+    setIsLoading(false);
+  }, [user, isUserLoading]);
+
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
-    // If the user isn't logged in, or submissions are still loading, just return tests without history.
-    if (!user || !submissions) {
+    if (!user) {
       return tests.map(t => ({...t, history: []}));
     }
 
@@ -93,8 +96,6 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       })
       .sort((a, b) => b.year - a.year || a.division.localeCompare(b.division));
   }, [testsWithHistory, startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
-
-  const isLoading = isUserLoading || (user && submissionsLoading);
 
   if (isLoading) {
      return (
