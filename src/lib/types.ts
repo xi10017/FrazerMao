@@ -2,18 +2,20 @@ export interface FamatTestBase {
   year: number;
   month: string;
   division: string;
-  test_type: 'Test' | 'Solution';
   competition: string;
+  document_type: 'Test' | 'Solution';
+  format: 'Individual' | 'Team';
+  name: string;
+  url: string;
 }
 
 export interface FamatTest extends FamatTestBase {
   id: string;
-  test_type: 'Test';
-  url: string;
+  document_type: 'Test';
 }
 
 export interface FamatSolution extends FamatTestBase {
-  test_type: 'Solution';
+  document_type: 'Solution';
   answers: string[];
 }
 

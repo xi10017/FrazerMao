@@ -4,6 +4,13 @@ import famatTests from '@/data/famat_tests.json';
 const allTests: AnyFamatTest[] = famatTests;
 
 /**
+ * Generates a unique, URL-friendly ID for a test.
+ */
+export function getTestId(test: FamatTestBase): string {
+    return `${test.year}-${test.month}-${test.division}-${test.competition}-${test.format}`.toLowerCase().replace(/\s+/g, '-');
+}
+
+/**
  * Generates a human-readable name for a test.
  * e.g., "2022 Statistics January Regional Individual"
  */
@@ -17,7 +24,7 @@ export function getTestName(test: FamatTest): string {
 export function findSolutionForTest(test: FamatTest): FamatSolution | undefined {
   return allTests.find(
     (item) =>
-      item.test_type === 'Solution' &&
+      item.document_type === 'Solution' &&
       item.year === test.year &&
       item.month === test.month &&
       item.division === test.division &&
