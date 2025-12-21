@@ -11,16 +11,10 @@ service cloud.firestore {
     }
 
     match /submissions/{submissionId} {
-      // Users can create their own submissions
       allow create: if isOwner(request.resource.data.userId);
-
-      // Users can only read their own submissions
       allow get: if isOwner(resource.data.userId);
-      
-      // Users can query for their own submissions
-      allow list: if isSignedIn() && request.query.where.get('userId')[2] == request.auth.uid;
-
-      // Users cannot update or delete submissions
+      // Allow users to query for their own submissions, checking the userId field.
+      allow list: if isSignedIn() && request.query.get("userId") == request.auth.uid;
       allow update, delete: if false;
     }
   }
