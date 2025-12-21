@@ -10,10 +10,10 @@ type Props = {
 
 export default function PracticePage({ params }: Props) {
   const { testId } = params;
-  const allTests = famatTests.tests as AnyFamatTest[];
+  const allTests = famatTests as AnyFamatTest[];
 
   const test = allTests.find(
-    (t) => t.id === testId && t.test_type === 'Test'
+    (t) => 'id' in t && t.id === testId && t.test_type === 'Test'
   ) as FamatTest | undefined;
 
   if (!test) {
@@ -22,12 +22,15 @@ export default function PracticePage({ params }: Props) {
 
   const solution = findSolutionForTest(test);
 
-  return <PracticeArena test={test} solution={solution} />;
+  // The 'id' property doesn't exist on the solution object, so we create one.
+  const testWithId = { ...test, id: testId };
+
+  return <PracticeArena test={testWithId} solution={solution} />;
 }
 
 export function generateStaticParams() {
-    const tests = famatTests.tests.filter(t => t.test_type === 'Test');
+    const tests = famatTests.filter(t => t.test_type === 'Test');
     return tests.map((test) => ({
-      testId: test.id,
-    }));
+      testId: 'id' in test ? test.id : undefined,
+    })).filter(p => p.testId);
 }

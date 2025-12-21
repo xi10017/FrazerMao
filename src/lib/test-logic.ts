@@ -1,7 +1,7 @@
 import type { FamatTest, FamatSolution, AnyFamatTest, UserAnswers } from './types';
 import famatTests from '@/data/famat_tests.json';
 
-const allTests: AnyFamatTest[] = famatTests.tests;
+const allTests: AnyFamatTest[] = famatTests;
 
 /**
  * Generates a human-readable name for a test.

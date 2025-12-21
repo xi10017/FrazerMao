@@ -1,5 +1,4 @@
 export interface FamatTestBase {
-  id: string;
   year: number;
   month: string;
   division: string;
@@ -8,6 +7,7 @@ export interface FamatTestBase {
 }
 
 export interface FamatTest extends FamatTestBase {
+  id: string;
   test_type: 'Test';
   url: string;
 }

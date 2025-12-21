@@ -4,7 +4,7 @@ import type { FamatTest } from '@/lib/types';
 
 export default function LibraryPage() {
   // We only want to display the tests, not the solutions, in the library.
-  const tests = famatTests.tests.filter(
+  const tests = famatTests.filter(
     (t) => t.test_type === 'Test'
   ) as FamatTest[];
 
