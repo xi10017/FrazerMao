@@ -5,13 +5,15 @@ import type { UserAnswers, ReviewData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 interface ScantronProps {
   userAnswers: UserAnswers;
   onAnswerSelect: (question: number, answer: string | null) => void;
   isReviewMode: boolean;
   reviewData: ReviewData | null;
+  onSubmit: () => void;
+  isSubmittable: boolean;
+  isSubmitted: boolean;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -37,63 +39,79 @@ const getReviewColorClasses = (
     return 'bg-red-500/10 border-red-500/30';
   };
 
-export const Scantron: React.FC<ScantronProps> = ({ userAnswers, onAnswerSelect, isReviewMode, reviewData }) => {
+export const Scantron: React.FC<ScantronProps> = ({ 
+    userAnswers, 
+    onAnswerSelect, 
+    isReviewMode, 
+    reviewData,
+    onSubmit,
+    isSubmittable,
+    isSubmitted 
+}) => {
   const questionNumbers = Array.from({ length: TOTAL_QUESTIONS }, (_, i) => i + 1);
 
   return (
     <div className="flex h-full flex-col">
-      <header className="border-b p-4">
-        <h2 className="text-xl font-bold">Digital Scantron</h2>
-        {isReviewMode && <p className="text-sm text-muted-foreground">Reviewing your results.</p>}
+      <header className="flex items-center justify-between border-b p-4">
+        <div>
+            <h2 className="text-xl font-bold">Digital Scantron</h2>
+            {isReviewMode && <p className="text-sm text-muted-foreground">Reviewing your results.</p>}
+        </div>
+        {!isReviewMode && (
+             <Button
+                onClick={onSubmit}
+                disabled={!isSubmittable || isSubmitted}
+              >
+                Submit Test
+            </Button>
+        )}
       </header>
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
-            {questionNumbers.map((qNum, index) => (
-                <React.Fragment key={qNum}>
-                    <div className={cn(
-                        "flex items-center justify-between p-3 rounded-lg border",
-                        getReviewColorClasses(qNum, isReviewMode, reviewData)
-                    )}>
-                        <div className="flex items-center">
-                            <span className="text-lg font-bold w-8">{qNum}.</span>
-                            <div className="flex flex-wrap gap-2">
-                                {ANSWER_CHOICES.map((choice) => (
-                                <Button
-                                    key={choice}
-                                    variant={userAnswers[qNum] === choice ? 'default' : 'outline'}
-                                    size="icon"
-                                    className="h-9 w-9 text-base"
-                                    onClick={() => onAnswerSelect(qNum, choice)}
-                                    disabled={isReviewMode}
-                                >
-                                    {choice}
-                                </Button>
-                                ))}
-                            </div>
-                        </div>
-                        {isReviewMode && reviewData?.[qNum] ? (
-                            <div className="text-sm font-bold text-right">
-                                {reviewData[qNum].userAnswer === undefined ? (
-                                    <span className="text-yellow-400">Omitted</span>
-                                ) : reviewData[qNum].isCorrect ? (
-                                    <span className="text-green-400">Correct</span>
-                                ) : (
-                                    <span className="text-red-400">Incorrect</span>
-                                )}
-                                <div className="text-muted-foreground">Ans: {reviewData[qNum].correctAnswer}</div>
-                            </div>
-                        ) : (
+            {questionNumbers.map((qNum) => (
+                <div key={qNum} className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border",
+                    getReviewColorClasses(qNum, isReviewMode, reviewData)
+                )}>
+                    <div className="flex items-center">
+                        <span className="text-lg font-bold w-8">{qNum}.</span>
+                        <div className="flex flex-wrap gap-2">
+                            {ANSWER_CHOICES.map((choice) => (
                             <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onAnswerSelect(qNum, null)}
-                                disabled={isReviewMode || !userAnswers[qNum]}
+                                key={choice}
+                                variant={userAnswers[qNum] === choice ? 'default' : 'outline'}
+                                size="icon"
+                                className="h-9 w-9 text-base"
+                                onClick={() => onAnswerSelect(qNum, choice)}
+                                disabled={isReviewMode || isSubmitted}
                             >
-                                Clear
+                                {choice}
                             </Button>
-                        )}
+                            ))}
+                        </div>
                     </div>
-                </React.Fragment>
+                    {isReviewMode && reviewData?.[qNum] ? (
+                        <div className="text-sm font-bold text-right">
+                            {reviewData[qNum].userAnswer === undefined ? (
+                                <span className="text-yellow-400">Omitted</span>
+                            ) : reviewData[qNum].isCorrect ? (
+                                <span className="text-green-400">Correct</span>
+                            ) : (
+                                <span className="text-red-400">Incorrect</span>
+                            )}
+                            <div className="text-muted-foreground">Ans: {reviewData[qNum].correctAnswer}</div>
+                        </div>
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onAnswerSelect(qNum, null)}
+                            disabled={isReviewMode || isSubmitted || !userAnswers[qNum]}
+                        >
+                            Clear
+                        </Button>
+                    )}
+                </div>
             ))}
         </div>
       </ScrollArea>
