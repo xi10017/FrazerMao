@@ -1,24 +1,63 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { FamatTest } from '@/lib/types';
+import type { FamatTest, FamatTestWithHistory, TestSubmission } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
+import { useUser, useCollection } from '@/firebase';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+
 
 interface LibraryClientProps {
   tests: FamatTest[];
 }
 
 const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  
+  const submissionsQuery = useMemo(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(
+      collection(firestore, 'submissions'),
+      where('userId', '==', user.uid),
+      orderBy('submittedAt', 'desc')
+    );
+  }, [firestore, user?.uid]);
+
+  const { data: submissions, loading: submissionsLoading } = useCollection<TestSubmission>(submissionsQuery);
+
+  const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
+    if (submissionsLoading || !submissions) {
+      return tests.map(t => ({...t, history: []}));
+    }
+
+    const submissionsByTestId = submissions.reduce((acc, sub) => {
+        if (!acc[sub.testId]) {
+            acc[sub.testId] = [];
+        }
+        acc[sub.testId].push(sub);
+        return acc;
+    }, {} as {[key: string]: TestSubmission[]});
+
+    return tests.map(test => ({
+        ...test,
+        history: submissionsByTestId[test.id] || []
+    }));
+
+  }, [tests, submissions, submissionsLoading]);
+
+
   const uniqueValues = useMemo(() => {
     const divisions = [...new Set(tests.map((t) => t.division))];
     const months = [...new Set(tests.map((t) => t.month))];
-    const competitions = [...new Set(tests.map((t) => t.competition))];
+    const testTypes = [...new Set(tests.map((t) => t.test_type))];
     const years = [...new Set(tests.map((t) => t.year))].sort((a, b) => a - b);
     return {
       divisions,
       months,
-      competitions,
+      competitions: testTypes,
       years,
       minYear: years[0],
       maxYear: years[years.length - 1],
@@ -39,7 +78,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   }, [startYear, endYear]);
 
   const filteredTests = useMemo(() => {
-    return tests
+    return testsWithHistory
       .filter((test) => {
         const yearMatch = test.year >= startYear && test.year <= endYear;
         const divisionMatch =
@@ -49,11 +88,22 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           selectedMonths.length === 0 || selectedMonths.includes(test.month);
         const competitionMatch =
           selectedCompetitions.length === 0 ||
-          selectedCompetitions.includes(test.competition);
+          selectedCompetitions.includes(test.test_type);
         return yearMatch && divisionMatch && monthMatch && competitionMatch;
       })
       .sort((a, b) => b.year - a.year);
-  }, [tests, startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
+  }, [testsWithHistory, startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
+
+  if (!user && !submissionsLoading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">Welcome to MuPractice</h2>
+          <p className="mt-2 text-muted-foreground">Please sign in to save your progress and view test history.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8 md:flex-row">

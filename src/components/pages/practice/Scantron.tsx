@@ -11,9 +11,8 @@ interface ScantronProps {
   onAnswerSelect: (question: number, answer: string | null) => void;
   isReviewMode: boolean;
   reviewData: ReviewData | null;
-  onSubmit: () => void;
-  isSubmittable: boolean;
   isSubmitted: boolean;
+  headerContent?: React.ReactNode;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -27,7 +26,7 @@ const getReviewColorClasses = (
     if (!isReviewMode || !reviewData || !reviewData[qNum]) return '';
 
     const { userAnswer, isCorrect } = reviewData[qNum];
-    if (userAnswer === undefined) {
+    if (userAnswer === undefined || userAnswer === null) {
       // Omitted
       return 'bg-yellow-500/10 border-yellow-500/30';
     }
@@ -44,9 +43,8 @@ export const Scantron: React.FC<ScantronProps> = ({
     onAnswerSelect, 
     isReviewMode, 
     reviewData,
-    onSubmit,
-    isSubmittable,
-    isSubmitted 
+    isSubmitted,
+    headerContent
 }) => {
   const questionNumbers = Array.from({ length: TOTAL_QUESTIONS }, (_, i) => i + 1);
 
@@ -55,16 +53,8 @@ export const Scantron: React.FC<ScantronProps> = ({
       <header className="flex items-center justify-between border-b p-4">
         <div>
             <h2 className="text-xl font-bold">Digital Scantron</h2>
-            {isReviewMode && <p className="text-sm text-muted-foreground">Reviewing your results.</p>}
         </div>
-        {!isReviewMode && (
-             <Button
-                onClick={onSubmit}
-                disabled={!isSubmittable || isSubmitted}
-              >
-                Submit Test
-            </Button>
-        )}
+        {headerContent}
       </header>
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
@@ -92,14 +82,19 @@ export const Scantron: React.FC<ScantronProps> = ({
                     </div>
                     {isReviewMode && reviewData?.[qNum] ? (
                         <div className="text-sm font-bold text-right">
-                            {reviewData[qNum].userAnswer === undefined ? (
+                            {reviewData[qNum].userAnswer === undefined || reviewData[qNum].userAnswer === null ? (
                                 <span className="text-yellow-400">Omitted</span>
                             ) : reviewData[qNum].isCorrect ? (
-                                <span className="text-green-400">Correct</span>
+                                <>
+                                  <span className="text-green-400">Correct</span>
+                                  <div className='text-muted-foreground'>Ans: {reviewData[qNum].correctAnswer}</div>
+                                </>
                             ) : (
-                                <span className="text-red-400">Incorrect</span>
+                                <>
+                                  <span className="text-red-400">Incorrect</span>
+                                   <div className='text-muted-foreground'>You: {reviewData[qNum].userAnswer} | Ans: {reviewData[qNum].correctAnswer}</div>
+                                </>
                             )}
-                            <div className="text-muted-foreground">Ans: {reviewData[qNum].correctAnswer}</div>
                         </div>
                     ) : (
                         <Button
