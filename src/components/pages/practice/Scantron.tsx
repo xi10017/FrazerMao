@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -29,6 +30,13 @@ const getReviewColorClasses = (qNum: number, reviewData: ReviewData | null) => {
   }
   return 'bg-red-500/10 border-red-500/30';
 };
+
+const getCorrectAnswerText = (correctAnswer: string | string[]): string => {
+    if (Array.isArray(correctAnswer)) {
+      return correctAnswer.join(' / ');
+    }
+    return correctAnswer;
+  };
 
 export const Scantron: React.FC<ScantronProps> = ({
   userAnswers,
@@ -89,7 +97,7 @@ export const Scantron: React.FC<ScantronProps> = ({
                       <>
                         <span className="text-green-400">Correct</span>
                         <div className="text-muted-foreground">
-                          Ans: {reviewData[qNum].correctAnswer}
+                          Ans: {getCorrectAnswerText(reviewData[qNum].correctAnswer)}
                         </div>
                       </>
                     ) : (
@@ -97,7 +105,7 @@ export const Scantron: React.FC<ScantronProps> = ({
                         <span className="text-red-400">Incorrect</span>
                         <div className="text-muted-foreground">
                           You: {reviewData[qNum].userAnswer} | Ans:{' '}
-                          {reviewData[qNum].correctAnswer}
+                          {getCorrectAnswerText(reviewData[qNum].correctAnswer)}
                         </div>
                       </>
                     )}

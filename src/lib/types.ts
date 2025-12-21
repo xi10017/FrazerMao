@@ -1,5 +1,6 @@
 
 
+
 export interface FamatTestBase {
   year: number;
   month: string;
@@ -18,7 +19,7 @@ export interface FamatTest extends FamatTestBase {
 
 export interface FamatSolution extends FamatTestBase {
   document_type: 'Solution';
-  answers: string[];
+  answers: (string | string[])[];
 }
 
 export type AnyFamatTest = FamatTest | FamatSolution;
@@ -35,7 +36,7 @@ export type ScoreReport = {
 export type ReviewData = {
   [key: number]: {
     userAnswer?: string | null;
-    correctAnswer: string;
+    correctAnswer: string | string[];
     isCorrect: boolean;
   };
 };
