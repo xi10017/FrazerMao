@@ -6,14 +6,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // This rule allows a user to read and write to their own user document
-    // and ANY document in ANY subcollection under that user document.
-    // The {document=**} is a recursive wildcard that makes this possible.
+    // Allow authenticated users to read and write their own data.
+    // The {document=**} wildcard ensures this applies to all subcollections.
     match /users/{userId}/{document=**} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // These collections are not used in the app, but are good to have for future use.
+    // Publicly readable collections
     match /tests/{testId} {
       allow read: if isSignedIn();
     }
