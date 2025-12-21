@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import 'katex/dist/katex.min.css';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/layout/Header';
 import { Toaster } from '@/components/ui/toaster';

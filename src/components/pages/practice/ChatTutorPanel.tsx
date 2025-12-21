@@ -10,9 +10,10 @@ import { Bot, Send, User, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { z } from 'zod';
 import type { ChatHistory } from '@/ai/flows/chat-schemas';
-
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 interface ChatTutorPanelProps {
   onClose: () => void;
@@ -114,15 +115,19 @@ export const ChatTutorPanel: React.FC<ChatTutorPanelProps> = ({ onClose }) => {
               )}
               <div
                 className={cn(
-                  'max-w-xs md:max-w-md lg:max-w-lg rounded-lg p-3 text-sm',
+                  'prose prose-sm dark:prose-invert max-w-xs md:max-w-md lg:max-w-lg rounded-lg p-3',
                   entry.role === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 )}
               >
-                <div className="whitespace-pre-wrap font-sans">
+                <ReactMarkdown
+                  remarkPlugins={[remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                  className="whitespace-pre-wrap font-sans"
+                >
                   {entry.content[0].text}
-                </div>
+                </ReactMarkdown>
               </div>
               {entry.role === 'user' && (
                 <Avatar className="h-8 w-8 border">
