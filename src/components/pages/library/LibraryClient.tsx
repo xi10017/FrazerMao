@@ -4,9 +4,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { FamatTest, FamatTestWithHistory, TestSubmission } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
-import { useUser, useCollection } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 
 
 interface LibraryClientProps {
@@ -17,7 +16,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const { user } = useUser();
   const firestore = useFirestore();
   
-  const submissionsQuery = useMemo(() => {
+  const submissionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'submissions'),

@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import type { FamatTest, TestSubmission, AnyFamatTest } from '@/lib/types';
 import famatTests from '@/data/famat_tests.json';
@@ -43,7 +43,7 @@ function HistoryPage() {
       .find((t) => t.id === testId) as FamatTest | undefined;
   }, [testId]);
 
-  const submissionsQuery = useMemo(() => {
+  const submissionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid || !testId) return null;
     return query(
       collection(firestore, 'submissions'),
