@@ -115,7 +115,8 @@ export const ChatTutorPanel: React.FC<ChatTutorPanelProps> = ({ onClose }) => {
               )}
               <div
                 className={cn(
-                  'prose prose-sm dark:prose-invert max-w-xs md:max-w-md lg:max-w-lg rounded-lg p-3',
+                  'max-w-xs md:max-w-md lg:max-w-lg rounded-lg p-3',
+                   'prose prose-sm dark:prose-invert',
                   entry.role === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
@@ -124,7 +125,6 @@ export const ChatTutorPanel: React.FC<ChatTutorPanelProps> = ({ onClose }) => {
                 <ReactMarkdown
                   remarkPlugins={[remarkMath]}
                   rehypePlugins={[rehypeKatex]}
-                  className="whitespace-pre-wrap font-sans"
                 >
                   {entry.content[0].text}
                 </ReactMarkdown>
