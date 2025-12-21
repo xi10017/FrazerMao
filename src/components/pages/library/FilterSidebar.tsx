@@ -79,7 +79,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <CardTitle>Filter Tests</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <FilterSection title="Division">
+          <FilterSection key="division-filter" title="Division">
             <CheckboxFilter
               items={uniqueValues.divisions}
               selectedItems={selectedDivisions}
@@ -87,7 +87,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             />
           </FilterSection>
 
-          <FilterSection title="Year Range">
+          <FilterSection key="year-filter" title="Year Range">
             <div className="px-1">
               <Slider
                 min={2015}
@@ -103,7 +103,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             </div>
           </FilterSection>
 
-          <FilterSection title="Month">
+          <FilterSection key="month-filter" title="Month">
             <CheckboxFilter
               items={uniqueValues.months}
               selectedItems={selectedMonths}
@@ -111,7 +111,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             />
           </FilterSection>
           
-          <FilterSection title="Competition">
+          <FilterSection key="competition-filter" title="Competition">
             <CheckboxFilter
               items={uniqueValues.competitions}
               selectedItems={selectedCompetitions}
