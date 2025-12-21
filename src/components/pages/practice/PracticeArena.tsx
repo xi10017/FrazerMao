@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -67,6 +68,31 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setIsClient(true);
   }, []);
 
+  const createReviewData = (
+    answers: UserAnswers,
+    correctAnswers: (string | string[])[]
+  ): ReviewData => {
+    const data: ReviewData = {};
+    for (let i = 0; i < correctAnswers.length; i++) {
+      const qNum = i + 1;
+      const userAnswer = answers[qNum];
+      const correctAnswer = correctAnswers[i];
+      let isCorrect = false;
+      if(userAnswer) {
+        isCorrect = Array.isArray(correctAnswer)
+        ? correctAnswer.includes(userAnswer)
+        : userAnswer === correctAnswer;
+      }
+      
+      data[qNum] = {
+        userAnswer,
+        correctAnswer,
+        isCorrect,
+      };
+    }
+    return data;
+  };
+
   useEffect(() => {
     if (isReviewFromHistory && solution && initialAnswers) {
       const report = gradeTest(initialAnswers, solution.answers);
@@ -93,24 +119,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       saveInProgressAnswers(user.uid, test.id, userAnswers);
     }
   }, [userAnswers, user, test.id, reviewData]);
-
-  const createReviewData = (
-    answers: UserAnswers,
-    correctAnswers: string[]
-  ): ReviewData => {
-    const data: ReviewData = {};
-    for (let i = 0; i < correctAnswers.length; i++) {
-      const qNum = i + 1;
-      const userAnswer = answers[qNum];
-      const correctAnswer = correctAnswers[i];
-      data[qNum] = {
-        userAnswer,
-        correctAnswer,
-        isCorrect: userAnswer === correctAnswer,
-      };
-    }
-    return data;
-  };
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     if (reviewData) return; // Disallow changes in review mode

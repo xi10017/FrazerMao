@@ -1,3 +1,4 @@
+
 import type {
   FamatTest,
   FamatSolution,
@@ -48,15 +49,12 @@ export function findSolutionForTest(
 
 /**
  * Grades the user's answers against the correct answer key.
- * Correct: +4 points
- * Blank: 0 points
- * Incorrect: -1 point
- * This is a common scoring system in some formats, adjust if needed.
- * For FAMAT: Correct: 5, Blank: 1, Incorrect: 0
+ * Supports multiple correct answers if the answer key contains an array of strings.
+ * FAMAT scoring: 5 for correct, 1 for omitted, 0 for incorrect
  */
 export function gradeTest(
   userAnswers: UserAnswers,
-  answerKey: string[]
+  answerKey: (string | string[])[]
 ): ScoreReport {
   let correctCount = 0;
   let incorrectCount = 0;
@@ -69,10 +67,20 @@ export function gradeTest(
 
     if (userAnswer === undefined || userAnswer === null) {
       omitCount++;
-    } else if (userAnswer === correctAnswer) {
-      correctCount++;
     } else {
-      incorrectCount++;
+      if (Array.isArray(correctAnswer)) {
+        if (correctAnswer.includes(userAnswer)) {
+          correctCount++;
+        } else {
+          incorrectCount++;
+        }
+      } else {
+        if (userAnswer === correctAnswer) {
+          correctCount++;
+        } else {
+          incorrectCount++;
+        }
+      }
     }
   }
 
