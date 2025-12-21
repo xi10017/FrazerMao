@@ -8,7 +8,8 @@ import { getFirestore } from 'firebase/firestore';
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   if (getApps().length) {
-    return getSdks(getApp());
+    const app = getApp();
+    return getSdks(app);
   }
   
   let firebaseApp;
@@ -35,5 +36,3 @@ export function getSdks(firebaseApp: FirebaseApp) {
 
 export * from './provider';
 export * from './client-provider';
-export * from './errors';
-export * from './error-emitter';

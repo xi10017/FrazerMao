@@ -1,9 +1,6 @@
-
 'use client';
 
-import type { TestSubmission, UserAnswers, ScoreReport } from './types';
-import { getTestId } from './test-logic';
-import type { FamatTest } from './types';
+import type { TestSubmission, UserAnswers, ScoreReport, FamatTest } from './types';
 
 // NOTE: This will only work on the client-side.
 // Ensure these functions are only called from 'use client' components.
@@ -24,7 +21,7 @@ export function getSubmissionsForUser(userId: string): TestSubmission[] {
     // Re-hydrate Date objects from strings
     return submissions.map(sub => ({
         ...sub,
-        submittedAt: new Date(sub.submittedAt as any),
+        submittedAt: new Date(sub.submittedAt),
     }));
   } catch (error) {
     console.error("Failed to get submissions from localStorage:", error);
@@ -54,7 +51,7 @@ export function saveSubmission(
             userId,
             answers: userAnswers,
             score: scoreReport,
-            submittedAt: new Date() as any, // Stored as string, rehydrated on retrieval
+            submittedAt: new Date(),
         };
 
         allSubmissions.unshift(newSubmission); // Add to the beginning
