@@ -20,16 +20,9 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Rule for the user document itself.
-    match /users/{userId} {
-      // Users can only read/write their own user document.
+    // Allow users to read and write only their own documents and subcollections
+    match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
-    }
-    
-    // Separate rule for the submissions subcollection.
-    match /users/{userId}/submissions/{submissionId} {
-      // A user can perform any action (read, write, list) on their own submissions.
-      allow read, write, list: if isOwner(userId);
     }
   }
 }
