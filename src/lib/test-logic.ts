@@ -3,18 +3,18 @@ import type {
   FamatSolution,
   AnyFamatTest,
   UserAnswers,
+  ScoreReport,
   FamatTestBase,
-  TestSubmission,
 } from './types';
 import famatTests from '@/data/famat_tests.json';
 
-const allTests: AnyFamatTest[] = famatTests;
+const allTests: AnyFamatTest[] = famatTests as AnyFamatTest[];
 
 /**
  * Generates a unique, URL-friendly ID for a test.
  */
 export function getTestId(test: FamatTestBase): string {
-  return `${test.year}-${test.month}-${test.division}-${test.competition}-${test.format}`
+  return `${test.year}-${test.month}-${test.division}-${test.test_type}-${test.format}`
     .toLowerCase()
     .replace(/\s+/g, '-');
 }
@@ -23,8 +23,8 @@ export function getTestId(test: FamatTestBase): string {
  * Generates a human-readable name for a test.
  * e.g., "2022 Statistics January Regional Individual"
  */
-export function getTestName(test: FamatTest): string {
-  return `${test.year} ${test.division} ${test.month} ${test.competition} Individual`;
+export function getTestName(test: FamatTestBase): string {
+  return `${test.year} ${test.division} ${test.month} ${test.test_type} ${test.format}`;
 }
 
 /**
@@ -39,16 +39,10 @@ export function findSolutionForTest(
       item.year === test.year &&
       item.month === test.month &&
       item.division === test.division &&
-      item.competition === test.competition
+      item.test_type === test.test_type
   ) as FamatSolution | undefined;
 }
 
-/**
- * Extracts the answer array from a given solution object.
- */
-export function getAnswerKey(solution: FamatSolution): string[] {
-  return solution.answers;
-}
 
 /**
  * Grades the user's answers against the correct answer key.
@@ -59,7 +53,7 @@ export function getAnswerKey(solution: FamatSolution): string[] {
 export function gradeTest(
   userAnswers: UserAnswers,
   answerKey: string[]
-): TestSubmission['score'] {
+): ScoreReport {
   let correctCount = 0;
   let incorrectCount = 0;
   let omitCount = 0;
@@ -70,7 +64,7 @@ export function gradeTest(
     const userAnswer = userAnswers[questionNumber];
     const correctAnswer = answerKey[i];
 
-    if (!userAnswer) {
+    if (userAnswer === undefined || userAnswer === null) {
       omitCount++;
       totalScore += 1;
     } else if (userAnswer === correctAnswer) {

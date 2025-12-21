@@ -1,8 +1,10 @@
+import { Timestamp } from 'firebase/firestore';
+
 export interface FamatTestBase {
   year: number;
   month: string;
   division: string;
-  competition: string;
+  test_type: string;
   document_type: 'Test' | 'Solution';
   format: 'Individual' | 'Team';
   name: string;
@@ -21,7 +23,7 @@ export interface FamatSolution extends FamatTestBase {
 
 export type AnyFamatTest = FamatTest | FamatSolution;
 
-export type UserAnswers = { [key: number]: string };
+export type UserAnswers = { [key: number]: string | null | undefined };
 
 export type ScoreReport = {
   totalScore: number;
@@ -32,22 +34,19 @@ export type ScoreReport = {
 
 export type ReviewData = {
   [key: number]: {
-    userAnswer?: string;
+    userAnswer?: string | null;
     correctAnswer: string;
     isCorrect: boolean;
   };
 };
 
 export type TestSubmission = {
-  id: string; // submission id
+  id: string; // submission id from firestore
   testId: string;
   userId: string;
   answers: UserAnswers;
   score: ScoreReport;
-  submittedAt: {
-    seconds: number;
-    nanoseconds: number;
-  };
+  submittedAt: Timestamp;
 };
 
 export interface FamatTestWithHistory extends FamatTest {
