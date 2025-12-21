@@ -18,7 +18,7 @@ service cloud.firestore {
       allow get: if isOwner(resource.data.userId);
       
       // Users can query for their own submissions
-      allow list: if isSignedIn() && request.query.get("userId") == request.auth.uid;
+      allow list: if isSignedIn() && request.query.where.get('userId')[2] == request.auth.uid;
 
       // Users cannot update or delete submissions
       allow update, delete: if false;
