@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -43,7 +43,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   initialAnswers,
   isReviewFromHistory,
 }) => {
-  const [userAnswers, setUserAnswers] = useState<UserAnswers>(initialAnswers || {});
+  const [userAnswers, setUserAnswers] = useState<UserAnswers>(
+    initialAnswers || {}
+  );
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -67,7 +69,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
   }, [isReviewFromHistory, solution, initialAnswers]);
 
-
   const createReviewData = (
     answers: UserAnswers,
     correctAnswers: string[]
@@ -85,7 +86,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
     return data;
   };
-
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     if (reviewData) return; // Disallow changes after submission
@@ -156,13 +156,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setIsScoreModalOpen(true);
   };
 
-  const handleExitReviewMode = () => {
+  const handleViewHistory = () => {
     router.push(`/history/${test.id}`);
   };
 
-  const handleEnterReviewFromModal = () => {
-    setIsScoreModalOpen(false);
-  }
+  const handleBackToLibrary = () => {
+    router.push(`/`);
+  };
 
   const DraggableDivider: React.FC<{
     onMouseDown: (e: React.MouseEvent) => void;
@@ -177,6 +177,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
+  const inReviewFromHistory = !!isReviewFromHistory;
 
   return (
     <>
@@ -230,10 +231,22 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    ) : (
-                      <Button onClick={handleExitReviewMode}>
+                    ) : inReviewFromHistory ? (
+                      <Button onClick={handleViewHistory}>
                         Back to History
                       </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsScoreModalOpen(true)}
+                        >
+                          Review Test
+                        </Button>
+                        <Button onClick={handleBackToLibrary}>
+                          Back to Library
+                        </Button>
+                      </>
                     )}
                   </div>
                 }
@@ -248,7 +261,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           isOpen={isScoreModalOpen}
           onClose={() => setIsScoreModalOpen(false)}
           scoreReport={scoreReport}
-          onEnterReviewMode={handleEnterReviewFromModal}
         />
       )}
     </>
