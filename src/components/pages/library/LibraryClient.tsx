@@ -5,7 +5,7 @@ import type { FamatTest, FamatTestWithHistory, TestSubmission } from '@/lib/type
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 
 interface LibraryClientProps {
@@ -19,8 +19,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const submissionsQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
-      collection(firestore, 'submissions'),
-      where('userId', '==', user.uid),
+      collection(firestore, 'users', user.uid, 'submissions'),
       orderBy('submittedAt', 'desc')
     );
   }, [firestore, user?.uid]);
