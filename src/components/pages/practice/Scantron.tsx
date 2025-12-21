@@ -72,7 +72,6 @@ export const Scantron: React.FC<ScantronProps> = ({
                                 size="icon"
                                 className="h-9 w-9 text-base"
                                 onClick={() => onAnswerSelect(qNum, choice)}
-                                disabled={isSubmitted}
                             >
                                 {choice}
                             </Button>
@@ -100,7 +99,7 @@ export const Scantron: React.FC<ScantronProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => onAnswerSelect(qNum, null)}
-                            disabled={isSubmitted || !userAnswers[qNum]}
+                            disabled={!userAnswers[qNum]}
                         >
                             Clear
                         </Button>
