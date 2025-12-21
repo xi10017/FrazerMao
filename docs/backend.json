@@ -48,7 +48,7 @@
     ]
   },
   "firestore": {
-     "structure": [
+    "structure": [
       {
         "path": "/submissions/{submissionId}",
         "definition": {

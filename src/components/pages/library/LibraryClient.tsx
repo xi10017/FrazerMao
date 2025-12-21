@@ -30,7 +30,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
     // If the user isn't logged in, or submissions are still loading, just return tests without history.
-    if (isUserLoading || submissionsLoading || !user || !submissions) {
+    if (!user || !submissions) {
       return tests.map(t => ({...t, history: []}));
     }
 
@@ -47,7 +47,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         history: submissionsByTestId[test.id] || []
     }));
 
-  }, [tests, submissions, submissionsLoading, isUserLoading, user]);
+  }, [tests, submissions, user]);
 
 
   const uniqueValues = useMemo(() => {
@@ -94,7 +94,9 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       .sort((a, b) => b.year - a.year || a.division.localeCompare(b.division));
   }, [testsWithHistory, startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
 
-  if (isUserLoading) {
+  const isLoading = isUserLoading || (user && submissionsLoading);
+
+  if (isLoading) {
      return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="text-center">
