@@ -33,7 +33,6 @@ const chatFlow = ai.defineFlow(
     const { history, prompt } = request;
 
     const response = await ai.generate({
-      model: 'googleai/gemini-pro',
       prompt: prompt,
       system: tutorPrompt,
       history: history,
