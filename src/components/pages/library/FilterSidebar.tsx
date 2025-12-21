@@ -17,31 +17,35 @@ const FilterSection: React.FC<{ title: string; children: React.ReactNode }> = ({
 );
 
 const CheckboxFilter: React.FC<{
+  filterKey: string;
   items: string[];
   selectedItems: string[];
   onSelectionChange: (items: string[]) => void;
-}> = ({ items, selectedItems, onSelectionChange }) => (
-  <>
-    {items.map((item) => (
-      <div key={item} className="flex items-center space-x-2">
-        <Checkbox
-          id={`${item}-filter`}
-          checked={selectedItems.includes(item)}
-          onCheckedChange={(checked) => {
-            if (checked) {
-              onSelectionChange([...selectedItems, item]);
-            } else {
-              onSelectionChange(selectedItems.filter((i) => i !== item));
-            }
-          }}
-        />
-        <Label htmlFor={`${item}-filter`} className="font-normal">
-          {item}
-        </Label>
-      </div>
-    ))}
-  </>
-);
+}> = ({ filterKey, items, selectedItems, onSelectionChange }) => {
+  return (
+    <>
+      {items.map((item) => (
+        <div key={`${filterKey}-${item}`} className="flex items-center space-x-2">
+          <Checkbox
+            id={`${filterKey}-${item}-filter`}
+            checked={selectedItems.includes(item)}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                onSelectionChange([...selectedItems, item]);
+              } else {
+                onSelectionChange(selectedItems.filter((i) => i !== item));
+              }
+            }}
+          />
+          <Label htmlFor={`${filterKey}-${item}-filter`} className="font-normal">
+            {item}
+          </Label>
+        </div>
+      ))}
+    </>
+  );
+};
+
 
 interface FilterSidebarProps {
   uniqueValues: {
@@ -79,15 +83,16 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <CardTitle>Filter Tests</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <FilterSection key="division-filter" title="Division">
+          <FilterSection title="Division">
             <CheckboxFilter
+              filterKey="division"
               items={uniqueValues.divisions}
               selectedItems={selectedDivisions}
               onSelectionChange={setSelectedDivisions}
             />
           </FilterSection>
 
-          <FilterSection key="year-filter" title="Year Range">
+          <FilterSection title="Year Range">
             <div className="px-1">
               <Slider
                 min={2015}
@@ -103,16 +108,18 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             </div>
           </FilterSection>
 
-          <FilterSection key="month-filter" title="Month">
+          <FilterSection title="Month">
             <CheckboxFilter
+              filterKey="month"
               items={uniqueValues.months}
               selectedItems={selectedMonths}
               onSelectionChange={setSelectedMonths}
             />
           </FilterSection>
           
-          <FilterSection key="competition-filter" title="Competition">
+          <FilterSection title="Competition">
             <CheckboxFilter
+              filterKey="competition"
               items={uniqueValues.competitions}
               selectedItems={selectedCompetitions}
               onSelectionChange={setSelectedCompetitions}
