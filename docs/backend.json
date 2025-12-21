@@ -1,48 +1,243 @@
 {
   "entities": {
-    "TestSubmission": {
-      "title": "Test Submission",
-      "description": "Represents a single attempt by a user for a specific test.",
+    "Test": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Test",
       "type": "object",
+      "description": "Represents a Mu Alpha Theta test.",
       "properties": {
-        "testId": {
+        "id": {
           "type": "string",
-          "description": "The ID of the test that was taken."
+          "description": "Unique identifier for the Test entity."
+        },
+        "year": {
+          "type": "number",
+          "description": "The year the test was administered."
+        },
+        "division": {
+          "type": "string",
+          "description": "The division of the test (e.g., Algebra I, Geometry)."
+        },
+        "month": {
+          "type": "string",
+          "description": "The month the test was administered (e.g., January, February)."
+        },
+        "test_type": {
+          "type": "string",
+          "description": "The type of the test (e.g., Regional, Invitational, Individual)."
+        },
+        "pdfUrl": {
+          "type": "string",
+          "description": "URL of the PDF document for the test.",
+          "format": "uri"
+        },
+        "solutionId": {
+          "type": "string",
+          "description": "Reference to the Solution entity. (Relationship: Test 1:1 Solution)"
+        }
+      },
+      "required": [
+        "id",
+        "year",
+        "division",
+        "month",
+        "test_type",
+        "pdfUrl",
+        "solutionId"
+      ]
+    },
+    "Solution": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Solution",
+      "type": "object",
+      "description": "Represents the solution key for a Mu Alpha Theta test.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Solution entity."
+        },
+        "year": {
+          "type": "number",
+          "description": "The year the solution key is for."
+        },
+        "month": {
+          "type": "string",
+          "description": "The month the solution key is for."
+        },
+        "division": {
+          "type": "string",
+          "description": "The division the solution key is for (e.g., Algebra I)."
+        },
+        "test_type": {
+          "type": "string",
+          "description": "The type of test the solution is for(e.g. Regional)."
+        },
+        "answers": {
+          "type": "array",
+          "description": "An array containing the correct answers for the test.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "year",
+        "month",
+        "division",
+        "test_type",
+        "answers"
+      ]
+    },
+    "UserScore": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserScore",
+      "type": "object",
+      "description": "Represents a user's score on a particular test.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserScore entity."
         },
         "userId": {
           "type": "string",
-          "description": "The ID of the user who took the test."
+          "description": "Reference to the User entity. (Relationship: User 1:N UserScore)"
         },
-        "answers": {
-          "type": "object",
-          "description": "A map of question numbers to the user's selected answers."
+        "testId": {
+          "type": "string",
+          "description": "Reference to the Test entity. (Relationship: Test 1:N UserScore)"
         },
         "score": {
-          "type": "object",
-          "properties": {
-            "totalScore": { "type": "number" },
-            "correctCount": { "type": "number" },
-            "incorrectCount": { "type": "number" },
-            "omitCount": { "type": "number" }
-          },
-          "required": ["totalScore", "correctCount", "incorrectCount", "omitCount"]
+          "type": "number",
+          "description": "The user's score on the test."
         },
-        "submittedAt": {
+        "correctCount": {
+          "type": "number",
+          "description": "Number of correct answers."
+        },
+        "incorrectCount": {
+          "type": "number",
+          "description": "Number of incorrect answers."
+        },
+        "omitCount": {
+          "type": "number",
+          "description": "Number of omitted answers."
+        },
+        "submissionTimestamp": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the test was submitted."
+          "description": "The timestamp when the test was submitted.",
+          "format": "date-time"
         }
       },
-      "required": ["testId", "userId", "answers", "score", "submittedAt"]
+      "required": [
+        "id",
+        "userId",
+        "testId",
+        "score",
+        "correctCount",
+        "incorrectCount",
+        "omitCount",
+        "submissionTimestamp"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's username."
+        }
+      },
+      "required": [
+        "id",
+        "username"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/submissions/{submissionId}": {
-      "schema": { "$ref": "#/entities/TestSubmission" },
-      "description": "Collection to store all user test submissions."
-    }
+    "structure": [
+      {
+        "path": "/tests/{testId}",
+        "definition": {
+          "entityName": "Test",
+          "schema": {
+            "$ref": "#/backend/entities/Test"
+          },
+          "description": "Stores Mu Alpha Theta test details. Includes properties like year, division, month, test type, and a reference to the corresponding Solution.",
+          "params": [
+            {
+              "name": "testId",
+              "description": "Unique identifier for the test."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/solutions/{solutionId}",
+        "definition": {
+          "entityName": "Solution",
+          "schema": {
+            "$ref": "#/backend/entities/Solution"
+          },
+          "description": "Stores the solution keys for the tests, including the correct answers.  It is separate from the 'tests' collection for security.",
+          "params": [
+            {
+              "name": "solutionId",
+              "description": "Unique identifier for the solution."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information.  Path-based ownership ensures users can only access their own data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/scores/{userScoreId}",
+        "definition": {
+          "entityName": "UserScore",
+          "schema": {
+            "$ref": "#/backend/entities/UserScore"
+          },
+          "description": "Stores user scores for each test. Path-based ownership ensures only the user or admin can access the score. Includes denormalized `testId`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "userScoreId",
+              "description": "Unique identifier for the user score."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the MuPractice application's features, focusing on test management, user scores, and a leaderboard (future implementation).  Authorization Independence is achieved through the segregation of user-specific data and the potential denormalization of test metadata within UserScore documents (if required by security rules).  This avoids `get()` calls in security rules. The structure prioritizes clear ownership and access control.\n\nThe segregation of `tests` and `solutions` ensures that listing tests does not inadvertently expose solution data. The `/users/{userId}/scores` collection facilitates QAPs by allowing secure listing of a user's own scores.  Since the leaderboard implementation is deferred, a global 'scores' collection is not yet included, avoiding potential security complexities at this stage.\n\nShould a leaderboard become a requirement in the future, and be globally accessible, it would be worth storing a slimmed down set of user score data within a 'globalScores' collection, which includes a copy of the `testId`, user public profile, and score. Security rules would ensure that users can only modify their own score in the user scores collection, and that only backend admin processes can create and update documents in the `globalScores` collection. This keeps user-specific data isolated, improves security, and optimizes queries for the leaderboard feature."
   }
 }
