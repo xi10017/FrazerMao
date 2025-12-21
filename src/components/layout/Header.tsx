@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, LogIn, User as UserIcon } from 'lucide-react';
+import { BookOpen, LogIn } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -28,6 +29,12 @@ function getInitials(name?: string | null) {
 function UserAuth() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/');
+  };
 
   if (isUserLoading) {
     return <Skeleton className="h-10 w-28" />;
@@ -56,7 +63,7 @@ function UserAuth() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut(auth)}>
+          <DropdownMenuItem onClick={handleSignOut}>
             <LogIn className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>
