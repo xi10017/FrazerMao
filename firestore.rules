@@ -6,17 +6,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    match /users/{userId} {
-      // Users can read their own user document
-      allow get: if isSignedIn() && request.auth.uid == userId;
-      // Users cannot write to their own user document for now
-      allow write: if false;
-
-      // This rule explicitly allows a user to LIST their own submissions
-      // and to GET, CREATE, UPDATE, or DELETE a specific submission document.
-      match /submissions/{submissionId} {
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
-      }
+    // This rule allows a user to read and write to their own user document
+    // and ANY document in ANY subcollection under their user document.
+    // The {document=**} is a recursive wildcard that makes this possible.
+    match /users/{userId}/{document=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     // These collections are not used in the app, but are good to have for future use.
