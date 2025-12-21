@@ -17,7 +17,6 @@ interface ScoreModalProps {
   isOpen: boolean;
   onClose: () => void;
   scoreReport: ScoreReport;
-  onEnterReviewMode: () => void;
 }
 
 const StatCard = ({
@@ -44,17 +43,11 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
   isOpen,
   onClose,
   scoreReport,
-  onEnterReviewMode,
 }) => {
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open) {
-            onClose();
-            onEnterReviewMode();
-        }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-3xl font-bold">
@@ -97,11 +90,11 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
           <Button
             type="button"
             size="lg"
-            onClick={onEnterReviewMode}
+            onClick={onClose}
             className="w-full sm:w-auto"
           >
             <BookOpen className="mr-2 h-4 w-4" />
-            Review Your Answers
+            Continue to Review
           </Button>
         </DialogFooter>
       </DialogContent>
