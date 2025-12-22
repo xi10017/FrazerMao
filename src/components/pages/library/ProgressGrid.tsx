@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import type { FamatTestWithHistory, ReviewData } from '@/lib/types';
-import { findSolutionForTest, getTestName } from '@/lib/test-logic';
+import { findSolutionForTest } from '@/lib/test-logic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Tooltip,
@@ -66,8 +66,8 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const getCellInfo = () => {
     if (!data) {
         return {
-            colorClass: 'bg-muted/50',
-            text: '-',
+            colorClass: 'bg-muted/30',
+            text: '',
             tooltipText: 'Not Taken'
         };
     }
@@ -77,19 +77,19 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
 
     switch(data.status) {
         case 'correct':
-            colorClass = 'bg-green-500/80 hover:bg-green-500 text-white';
+            colorClass = 'bg-green-500/70 hover:bg-green-500/90 text-white';
             statusText = 'Correct';
             break;
         case 'incorrect':
-            colorClass = 'bg-red-500/80 hover:bg-red-500 text-white';
+            colorClass = 'bg-red-500/70 hover:bg-red-500/90 text-white';
             statusText = 'Incorrect';
             break;
         case 'omitted':
-            colorClass = 'bg-yellow-500/80 hover:bg-yellow-500 text-black';
+            colorClass = 'bg-yellow-500/70 hover:bg-yellow-500/90 text-black';
             statusText = 'Omitted';
             break;
         default:
-            colorClass = 'bg-muted/50';
+            colorClass = 'bg-muted/30';
             statusText = 'Not Taken';
             break;
     }
@@ -97,9 +97,9 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
     const correctAnswerText = Array.isArray(data.correctAnswer) ? data.correctAnswer.join('/') : data.correctAnswer;
     const tooltipText = data.userAnswer 
         ? `${statusText} (You: ${data.userAnswer} | Ans: ${correctAnswerText})`
-        : `${statusText} (Ans: ${correctAnswerText})`;
+        : data.status !== 'not_taken' ? `${statusText} (Ans: ${correctAnswerText})` : statusText;
 
-    return { colorClass, text: data.userAnswer || '-', tooltipText };
+    return { colorClass, text: data.userAnswer || '', tooltipText };
   }
 
   const { colorClass, text, tooltipText } = getCellInfo();
@@ -107,7 +107,7 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <TableCell className={cn('w-24 min-w-24 text-center font-bold text-lg p-0', colorClass)}>
+        <TableCell className={cn('w-[60px] min-w-[60px] text-center font-bold text-xs p-0', colorClass)}>
             {text}
         </TableCell>
       </TooltipTrigger>
@@ -131,6 +131,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
     tests.forEach(test => {
         const reviewData = createReviewDataFromLastAttempt(test);
         const testMap = new Map<number, CellData>();
+        const solution = findSolutionForTest(test);
         
         questionNumbers.forEach(qNum => {
             if (reviewData && reviewData[qNum]) {
@@ -141,8 +142,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                 }
                 testMap.set(qNum, { status, userAnswer, correctAnswer });
             } else {
-                 // Even if test is taken, a question might be missing from reviewData if solution is short
-                 const solution = findSolutionForTest(test);
+                 // Even if test isn't taken, we want to store correct answer for tooltip
                  const correctAnswer = solution?.answers[qNum-1] || 'N/A';
                  testMap.set(qNum, { status: 'not_taken', userAnswer: null, correctAnswer });
             }
@@ -171,15 +171,16 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
             <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests.</CardDescription>
         </CardHeader>
         <CardContent className="w-full overflow-x-auto">
-          <Table className='border'>
+          <Table className='border table-fixed'>
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 z-10 bg-background w-12 min-w-12 text-center font-bold border-r">Q#</TableHead>
+                <TableHead className="sticky left-0 z-10 bg-background w-10 min-w-10 text-center font-bold border-r p-1 h-auto">Q#</TableHead>
                 {tests.map(test => (
-                  <TableHead key={test.id} className="w-24 min-w-24 text-center">
+                  <TableHead key={test.id} className="w-[60px] min-w-[60px] text-center text-xs p-1 h-auto">
                      <Link href={`/history/${test.id}`} className="hover:underline">
-                        <div>{test.division}</div>
-                        <div className='font-normal'>{`${test.year} ${test.month} ${test.test_type}`}</div>
+                        <div className='font-bold'>{test.division}</div>
+                        <div className='font-normal'>{`${test.year} ${test.month.substring(0,3)}`}</div>
+                        <div className='font-normal text-muted-foreground'>{test.test_type.substring(0,4)}</div>
                     </Link>
                   </TableHead>
                 ))}
@@ -187,8 +188,8 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
             </TableHeader>
             <TableBody>
               {questionNumbers.map(qNum => (
-                <TableRow key={qNum}>
-                  <TableCell className="sticky left-0 z-10 bg-background font-medium text-center border-r">{qNum}</TableCell>
+                <TableRow key={qNum} className='h-6'>
+                  <TableCell className="sticky left-0 z-10 bg-background font-medium text-center border-r p-1 text-xs">{qNum}</TableCell>
                   {tests.map(test => {
                     const cellData = gridData.get(test.id)?.get(qNum) || null;
                     return <ResultCell key={`${test.id}-${qNum}`} data={cellData} />;
