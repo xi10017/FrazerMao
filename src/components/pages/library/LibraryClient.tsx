@@ -67,7 +67,8 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
   const uniqueValues = useMemo(() => {
     const divisions = [...new Set(tests.map((t) => t.division))].sort();
-    const months = [...new Set(tests.map((t) => t.month))].sort();
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const months = [...new Set(tests.map((t) => t.month))].sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
     const testTypes = [...new Set(tests.map((t) => t.test_type))].sort();
     const years = [...new Set(tests.map((t) => t.year))].sort((a, b) => a - b);
     return {
