@@ -83,7 +83,7 @@ const LeaderboardTable = ({
   if (!entries || entries.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-10">
-        No leaderboard data available yet.
+        No one is sharing their score on the leaderboard yet.
       </div>
     );
   }
@@ -142,9 +142,11 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
   const firestore = useFirestore();
   const leaderBoardQuery = useMemoFirebase(() => {
     if (!firestore) return null;
+    // Query is now filtered by showOnLeaderboard flag
     return query(
       collection(firestore, 'leaderboard_by_division'),
       where('division', '==', division),
+      where('showOnLeaderboard', '==', true),
       orderBy('testsCompleted', 'desc'),
       limit(25)
     );
@@ -167,8 +169,10 @@ export const Leaderboard = () => {
 
   const overallLeaderboardQuery = useMemoFirebase(() => {
     if (!firestore) return null;
+    // Query is now filtered by showOnLeaderboard flag
     return query(
       collection(firestore, 'leaderboard_overall'),
+      where('showOnLeaderboard', '==', true),
       orderBy('testsCompleted', 'desc'),
       limit(100)
     );
