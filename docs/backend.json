@@ -1,0 +1,155 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the MuPractice application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's chosen username."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email"
+      ]
+    },
+    "TestCompletion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TestCompletion",
+      "type": "object",
+      "description": "Represents a record of a user completing a test.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the test completion record."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who completed the test. (Relationship: User 1:N TestCompletion)"
+        },
+        "testName": {
+          "type": "string",
+          "description": "The name of the test completed."
+        },
+        "division": {
+          "type": "string",
+          "description": "The division of the test completed (e.g., Algebra I, Geometry)."
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "The date and time the test was completed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "testName",
+        "division",
+        "completionDate"
+      ]
+    },
+    "Leaderboard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Leaderboard",
+      "type": "object",
+      "description": "Represents aggregated leaderboard data, showing number of tests completed per division.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the leaderboard entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User. (Relationship: User 1:N Leaderboard)"
+        },
+        "division": {
+          "type": "string",
+          "description": "The division for which the leaderboard entry is calculated."
+        },
+        "testsCompleted": {
+          "type": "number",
+          "description": "The number of tests completed by the user in the specified division."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "division",
+        "testsCompleted"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "testCompletions/{testCompletionId}",
+        "definition": {
+          "entityName": "TestCompletion",
+          "schema": {
+            "$ref": "#/backend/entities/TestCompletion"
+          },
+          "description": "Stores individual test completion records.  Authorization rules should allow users to create their own records and admins to read all.",
+          "params": [
+            {
+              "name": "testCompletionId",
+              "description": "Unique identifier for the test completion record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "leaderboard_overall/{leaderboardEntryId}",
+        "definition": {
+          "entityName": "Leaderboard",
+          "schema": {
+            "$ref": "#/backend/entities/Leaderboard"
+          },
+          "description": "Stores aggregated leaderboard data for overall test completions.  Each document represents a user's total tests completed across all divisions.",
+          "params": [
+            {
+              "name": "leaderboardEntryId",
+              "description": "Unique identifier for the leaderboard entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "leaderboard_by_division/{leaderboardEntryId}",
+        "definition": {
+          "entityName": "Leaderboard",
+          "schema": {
+            "$ref": "#/backend/entities/Leaderboard"
+          },
+          "description": "Stores aggregated leaderboard data specific to each division.  Each document represents a user's total tests completed within a particular division.",
+          "params": [
+            {
+              "name": "leaderboardEntryId",
+              "description": "Unique identifier for the leaderboard entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support leaderboards based on the number of tests completed, both overall and by division.  The core design principle is Authorization Independence, achieved primarily through the structure and denormalization of data.  Since only leaderboards are asked for, and auth is assumed, only those are focused on.\n\n1.  **`testCompletions/{testCompletionId}`**: Stores individual test completion records. This collection is segregated for test completion records, ensuring a homogeneous security posture. Authorization rules should allow users to create their own test completion records and admins to read all.\n\n2.  **`leaderboard_overall/{leaderboardEntryId}`**: Stores aggregated leaderboard data for overall test completions.  Each document represents a user's total tests completed across all divisions.  The `userId` field links back to the User document.  This approach supports QAPs for displaying the overall leaderboard.\n\n3.  **`leaderboard_by_division/{leaderboardEntryId}`**: Stores aggregated leaderboard data specific to each division.  Each document represents a user's total tests completed within a particular division, indicated by the `division` field.  This approach supports QAPs for displaying leaderboards filtered by division.\n\nThis structure avoids hierarchical authorization dependencies. The denormalization strategy ensures Authorization Independence by including all necessary authorization data within each document. The use of separate collections (`leaderboard_overall` and `leaderboard_by_division`) facilitates secure list operations, ensuring that rules are not filters and that users can only access the data they are authorized to see."
+  }
+}
