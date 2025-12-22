@@ -52,10 +52,7 @@ export const Scantron: React.FC<ScantronProps> = ({
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b p-4">
-        <div>
-          <h2 className="text-xl font-bold">Digital Scantron</h2>
-        </div>
+      <header className="flex items-center justify-end border-b p-4">
         {headerContent}
       </header>
       <ScrollArea className="flex-1">
