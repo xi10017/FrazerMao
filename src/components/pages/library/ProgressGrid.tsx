@@ -186,7 +186,8 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                   <TableHead key={test.id} className="w-[60px] min-w-[60px] text-center text-xs p-1 h-auto">
                       <Link href={`/history/${test.id}`} className="hover:underline">
                           <div className='font-bold'>{test.division}</div>
-                          <div className='font-normal'>{`${test.year} ${test.month.substring(0,3)}`}</div>
+                          <div className='font-normal'>{test.year}</div>
+                          <div className='font-normal'>{test.month.substring(0,3)}</div>
                           <div className='font-normal text-muted-foreground'>{getShortTestType(test.test_type)}</div>
                       </Link>
                   </TableHead>
