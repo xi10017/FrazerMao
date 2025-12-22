@@ -22,9 +22,8 @@
  *   problem for queries, as any query on this subcollection is inherently
  *   scoped to the correct user.
  * - Read-Only Public Leaderboards: All leaderboard collections are publicly
- *   readable but are completely locked down from client-side writes. This
- *   enforces the architectural assumption that a trusted server environment
- *   is responsible for calculating and maintaining scores.
+ *   readable. Writes are restricted to the document owner to ensure a user
+ *   can only update their own score.
  * - Public User Profiles: User profiles are publicly readable to display names
  *   on leaderboards, but a user can only write to their own profile document.
  */
@@ -74,30 +73,27 @@ service cloud.firestore {
 
     /**
      * @description
-     *   Rules for the overall leaderboard. This collection is public and read-only
-     *   for all clients. It is assumed to be populated by a trusted backend process.
-     * @path /leaderboard_overall/{leaderboardEntryId}
+     *   Rules for the overall leaderboard. This collection is public, but users
+     *   can only create or update their OWN entry. The document ID must be the user's UID.
+     * @path /leaderboard_overall/{userId}
      */
-    match /leaderboard_overall/{leaderboardEntryId} {
+    match /leaderboard_overall/{userId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow write: if isOwner(userId);
     }
 
     /**
      * @description
-     *   Rules for the division-specific leaderboards. This collection is public and
-     *   read-only for all clients.
+     *  Rules for the division-specific leaderboards. Publicly readable.
+     *  A user can only write to a document where the `userId` field matches their own UID.
      * @path /leaderboard_by_division/{leaderboardEntryId}
      */
     match /leaderboard_by_division/{leaderboardEntryId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      // Allow create/update if the document's userId belongs to the user making the request
+      allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
     }
   }
 }
