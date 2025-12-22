@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTheme } from 'next-themes';
 import {
   Card,
@@ -28,6 +28,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { clearAllUserData } from '@/lib/localStorage';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -61,6 +63,7 @@ export default function SettingsPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const [confirmationText, setConfirmationText] = useState('');
 
   const handleClearData = () => {
     if (!user) return;
@@ -69,9 +72,12 @@ export default function SettingsPage() {
       title: 'Data Cleared',
       description: 'All your test history and progress has been deleted.',
     });
+    setConfirmationText(''); // Reset for next time
     // Optional: redirect or refresh to reflect changes
     router.refresh();
   };
+  
+  const isConfirmationMatch = confirmationText === 'delete my data';
 
   if (isUserLoading) {
     return (
@@ -159,17 +165,17 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-destructive">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+            <CardTitle>Data Management</CardTitle>
             <CardDescription>
-              These actions are permanent and cannot be undone.
+              Manage your application data. This action is permanent.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AlertDialog>
+            <AlertDialog onOpenChange={() => setConfirmationText('')}>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">
+                <Button variant="outline">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Clear All Test Data
                 </Button>
@@ -179,13 +185,28 @@ export default function SettingsPage() {
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This will permanently delete all of your saved test
-                    submissions and in-progress work. This action cannot be
-                    undone.
+                    submissions and in-progress work. To confirm, please type{' '}
+                    <code className="font-mono bg-muted p-1 rounded-md text-foreground">delete my data</code>{' '}
+                    in the box below.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="my-4">
+                  <Label htmlFor="confirmation" className="sr-only">Confirmation</Label>
+                  <Input 
+                    id="confirmation"
+                    value={confirmationText}
+                    onChange={(e) => setConfirmationText(e.target.value)}
+                    placeholder="delete my data"
+                    autoComplete="off"
+                  />
+                </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearData}>
+                  <AlertDialogAction
+                    onClick={handleClearData}
+                    disabled={!isConfirmationMatch}
+                    variant="destructive"
+                  >
                     Yes, delete my data
                   </AlertDialogAction>
                 </AlertDialogFooter>
