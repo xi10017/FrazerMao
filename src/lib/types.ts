@@ -60,6 +60,8 @@ export type LeaderboardEntry = {
     userId: string;
     division: string;
     testsCompleted: number;
+    displayName?: string;
+    photoURL?: string;
 };
   
 export type UserProfile = {

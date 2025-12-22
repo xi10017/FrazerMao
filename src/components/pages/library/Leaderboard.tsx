@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { LeaderboardEntry, UserProfile } from '@/lib/types';
+import type { LeaderboardEntry } from '@/lib/types';
 import { Trophy } from 'lucide-react';
 
 function getInitials(name?: string | null) {
@@ -43,23 +43,13 @@ function getInitials(name?: string | null) {
 
 const LeaderboardTable = ({
   entries,
-  users,
   isLoading,
   title,
 }: {
   entries: (LeaderboardEntry & { id: string })[] | null;
-  users: UserProfile[] | null;
   isLoading: boolean;
   title: string;
 }) => {
-  const usersById = useMemo(() => {
-    if (!users) return {};
-    return users.reduce((acc, user) => {
-      acc[user.uid] = user;
-      return acc;
-    }, {} as { [key: string]: UserProfile });
-  }, [users]);
-
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
@@ -110,7 +100,6 @@ const LeaderboardTable = ({
       </TableHeader>
       <TableBody>
         {entries.map((entry, index) => {
-          const user = usersById[entry.userId];
           const rank = index + 1;
           return (
             <TableRow key={entry.id}>
@@ -126,12 +115,12 @@ const LeaderboardTable = ({
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={user?.photoURL ?? undefined} />
-                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+                    <AvatarImage src={entry.photoURL ?? undefined} />
+                    <AvatarFallback>{getInitials(entry.displayName)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="font-medium">
-                      {user?.displayName || 'Anonymous User'}
+                      {entry.displayName || 'Anonymous User'}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {title} Division
@@ -168,9 +157,6 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
     data: leaderboardData,
     isLoading: isLeaderboardLoading,
   } = useCollection<LeaderboardEntry>(leaderBoardQuery);
-  const { data: users, isLoading: areUsersLoading } = useCollection<UserProfile>(
-    useMemoFirebase(() => collection(firestore, 'users'), [firestore])
-  );
   
   const filteredEntries = useMemo(() => {
       return leaderboardData?.filter(entry => entry.division === division) || [];
@@ -179,8 +165,7 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
   return (
     <LeaderboardTable
       entries={filteredEntries}
-      users={users}
-      isLoading={isLeaderboardLoading || areUsersLoading}
+      isLoading={isLeaderboardLoading}
       title={division}
     />
   );
@@ -204,9 +189,6 @@ export const Leaderboard = () => {
     data: overallData,
     isLoading: isOverallLoading,
   } = useCollection<LeaderboardEntry>(overallLeaderboardQuery);
-  const { data: users, isLoading: areUsersLoading } = useCollection<UserProfile>(
-    useMemoFirebase(() => collection(firestore, 'users'), [firestore])
-  );
 
   const divisions = ['Stats', 'Calculus', 'Pre-calculus', 'Algebra 2', 'Geometry'];
 
@@ -227,8 +209,7 @@ export const Leaderboard = () => {
           <TabsContent value="overall">
             <LeaderboardTable
               entries={overallData}
-              users={users}
-              isLoading={isOverallLoading || areUsersLoading}
+              isLoading={isOverallLoading}
               title="Overall"
             />
           </TabsContent>
