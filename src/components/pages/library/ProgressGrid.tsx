@@ -105,16 +105,16 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const { colorClass, text, tooltipText } = getCellInfo();
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <TableCell className={cn('w-[60px] min-w-[60px] text-center font-bold text-xs p-0', colorClass)}>
-            {text}
-        </TableCell>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{tooltipText}</p>
-      </TooltipContent>
-    </Tooltip>
+    <TableCell className={cn('h-auto min-w-[60px] w-[60px] p-0 text-center text-xs font-bold', colorClass)}>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className='w-full h-full p-1'>{text}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>{tooltipText}</p>
+            </TooltipContent>
+        </Tooltip>
+    </TableCell>
   );
 };
 
