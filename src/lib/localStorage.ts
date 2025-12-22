@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { TestSubmission, UserAnswers, ScoreReport, FamatTest } from './types';
@@ -8,7 +7,6 @@ import {
   collection,
   addDoc,
   query,
-  where,
   getDocs,
   Timestamp,
   Firestore,
@@ -28,10 +26,10 @@ import { FirestorePermissionError } from '@/firebase/errors';
  * @returns An array of TestSubmission objects.
  */
 export async function getSubmissionsForUser(db: Firestore, userId: string): Promise<TestSubmission[]> {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === 'undefined' || !userId) return [];
 
-  const submissionsRef = collection(db, 'testCompletions');
-  const q = query(submissionsRef, where('userId', '==', userId));
+  const submissionsRef = collection(db, 'users', userId, 'testCompletions');
+  const q = query(submissionsRef);
 
   try {
     const querySnapshot = await getDocs(q);
@@ -72,9 +70,9 @@ export function saveSubmission(
     userAnswers: UserAnswers, 
     scoreReport: ScoreReport
 ) {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !userId) return;
     
-    const submissionsRef = collection(db, 'testCompletions');
+    const submissionsRef = collection(db, 'users', userId, 'testCompletions');
     const newSubmission = {
         testId: test.id,
         userId,
