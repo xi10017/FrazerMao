@@ -297,63 +297,43 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const isPracticeMode = reviewData === null;
   const isSubmittable = Object.keys(userAnswers).length > 0;
   
-  const scantronComponent = (
-     <Scantron
-        userAnswers={userAnswers}
-        onAnswerSelect={handleAnswerSelect}
-        reviewData={reviewData}
-        headerContent={
-          <div className="flex items-center gap-2">
-            {isClient && (
-              <>
-                {isPracticeMode ? (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button disabled={!isSubmittable}>
-                        Submit Test
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Are you sure?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Once you submit, you will not be able to
-                          change your answers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleSubmit}>
-                          Submit
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsScoreModalOpen(true)}
-                    >
-                      Review Score
-                    </Button>
-                    <Button onClick={handleBackToLibrary}>
-                      Back to Library
-                    </Button>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        }
-      />
-  )
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      {isClient && (
+        <>
+          {isPracticeMode ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button disabled={!isSubmittable}>Submit Test</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Once you submit, you will not be able to change your answers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSubmit}>Submit</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setIsScoreModalOpen(true)}>
+                Review Score
+              </Button>
+              <Button onClick={handleBackToLibrary}>Back to Library</Button>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   const mainContent = (
     <div className="flex h-full w-full">
-      <div className="flex-1 transition-all duration-300">
       {isPracticeMode ? (
           // Two-panel layout for practice
           <div ref={containerRef} className="flex h-full w-full">
@@ -382,7 +362,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
               <>
                   <DraggableDivider onMouseDown={handleMouseDown} />
                   <div className="h-full flex-1">
-                      {scantronComponent}
+                      <Scantron
+                          userAnswers={userAnswers}
+                          onAnswerSelect={handleAnswerSelect}
+                          reviewData={reviewData}
+                      />
                   </div>
               </>
               )}
@@ -392,18 +376,28 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           <ThreePanelLayout 
               testPdf={<PDFDisplay url={test.url} />}
               solutionPdf={<PDFDisplay url={solution?.url || test.url} />}
-              scantron={scantronComponent}
+              scantron={
+                <Scantron
+                    userAnswers={userAnswers}
+                    onAnswerSelect={handleAnswerSelect}
+                    reviewData={reviewData}
+                />
+              }
           />
       )}
     </div>
-  </div>
   );
 
 
   return (
     <>
-      <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-        {mainContent}
+      <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-background">
+        <header className="flex h-16 flex-shrink-0 items-center justify-end border-b px-4">
+            {headerActions}
+        </header>
+        <div className="flex-1 overflow-hidden">
+            {mainContent}
+        </div>
       </div>
 
       {scoreReport && (
