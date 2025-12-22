@@ -142,22 +142,24 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
   const firestore = useFirestore();
   const leaderBoardQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // Query is now filtered by showOnLeaderboard flag
     return query(
       collection(firestore, 'leaderboard_by_division'),
       where('division', '==', division),
-      where('showOnLeaderboard', '==', true),
       orderBy('testsCompleted', 'desc'),
-      limit(25)
+      limit(100) // Fetch more to allow for client-side filtering
     );
   }, [firestore, division]);
 
   const { data: leaderboardData, isLoading: isLeaderboardLoading } =
     useCollection<LeaderboardEntry>(leaderBoardQuery);
+    
+  const filteredData = useMemo(() => {
+      return leaderboardData?.filter(entry => entry.showOnLeaderboard).slice(0, 25) || null;
+  }, [leaderboardData]);
 
   return (
     <LeaderboardTable
-      entries={leaderboardData}
+      entries={filteredData}
       isLoading={isLeaderboardLoading}
       title={division}
     />
@@ -169,17 +171,21 @@ export const Leaderboard = () => {
 
   const overallLeaderboardQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // Query is now filtered by showOnLeaderboard flag
+    // Remove the where clause to avoid needing a composite index
     return query(
       collection(firestore, 'leaderboard_overall'),
-      where('showOnLeaderboard', '==', true),
       orderBy('testsCompleted', 'desc'),
-      limit(100)
+      limit(200) // Fetch more to allow for client-side filtering
     );
   }, [firestore]);
   
   const { data: overallData, isLoading: isOverallLoading } =
     useCollection<LeaderboardEntry>(overallLeaderboardQuery);
+
+  const filteredOverallData = useMemo(() => {
+      // Filter on the client-side
+      return overallData?.filter(entry => entry.showOnLeaderboard).slice(0, 100) || null;
+  }, [overallData]);
 
   const divisions = ['Stats', 'Calculus', 'Pre-calculus', 'Algebra 2', 'Geometry'];
 
@@ -199,7 +205,7 @@ export const Leaderboard = () => {
           </TabsList>
           <TabsContent value="overall">
             <LeaderboardTable
-              entries={overallData}
+              entries={filteredOverallData}
               isLoading={isOverallLoading}
               title="Overall"
             />

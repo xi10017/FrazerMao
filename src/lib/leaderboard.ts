@@ -4,8 +4,9 @@ import {
   collection,
   doc,
   getDocs,
-  setDoc,
-  getDoc,
+  writeBatch,
+  query,
+  where,
   Firestore,
 } from 'firebase/firestore';
 import type { LeaderboardEntry } from './types';
@@ -15,50 +16,32 @@ import type { User } from 'firebase/auth';
 
 /**
  * Updates a user's entries in all relevant leaderboard collections.
- * This function is called after a test submission to ensure scores are fresh.
- * It always writes the user's data; filtering is done on the client.
+ * This function is called after a test submission or privacy change.
+ * It always writes the user's data, including their 'showOnLeaderboard' preference.
+ * Filtering is then handled on the client-side during display.
  *
  * @param db The Firestore instance.
  * @param user The authenticated Firebase User object.
+ * @param showOnLeaderboard The user's current visibility preference.
  */
 export async function updateUserLeaderboardEntries(
   db: Firestore,
-  user: User | null
+  user: User | null,
+  showOnLeaderboard: boolean
 ) {
   if (!user) return;
-
   const userId = user.uid;
-  let showOnLeaderboard = true;
 
-  // 1. Get the user's current visibility preference from their profile.
-  const userProfileRef = doc(db, 'users', userId);
   try {
-    const userProfileSnap = await getDoc(userProfileRef);
-    if (userProfileSnap.exists()) {
-        showOnLeaderboard = userProfileSnap.data()?.showOnLeaderboard ?? true;
-    }
-  } catch (error) {
-    console.error('Could not fetch user profile to check visibility', error);
-    // Don't emit an error here, as we can proceed with a default.
-  }
-
-  // 2. Get all of the user's test completions.
-  try {
-    const testCompletionsRef = collection(
-      db,
-      'users',
-      userId,
-      'testCompletions'
-    );
+    const batch = writeBatch(db);
+    const testCompletionsRef = collection(db, 'users', userId, 'testCompletions');
     const completionsSnapshot = await getDocs(testCompletionsRef);
-    const allCompletions = completionsSnapshot.docs.map(
-      (doc) => doc.data() as any
-    );
+    const allCompletions = completionsSnapshot.docs.map(doc => doc.data() as any);
 
     const displayName = user.displayName || 'Anonymous User';
     const photoURL = user.photoURL;
 
-    // 3. Update the 'Overall' leaderboard.
+    // 1. Update the 'Overall' leaderboard.
     const overallTotal = allCompletions.length;
     const overallLeaderboardRef = doc(db, 'leaderboard_overall', userId);
     const overallData: LeaderboardEntry = {
@@ -69,35 +52,19 @@ export async function updateUserLeaderboardEntries(
       photoURL,
       showOnLeaderboard,
     };
-    // This is a non-blocking write.
-    setDoc(overallLeaderboardRef, overallData, { merge: true }).catch(
-      (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: overallLeaderboardRef.path,
-          operation: 'write',
-          requestResourceData: overallData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      }
-    );
+    batch.set(overallLeaderboardRef, overallData, { merge: true });
 
-    // 4. Group completions by division to update 'By Division' leaderboards.
+    // 2. Group completions by division.
     const completionsByDivision = allCompletions.reduce((acc, c) => {
       acc[c.division] = (acc[c.division] || 0) + 1;
       return acc;
     }, {} as { [key: string]: number });
 
-    // 5. Update each relevant 'By Division' leaderboard.
+    // 3. Update each relevant 'By Division' leaderboard.
     for (const division in completionsByDivision) {
       const divisionTotal = completionsByDivision[division];
-      const divisionLeaderboardId = `${userId}_${division
-        .replace(/\s+/g, '_')
-        .toLowerCase()}`;
-      const divisionLeaderboardRef = doc(
-        db,
-        'leaderboard_by_division',
-        divisionLeaderboardId
-      );
+      const divisionLeaderboardId = `${userId}_${division.replace(/\s+/g, '_').toLowerCase()}`;
+      const divisionLeaderboardRef = doc(db, 'leaderboard_by_division', divisionLeaderboardId);
 
       const divisionData: LeaderboardEntry = {
         userId,
@@ -107,23 +74,19 @@ export async function updateUserLeaderboardEntries(
         photoURL,
         showOnLeaderboard,
       };
-      // This is a non-blocking write.
-      setDoc(divisionLeaderboardRef, divisionData, { merge: true }).catch(
-        (error) => {
-          const permissionError = new FirestorePermissionError({
-            path: divisionLeaderboardRef.path,
-            operation: 'write',
-            requestResourceData: divisionData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        }
-      );
+      batch.set(divisionLeaderboardRef, divisionData, { merge: true });
     }
+
+    // 4. Commit all changes at once.
+    await batch.commit();
+
   } catch (error) {
-    console.error('Could not read test completions to update leaderboard:', error);
+    console.error('Error updating leaderboard entries:', error);
+    // Determine if it was a read or write error for better context
     const permissionError = new FirestorePermissionError({
-      path: `users/${userId}/testCompletions`,
-      operation: 'list',
+        path: `users/${userId}/leaderboard_updates`,
+        operation: 'write', // This is a batch write operation
+        requestResourceData: { userId, showOnLeaderboard }
     });
     errorEmitter.emit('permission-error', permissionError);
   }

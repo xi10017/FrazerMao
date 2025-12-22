@@ -31,10 +31,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { doc, setDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { updateUserLeaderboardEntries } from '@/lib/leaderboard';
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -99,51 +100,32 @@ export default function SettingsPage() {
 
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
     if (!userProfileRef || !user || !firestore) return;
-
+  
     const updatedProfileData = { showOnLeaderboard: checked };
-    const updatedLeaderboardData = { showOnLeaderboard: checked, userId: user.uid };
-
-    try {
-        const batch = writeBatch(firestore);
-
-        // 1. Update the user's profile
-        batch.set(userProfileRef, updatedProfileData, { merge: true });
-
-        // 2. Update the overall leaderboard entry
-        const overallRef = doc(firestore, 'leaderboard_overall', user.uid);
-        batch.set(overallRef, updatedLeaderboardData, { merge: true });
-
-        // 3. Update all division-specific leaderboard entries
-        const divisionQuery = query(
-            collection(firestore, 'leaderboard_by_division'),
-            where('userId', '==', user.uid)
-        );
-        const divisionSnapshot = await getDocs(divisionQuery);
-        divisionSnapshot.forEach((doc) => {
-            batch.set(doc.ref, updatedLeaderboardData, { merge: true });
-        });
-
-        // 4. Commit all changes at once
-        await batch.commit();
-
+  
+    // 1. Update the user's profile document.
+    setDoc(userProfileRef, updatedProfileData, { merge: true })
+      .then(async () => {
+        // 2. After the profile is updated, update all leaderboard entries.
+        // This ensures the `showOnLeaderboard` flag is consistent everywhere.
+        await updateUserLeaderboardEntries(firestore, user, checked);
+  
         toast({
-            title: 'Privacy settings updated!',
-            description: `You will now be ${
+          title: 'Privacy settings updated!',
+          description: `You will now be ${
             checked ? 'shown on' : 'hidden from'
-            } leaderboards.`,
+          } leaderboards.`,
         });
-
-    } catch (error) {
-        console.error("Error updating leaderboard visibility:", error);
-        // This is a complex operation, so we create a generic error for now
-        // In a real app, you might create a more specific error type for this batch write
+      })
+      .catch((error) => {
+        console.error("Error updating user profile for leaderboard visibility:", error);
         const permissionError = new FirestorePermissionError({
-            path: `user ${user.uid} batch update`,
-            operation: 'write',
-            requestResourceData: updatedLeaderboardData
+          path: userProfileRef.path,
+          operation: 'update',
+          requestResourceData: updatedProfileData,
         });
         errorEmitter.emit('permission-error', permissionError);
-    }
+      });
   };
 
   const isConfirmationMatch = confirmationText === 'delete my data';
