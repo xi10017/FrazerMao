@@ -29,11 +29,12 @@ import { FirestorePermissionError } from '@/firebase/errors';
  */
 export async function getSubmissionsForUser(db: Firestore, userId: string): Promise<TestSubmission[]> {
   if (typeof window === 'undefined') return [];
+
+  const submissionsRef = collection(db, 'testCompletions');
+  const q = query(submissionsRef, where('userId', '==', userId));
+
   try {
-    const submissionsRef = collection(db, 'testCompletions');
-    const q = query(submissionsRef, where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
-    
     const submissions: TestSubmission[] = [];
     querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -43,13 +44,15 @@ export async function getSubmissionsForUser(db: Firestore, userId: string): Prom
             submittedAt: (data.submittedAt as Timestamp).toDate(),
         } as TestSubmission);
     });
-
     return submissions;
-
   } catch (error) {
-    console.error("Failed to get submissions from Firestore:", error);
-    // In a real app, you might want to handle this more gracefully
-    return [];
+    const permissionError = new FirestorePermissionError({
+        path: submissionsRef.path,
+        operation: 'list',
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    console.error("Error getting submissions, permission error emitted:", error);
+    return []; // Return empty array on error
   }
 }
 
