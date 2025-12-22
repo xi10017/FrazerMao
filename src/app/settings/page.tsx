@@ -7,7 +7,17 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
-import { Moon, Sun, Laptop } from 'lucide-react';
+import { Moon, Sun, Laptop, User as UserIcon } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+
+function getInitials(name?: string | null) {
+    if (!name) return '?';
+    const names = name.split(' ');
+    const initials = names.map((n) => n[0]).join('');
+    return initials.length > 2 ? initials.substring(0, 2) : initials;
+}
+
 
 function ThemeSwitcher() {
   const { setTheme } = useTheme();
@@ -49,6 +59,15 @@ export default function SettingsPage() {
               <Skeleton className="h-10 w-full" />
             </CardContent>
           </Card>
+           <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-1/4" />
+              <Skeleton className="h-4 w-1/2 mt-2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-12 w-full" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -68,6 +87,28 @@ export default function SettingsPage() {
             Manage your account and app preferences.
           </p>
         </div>
+
+         <Card>
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+            <CardDescription>
+              Your account information.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+             <div className="flex items-center gap-4">
+                <Avatar className="h-12 w-12">
+                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                </Avatar>
+                <div className="grid gap-1">
+                    <div className="font-semibold">{user.displayName}</div>
+                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
@@ -79,6 +120,7 @@ export default function SettingsPage() {
              <ThemeSwitcher />
           </CardContent>
         </Card>
+
       </div>
     </div>
   );
