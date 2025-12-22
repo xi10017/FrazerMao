@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Maximize, Minimize } from 'lucide-react';
+import { Maximize, Minimize, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
+import { ChatTutorPanel } from './ChatTutorPanel';
 
 // --- Draggable Divider Logic ---
 
@@ -148,6 +149,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+  const [isTutorOpen, setIsTutorOpen] = useState(false);
   
   // Two-panel layout state
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
@@ -301,6 +303,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         userAnswers={userAnswers}
         onAnswerSelect={handleAnswerSelect}
         reviewData={reviewData}
+        onAskTutor={() => setIsTutorOpen(true)}
         headerContent={
           <div className="flex items-center gap-2">
             {isClient && (
@@ -350,50 +353,74 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       />
   )
 
+  const pdfPanelWidth = isTutorOpen ? '65%' : '100%';
+  const mainContent = (
+    <div className="flex h-full w-full">
+      <div className="flex-1 transition-all duration-300" style={{ width: isPracticeMode ? 'auto' : pdfPanelWidth }}>
+      {isPracticeMode ? (
+          // Two-panel layout for practice
+          <div ref={containerRef} className="flex h-full w-full">
+              <div
+                  className={cn(
+                  'relative h-full transition-all duration-300',
+                  isPdfFullScreen && 'w-full'
+                  )}
+                  style={{ width: isPdfFullScreen ? '100%' : `${dividerPosition}%` }}
+              >
+                  {isDragging && (
+                      <div className="absolute inset-0 z-30" />
+                  )}
+                  <PDFDisplay url={test.url} />
+                  <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
+                      onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
+                  >
+                      {isPdfFullScreen ? <Minimize /> : <Maximize />}
+                  </Button>
+              </div>
+
+              {!isPdfFullScreen && (
+              <>
+                  <DraggableDivider onMouseDown={handleMouseDown} />
+                  <div className="h-full flex-1">
+                      {scantronComponent}
+                  </div>
+              </>
+              )}
+        </div>
+      ) : (
+          // Three-panel layout for review
+          <ThreePanelLayout 
+              testPdf={<PDFDisplay url={test.url} />}
+              solutionPdf={<PDFDisplay url={solution?.url || test.url} />}
+              scantron={scantronComponent}
+          />
+      )}
+    </div>
+    {isTutorOpen && (
+      <div className="w-[35%] h-full">
+        <ChatTutorPanel onClose={() => setIsTutorOpen(false)} />
+      </div>
+    )}
+  </div>
+  );
+
+
   return (
     <>
       <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-        {isPracticeMode ? (
-           // Two-panel layout for practice
-            <div ref={containerRef} className="flex h-full w-full">
-                <div
-                    className={cn(
-                    'relative h-full transition-all duration-300',
-                    isPdfFullScreen && 'w-full'
-                    )}
-                    style={{ width: isPdfFullScreen ? '100%' : `${dividerPosition}%` }}
-                >
-                    {isDragging && (
-                        <div className="absolute inset-0 z-30" />
-                    )}
-                    <PDFDisplay url={test.url} />
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
-                        onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
-                    >
-                        {isPdfFullScreen ? <Minimize /> : <Maximize />}
-                    </Button>
-                </div>
-
-                {!isPdfFullScreen && (
-                <>
-                    <DraggableDivider onMouseDown={handleMouseDown} />
-                    <div className="h-full flex-1">
-                        {scantronComponent}
-                    </div>
-                </>
-                )}
-           </div>
-        ) : (
-            // Three-panel layout for review
-            <ThreePanelLayout 
-                testPdf={<PDFDisplay url={test.url} />}
-                solutionPdf={<PDFDisplay url={solution?.url || test.url} />}
-                scantron={scantronComponent}
-            />
-        )}
+         <Button
+            variant="outline"
+            size="icon"
+            className="absolute top-[calc(3.5rem+1rem)] right-4 z-20"
+            onClick={() => setIsTutorOpen(!isTutorOpen)}
+            title="Toggle AI Tutor"
+        >
+            {isTutorOpen ? <PanelRightClose/> : <PanelRightOpen />}
+        </Button>
+        {mainContent}
       </div>
 
       {scoreReport && (
