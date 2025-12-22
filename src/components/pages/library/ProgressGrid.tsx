@@ -105,11 +105,11 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const { colorClass, text, tooltipText } = getCellInfo();
 
   return (
-    <TableCell className={cn('h-auto min-w-[60px] w-[60px] p-0 text-center text-xs font-bold', colorClass)}>
+    <TableCell className="p-0">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="w-full h-full p-1">{text}</div>
+            <div className={cn("h-full w-full min-w-[60px] p-1 text-center text-xs font-bold", colorClass)}>{text}</div>
           </TooltipTrigger>
           <TooltipContent>
             <p>{tooltipText}</p>
@@ -177,11 +177,11 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
           <CardTitle>Progress Grid</CardTitle>
           <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests.</CardDescription>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-          <Table className='border table-fixed'>
+      <CardContent className="overflow-x-auto p-0">
+          <Table className='border-t border-b table-fixed'>
               <TableHeader>
               <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-background w-10 min-w-10 text-center font-bold border-r p-1 h-auto">Q#</TableHead>
+                  <TableHead className="sticky left-0 z-10 bg-card w-10 min-w-10 text-center font-bold border-r p-1 h-auto">Q#</TableHead>
                   {tests.map(test => (
                   <TableHead key={test.id} className="w-[60px] min-w-[60px] text-center text-xs p-1 h-auto">
                       <Link href={`/history/${test.id}`} className="hover:underline">
@@ -197,7 +197,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
               <TableBody>
               {questionNumbers.map(qNum => (
                   <TableRow key={qNum} className='h-6'>
-                  <TableCell className="sticky left-0 z-10 bg-background font-medium text-center border-r p-1 text-xs">{qNum}</TableCell>
+                  <TableCell className="sticky left-0 z-10 bg-card font-medium text-center border-r p-1 text-xs">{qNum}</TableCell>
                   {tests.map(test => {
                       const cellData = gridData.get(test.id)?.get(qNum) || null;
                       return <ResultCell key={`${test.id}-${qNum}`} data={cellData} />;
