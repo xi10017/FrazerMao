@@ -27,16 +27,34 @@
       ]
     },
     "UserProfile": {
-        "title": "User Profile",
-        "description": "Publicly available information about a user.",
-        "type": "object",
-        "properties": {
-            "uid": { "type": "string", "description": "The user's unique ID." },
-            "displayName": { "type": "string", "description": "The user's public display name." },
-            "email": { "type": "string", "format": "email", "description": "The user's email." },
-            "photoURL": { "type": "string", "format": "uri", "description": "URL to the user's profile picture." }
+      "title": "User Profile",
+      "description": "Publicly available information about a user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID."
         },
-        "required": ["uid", "displayName", "email"]
+        "displayName": {
+          "type": "string",
+          "description": "The user's public display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's profile picture."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "email"
+      ]
     },
     "TestCompletion": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -163,7 +181,7 @@
           },
           "description": "Stores aggregated leaderboard data specific to each division. The document ID is a unique combination of userId and division.",
           "params": [
-             {
+            {
               "name": "entry_id",
               "description": "A unique ID, typically a composite of userId and division."
             }
