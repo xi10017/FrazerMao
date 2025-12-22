@@ -70,32 +70,29 @@ export function saveSubmission(
     scoreReport: ScoreReport
 ) {
     if (typeof window === 'undefined') return;
-    try {
-        const submissionsRef = collection(db, 'testCompletions');
-        const newSubmission = {
-            testId: test.id,
-            userId,
-            answers: userAnswers,
-            score: scoreReport,
-            submittedAt: Timestamp.now(),
-            division: test.division,
-            testName: getTestName(test),
-            completionDate: new Date().toISOString(),
-        };
+    
+    const submissionsRef = collection(db, 'testCompletions');
+    const newSubmission = {
+        testId: test.id,
+        userId,
+        answers: userAnswers,
+        score: scoreReport,
+        submittedAt: Timestamp.now(),
+        division: test.division,
+        testName: getTestName(test),
+        completionDate: new Date().toISOString(),
+    };
 
-        addDoc(submissionsRef, newSubmission)
-            .catch((serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: submissionsRef.path,
-                    operation: 'create',
-                    requestResourceData: newSubmission,
-                });
-                errorEmitter.emit('permission-error', permissionError);
+    addDoc(submissionsRef, newSubmission)
+        .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: submissionsRef.path,
+                operation: 'create',
+                requestResourceData: newSubmission,
             });
-
-    } catch (error) {
-        console.error("Failed to save submission to Firestore:", error);
-    }
+            errorEmitter.emit('permission-error', permissionError);
+            console.error("Error saving submission:", serverError);
+        });
 }
 
 

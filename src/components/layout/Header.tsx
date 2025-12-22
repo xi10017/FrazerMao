@@ -25,6 +25,8 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -38,16 +40,23 @@ const createUserProfile = async (firestore: any, user: User) => {
     if (!firestore || !user) return;
 
     const userRef = doc(firestore, 'users', user.uid);
-    try {
-        await setDoc(userRef, {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-        }, { merge: true }); // Merge true to avoid overwriting existing data if user logs in again
-    } catch (error) {
-        console.error("Error creating user profile:", error);
-    }
+    const userData = {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+    };
+
+    setDoc(userRef, userData, { merge: true })
+        .catch((error) => {
+            const permissionError = new FirestorePermissionError({
+                path: userRef.path,
+                operation: 'write',
+                requestResourceData: userData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            console.error("Error creating user profile:", error);
+        });
 };
 
 
