@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { Moon, Sun, Laptop, Trash2 } from 'lucide-react';
@@ -30,6 +30,12 @@ import { clearAllUserData } from '@/lib/localStorage';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { doc, setDoc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -61,9 +67,17 @@ function ThemeSwitcher() {
 
 export default function SettingsPage() {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [confirmationText, setConfirmationText] = useState('');
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
   const handleClearData = () => {
     if (!user) return;
@@ -77,40 +91,38 @@ export default function SettingsPage() {
     router.refresh();
   };
   
+  const handleLeaderboardVisibilityChange = async (checked: boolean) => {
+    if (!userProfileRef) return;
+    const updatedData = { showOnLeaderboard: checked };
+    setDoc(userProfileRef, updatedData, { merge: true })
+        .catch(error => {
+            const permissionError = new FirestorePermissionError({
+                path: userProfileRef.path,
+                operation: 'update',
+                requestResourceData: updatedData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
+  };
+
   const isConfirmationMatch = confirmationText === 'delete my data';
 
-  if (isUserLoading) {
+  if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="container mx-auto max-w-2xl p-4 sm:p-6 lg:p-8">
         <div className="space-y-6">
           <Skeleton className="h-10 w-1/3" />
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/4" />
-              <Skeleton className="h-4 w-1/2 mt-2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-12 w-full" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/4" />
-              <Skeleton className="h-4 w-1/2 mt-2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/4" />
-              <Skeleton className="h-4 w-1/2 mt-2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
+          {[...Array(4)].map((_, i) => (
+             <Card key={i}>
+                <CardHeader>
+                <Skeleton className="h-6 w-1/4" />
+                <Skeleton className="h-4 w-1/2 mt-2" />
+                </CardHeader>
+                <CardContent>
+                <Skeleton className="h-12 w-full" />
+                </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -163,6 +175,34 @@ export default function SettingsPage() {
           <CardContent>
             <ThemeSwitcher />
           </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Privacy</CardTitle>
+                <CardDescription>
+                Control how your information is displayed.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="leaderboard-switch" className="text-base">
+                            Show on Leaderboards
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                            Allow your name and score to be publicly visible on leaderboards.
+                        </p>
+                    </div>
+                     {userProfile && (
+                        <Switch
+                            id="leaderboard-switch"
+                            checked={userProfile.showOnLeaderboard ?? true}
+                            onCheckedChange={handleLeaderboardVisibilityChange}
+                        />
+                     )}
+                </div>
+            </CardContent>
         </Card>
 
         <Card>
