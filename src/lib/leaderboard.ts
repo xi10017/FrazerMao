@@ -34,25 +34,36 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
     // 1. Fetch all necessary data upfront.
     const [userProfileSnap, completionsSnapshot] = await Promise.all([
       getDoc(userProfileRef),
-      getDocs(testCompletionsRef)
+      getDocs(testCompletionsRef),
     ]);
-    
+
     const userProfile = userProfileSnap.data() as UserProfile | undefined;
     const showOnLeaderboard = userProfile?.showOnLeaderboard ?? true;
+
+    // Get all completions to know which divisions to delete from if user is hidden
+    const allCompletions = completionsSnapshot.docs.map(
+      (doc) => doc.data() as TestSubmission
+    );
 
     // 2. If the user wants to be hidden, delete all their leaderboard entries.
     if (!showOnLeaderboard) {
       // Delete overall entry
       const overallRef = doc(db, 'leaderboard_overall', userId);
-      deleteDoc(overallRef).catch(e => console.error("Could not delete overall leaderboard doc", e));
+      deleteDoc(overallRef).catch((e) =>
+        console.error('Could not delete overall leaderboard doc', e)
+      );
 
       // Find and delete all division-specific entries for the user
-      const divisionQuery = query(collection(db, 'leaderboard_by_division'), where('userId', '==', userId));
-      const divisionSnap = await getDocs(divisionQuery);
-      divisionSnap.forEach(doc => {
-        deleteDoc(doc.ref).catch(e => console.error(`Could not delete division entry ${doc.id}`, e));
-      });
-      
+      // We derive the divisions from their past completions to know which documents to target
+      const divisions = [...new Set(allCompletions.map((c) => c.division))];
+      for (const division of divisions) {
+        const divisionLeaderboardId = `${userId}_${division.replace(/\s+/g, '_').toLowerCase()}`;
+        const divisionRef = doc(db, 'leaderboard_by_division', divisionLeaderboardId);
+        deleteDoc(divisionRef).catch((e) =>
+          console.error(`Could not delete division entry ${divisionRef.id}`, e)
+        );
+      }
+
       // Stop here, no need to create new entries.
       return;
     }
@@ -60,8 +71,7 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
     // 3. If the user wants to be shown, proceed with updating/creating entries.
     const displayName = user.displayName || 'Anonymous User';
     const photoURL = user.photoURL || null;
-    const allCompletions = completionsSnapshot.docs.map(doc => doc.data() as TestSubmission);
-
+    
     // 4. Update the 'Overall' leaderboard.
     const overallTotal = allCompletions.length;
     const overallLeaderboardRef = doc(db, 'leaderboard_overall', userId);
@@ -89,14 +99,17 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
       acc[c.division] = (acc[c.division] || 0) + 1;
       return acc;
     }, {} as { [key: string]: number });
-    
 
     // 6. Update each relevant 'By Division' leaderboard.
     for (const division in completionsByDivision) {
       const divisionTotal = completionsByDivision[division];
       const divisionLeaderboardId = `${userId}_${division.replace(/\s+/g, '_').toLowerCase()}`;
-      const divisionLeaderboardRef = doc(db, 'leaderboard_by_division', divisionLeaderboardId);
-      
+      const divisionLeaderboardRef = doc(
+        db,
+        'leaderboard_by_division',
+        divisionLeaderboardId
+      );
+
       const divisionData: LeaderboardEntry = {
         userId: userId,
         testsCompleted: divisionTotal,
@@ -116,7 +129,6 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
         }
       );
     }
-
   } catch (error) {
     console.error('Could not update leaderboard entries:', error);
     // This could be a permissions error on reading testCompletions or userProfile
