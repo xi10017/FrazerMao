@@ -74,6 +74,7 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
     
     let colorClass = '';
     let statusText = '';
+    let text = data.userAnswer || '';
 
     switch(data.status) {
         case 'correct':
@@ -96,20 +97,22 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
 
     const correctAnswerText = Array.isArray(data.correctAnswer) ? data.correctAnswer.join('/') : data.correctAnswer;
     const tooltipText = data.userAnswer 
-        ? `${statusText} (You: ${data.userAnswer} | Ans: ${correctAnswerText})`
+        ? `${statusText} (You: ${text} | Ans: ${correctAnswerText})`
         : data.status !== 'not_taken' ? `${statusText} (Ans: ${correctAnswerText})` : statusText;
 
-    return { colorClass, text: data.userAnswer || '', tooltipText };
+    return { colorClass, text, tooltipText };
   }
 
   const { colorClass, text, tooltipText } = getCellInfo();
 
   return (
-    <TableCell className="p-0">
+    <TableCell className="p-0 h-6">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={cn("h-full w-full min-w-[60px] p-1 text-center text-xs font-bold", colorClass)}>{text}</div>
+            <div className={cn("h-full w-full min-w-[60px] flex items-center justify-center text-xs font-bold", colorClass)}>
+              {text}
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>{tooltipText}</p>
@@ -186,9 +189,9 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                   <TableHead key={test.id} className="w-[60px] min-w-[60px] text-center text-xs p-1 h-auto">
                       <Link href={`/history/${test.id}`} className="hover:underline">
                           <div className='font-bold'>{test.division}</div>
-                          <div className='font-normal'>{test.year}</div>
-                          <div className='font-normal'>{test.month.substring(0,3)}</div>
-                          <div className='font-normal text-muted-foreground'>{getShortTestType(test.test_type)}</div>
+                          <div>{test.year}</div>
+                          <div>{test.month.substring(0,3)}</div>
+                          <div className='text-muted-foreground'>{getShortTestType(test.test_type)}</div>
                       </Link>
                   </TableHead>
                   ))}
