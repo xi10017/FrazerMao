@@ -1,6 +1,8 @@
 'use client';
 
 import type { TestSubmission, UserAnswers, ScoreReport, FamatTest } from './types';
+import famatTests from '@/data/famat_tests.json';
+import { getTestId } from './test-logic';
 
 // NOTE: This will only work on the client-side.
 // Ensure these functions are only called from 'use client' components.
@@ -123,5 +125,28 @@ export function clearInProgressAnswers(userId: string, testId: string) {
         window.localStorage.removeItem(key);
     } catch (error) {
         console.error("Failed to clear in-progress answers from localStorage:", error);
+    }
+}
+
+/**
+ * Clears all submissions and in-progress work for a specific user.
+ * @param userId The UID of the user.
+ */
+export function clearAllUserData(userId: string) {
+    if (typeof window === 'undefined') return;
+    try {
+        // Clear all submissions
+        window.localStorage.removeItem(`submissions_${userId}`);
+
+        // Clear all in-progress tests for the user
+        const tests = (famatTests as FamatTest[]).filter(t => t.document_type === 'Test');
+        tests.forEach(test => {
+            const testId = getTestId(test);
+            const key = getInProgressKey(userId, testId);
+            window.localStorage.removeItem(key);
+        });
+
+    } catch (error) {
+        console.error("Failed to clear all user data from localStorage:", error);
     }
 }
