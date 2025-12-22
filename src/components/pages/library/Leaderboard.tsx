@@ -1,8 +1,7 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   useCollection,
-  useFirebase,
   useFirestore,
   useMemoFirebase,
 } from '@/firebase';
@@ -11,7 +10,7 @@ import {
   query,
   orderBy,
   limit,
-  DocumentData,
+  where
 } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -46,7 +45,7 @@ const LeaderboardTable = ({
   isLoading,
   title,
 }: {
-  entries: (LeaderboardEntry & { id: string })[] | null;
+  entries: LeaderboardEntry[] | null;
   isLoading: boolean;
   title: string;
 }) => {
@@ -80,13 +79,13 @@ const LeaderboardTable = ({
       </div>
     );
   }
-  
+
   if (!entries || entries.length === 0) {
-      return (
-          <div className="text-center text-muted-foreground py-10">
-              No leaderboard data available yet.
-          </div>
-      )
+    return (
+      <div className="text-center text-muted-foreground py-10">
+        No leaderboard data available yet.
+      </div>
+    );
   }
 
   return (
@@ -102,7 +101,7 @@ const LeaderboardTable = ({
         {entries.map((entry, index) => {
           const rank = index + 1;
           return (
-            <TableRow key={entry.id}>
+            <TableRow key={entry.userId + (entry.division || '')}>
               <TableCell>
                 <div className="flex items-center justify-center">
                   <span
@@ -122,8 +121,8 @@ const LeaderboardTable = ({
                     <div className="font-medium">
                       {entry.displayName || 'Anonymous User'}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {title} Division
+                     <div className="text-sm text-muted-foreground">
+                      {title !== 'Overall' ? `${title} Division` : 'Overall'}
                     </div>
                   </div>
                 </div>
@@ -141,30 +140,22 @@ const LeaderboardTable = ({
 
 const DivisionLeaderboard = ({ division }: { division: string }) => {
   const firestore = useFirestore();
-  const leaderBoardQuery = useMemoFirebase(
-    () => {
-      if (!firestore) return null;
-      return query(
-        collection(firestore, 'leaderboard_by_division'),
-        orderBy('testsCompleted', 'desc'),
-        limit(25)
-      );
-    },
-    [firestore]
-  );
-  
-  const {
-    data: leaderboardData,
-    isLoading: isLeaderboardLoading,
-  } = useCollection<LeaderboardEntry>(leaderBoardQuery);
-  
-  const filteredEntries = useMemo(() => {
-      return leaderboardData?.filter(entry => entry.division === division) || [];
-  }, [leaderboardData, division])
+  const leaderBoardQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, 'leaderboard_by_division'),
+      where('division', '==', division),
+      orderBy('testsCompleted', 'desc'),
+      limit(25)
+    );
+  }, [firestore, division]);
+
+  const { data: leaderboardData, isLoading: isLeaderboardLoading } =
+    useCollection<LeaderboardEntry>(leaderBoardQuery);
 
   return (
     <LeaderboardTable
-      entries={filteredEntries}
+      entries={leaderboardData}
       isLoading={isLeaderboardLoading}
       title={division}
     />
@@ -174,21 +165,17 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
 export const Leaderboard = () => {
   const firestore = useFirestore();
 
-  const overallLeaderboardQuery = useMemoFirebase(
-    () => {
-      if (!firestore) return null;
-      return query(
-        collection(firestore, 'leaderboard_overall'),
-        orderBy('testsCompleted', 'desc'),
-        limit(100)
-      );
-    },
-    [firestore]
-  );
-  const {
-    data: overallData,
-    isLoading: isOverallLoading,
-  } = useCollection<LeaderboardEntry>(overallLeaderboardQuery);
+  const overallLeaderboardQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(
+      collection(firestore, 'leaderboard_overall'),
+      orderBy('testsCompleted', 'desc'),
+      limit(100)
+    );
+  }, [firestore]);
+  
+  const { data: overallData, isLoading: isOverallLoading } =
+    useCollection<LeaderboardEntry>(overallLeaderboardQuery);
 
   const divisions = ['Stats', 'Calculus', 'Pre-calculus', 'Algebra 2', 'Geometry'];
 
@@ -214,8 +201,8 @@ export const Leaderboard = () => {
             />
           </TabsContent>
           <TabsContent value="by_division">
-            <Tabs defaultValue="Stats" className="mt-4">
-              <TabsList className="grid w-full grid-cols-5">
+            <Tabs defaultValue={divisions[0]} className="mt-4">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                 {divisions.map((div) => (
                   <TabsTrigger key={div} value={div}>
                     {div}

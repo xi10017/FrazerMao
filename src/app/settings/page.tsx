@@ -37,7 +37,6 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { updateUserLeaderboardEntries } from '@/lib/leaderboard';
 
-
 function getInitials(name?: string | null) {
   if (!name) return '?';
   const names = name.split(' ');
@@ -78,8 +77,9 @@ export default function SettingsPage() {
     return doc(firestore, 'users', user.uid);
   }, [firestore, user]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
-  
+  const { data: userProfile, isLoading: isProfileLoading } =
+    useDoc<UserProfile>(userProfileRef);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/');
@@ -91,59 +91,66 @@ export default function SettingsPage() {
     clearAllUserData(user.uid);
     toast({
       title: 'Local Data Cleared',
-      description: 'Your in-progress test data has been deleted. Submitted test history must be cleared from the database by an administrator.',
+      description:
+        'Your in-progress test data has been deleted. Submitted test history must be cleared from the database by an administrator.',
     });
     setConfirmationText(''); // Reset for next time
     // Optional: redirect or refresh to reflect changes
     router.refresh();
   };
-  
+
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
     if (!userProfileRef || !user || !firestore) return;
     const updatedData = { showOnLeaderboard: checked };
-    
+
     // First, update the user's profile setting
     setDoc(userProfileRef, updatedData, { merge: true })
-        .then(() => {
-            toast({
-                title: 'Privacy settings updated!',
-                description: `You will now be ${checked ? 'shown on' : 'hidden from'} leaderboards.`,
-            });
-            // After the profile is updated, trigger the leaderboard update.
-            // This ensures the leaderboard uses the latest privacy setting.
-            updateUserLeaderboardEntries(firestore, user);
-        })
-        .catch(error => {
-            const permissionError = new FirestorePermissionError({
-                path: userProfileRef.path,
-                operation: 'update',
-                requestResourceData: updatedData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
+      .then(() => {
+        toast({
+          title: 'Privacy settings updated!',
+          description: `You will now be ${
+            checked ? 'shown on' : 'hidden from'
+          } leaderboards.`,
         });
+        // After the profile is updated, trigger the leaderboard update.
+        // This ensures the leaderboard uses the latest privacy setting.
+        updateUserLeaderboardEntries(firestore, user, checked);
+      })
+      .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: userProfileRef.path,
+          operation: 'update',
+          requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const isConfirmationMatch = confirmationText === 'delete my data';
 
-  if (isUserLoading || !user || (user && isProfileLoading)) {
+  if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="container mx-auto max-w-2xl p-4 sm:p-6 lg:p-8">
         <div className="space-y-6">
           <Skeleton className="h-10 w-1/3" />
           {[...Array(4)].map((_, i) => (
-             <Card key={i}>
-                <CardHeader>
+            <Card key={i}>
+              <CardHeader>
                 <Skeleton className="h-6 w-1/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
-                </CardHeader>
-                <CardContent>
+              </CardHeader>
+              <CardContent>
                 <Skeleton className="h-12 w-full" />
-                </CardContent>
+              </CardContent>
             </Card>
           ))}
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Don't render anything if user is not logged in, useEffect will redirect
   }
 
   return (
@@ -191,31 +198,32 @@ export default function SettingsPage() {
         </Card>
 
         <Card>
-            <CardHeader>
-                <CardTitle>Privacy</CardTitle>
-                <CardDescription>
-                Control how your information is displayed.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <Label htmlFor="leaderboard-switch" className="text-base">
-                            Show on Leaderboards
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                            Allow your name and score to be publicly visible on leaderboards.
-                        </p>
-                    </div>
-                     {userProfile && (
-                        <Switch
-                            id="leaderboard-switch"
-                            checked={userProfile.showOnLeaderboard ?? true}
-                            onCheckedChange={handleLeaderboardVisibilityChange}
-                        />
-                     )}
-                </div>
-            </CardContent>
+          <CardHeader>
+            <CardTitle>Privacy</CardTitle>
+            <CardDescription>
+              Control how your information is displayed.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="leaderboard-switch" className="text-base">
+                  Show on Leaderboards
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Allow your name and score to be publicly visible on
+                  leaderboards.
+                </p>
+              </div>
+              {userProfile && (
+                <Switch
+                  id="leaderboard-switch"
+                  checked={userProfile.showOnLeaderboard ?? true}
+                  onCheckedChange={handleLeaderboardVisibilityChange}
+                />
+              )}
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
@@ -237,14 +245,20 @@ export default function SettingsPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all of your saved in-progress work. Submitted test history is stored in the database and is not affected. To confirm, please type{' '}
-                    <code className="font-mono bg-muted p-1 rounded-md text-foreground">delete my data</code>{' '}
+                    This will permanently delete all of your saved in-progress
+                    work. Submitted test history is stored in the database and
+                    is not affected. To confirm, please type{' '}
+                    <code className="font-mono bg-muted p-1 rounded-md text-foreground">
+                      delete my data
+                    </code>{' '}
                     in the box below.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="my-4">
-                  <Label htmlFor="confirmation" className="sr-only">Confirmation</Label>
-                  <Input 
+                  <Label htmlFor="confirmation" className="sr-only">
+                    Confirmation
+                  </Label>
+                  <Input
                     id="confirmation"
                     value={confirmationText}
                     onChange={(e) => setConfirmationText(e.target.value)}

@@ -47,19 +47,22 @@ function HistoryPage() {
 
   useEffect(() => {
     const fetchSubmissions = async () => {
-        if (user && testId && firestore) {
-            setIsLoading(true);
-            const allSubmissions = await getSubmissionsForUser(firestore, user.uid);
-            const testSubmissions = allSubmissions
-              .filter((sub) => sub.testId === testId)
-              .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
-            setSubmissions(testSubmissions);
-            setIsLoading(false);
-        } else if (!isUserLoading) {
-            setSubmissions([]);
-            setIsLoading(false);
-        }
-    }
+      if (user && testId && firestore) {
+        setIsLoading(true);
+        const allSubmissions = await getSubmissionsForUser(
+          firestore,
+          user.uid
+        );
+        const testSubmissions = allSubmissions
+          .filter((sub) => sub.testId === testId)
+          .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+        setSubmissions(testSubmissions);
+        setIsLoading(false);
+      } else if (!isUserLoading) {
+        setSubmissions([]);
+        setIsLoading(false);
+      }
+    };
     fetchSubmissions();
   }, [user, testId, firestore, isUserLoading]);
 
@@ -67,7 +70,7 @@ function HistoryPage() {
     return (
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="mb-6 flex items-center">
-           <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
         </div>
         <Card>
           <CardHeader>
@@ -92,8 +95,12 @@ function HistoryPage() {
 
   const handleReview = (submission: TestSubmission) => {
     // Pass the specific answers from that submission to the practice page for review.
-    const submissionData = encodeURIComponent(JSON.stringify(submission.answers));
-    router.push(`/practice/${testId}?fromHistory=true&submission=${submissionData}`);
+    const submissionData = encodeURIComponent(
+      JSON.stringify(submission.answers)
+    );
+    router.push(
+      `/practice/${testId}?fromHistory=true&submission=${submissionData}`
+    );
   };
 
   return (
@@ -117,9 +124,15 @@ function HistoryPage() {
                 <TableRow>
                   <TableHead className="w-[200px]">Date Taken</TableHead>
                   <TableHead className="text-center">Score</TableHead>
-                  <TableHead className="text-center text-green-400">Correct</TableHead>
-                  <TableHead className="text-center text-red-400">Incorrect</TableHead>
-                  <TableHead className="text-center text-yellow-400">Omitted</TableHead>
+                  <TableHead className="text-center text-green-400">
+                    Correct
+                  </TableHead>
+                  <TableHead className="text-center text-red-400">
+                    Incorrect
+                  </TableHead>
+                  <TableHead className="text-center text-yellow-400">
+                    Omitted
+                  </TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>

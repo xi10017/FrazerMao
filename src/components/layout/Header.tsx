@@ -1,16 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, LogIn, Settings, User as UserIcon } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { BookOpen, LogIn, Settings } from 'lucide-react';
+import { useUser, useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  User,
+  type User,
 } from 'firebase/auth';
-import { useAuth, useFirestore } from '@/firebase';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import type { UserProfile } from '@/lib/types';
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -37,29 +37,27 @@ function getInitials(name?: string | null) {
 
 // Function to create or update user profile in Firestore
 const createUserProfile = async (firestore: any, user: User) => {
-    if (!firestore || !user) return;
+  if (!firestore || !user) return;
 
-    const userRef = doc(firestore, 'users', user.uid);
-    const userData = {
-        uid: user.uid,
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        showOnLeaderboard: true, // Default to true on creation
-    };
+  const userRef = doc(firestore, 'users', user.uid);
+  const userData: UserProfile = {
+    uid: user.uid,
+    displayName: user.displayName || 'Anonymous User',
+    email: user.email!,
+    photoURL: user.photoURL,
+    showOnLeaderboard: true, // Default to true on creation
+  };
 
-    setDoc(userRef, userData, { merge: true })
-        .catch((error) => {
-            const permissionError = new FirestorePermissionError({
-                path: userRef.path,
-                operation: 'write',
-                requestResourceData: userData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            console.error("Error creating user profile:", error);
-        });
+  setDoc(userRef, userData, { merge: true }).catch((error) => {
+    const permissionError = new FirestorePermissionError({
+      path: userRef.path,
+      operation: 'write',
+      requestResourceData: userData,
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    console.error('Error creating user profile:', error);
+  });
 };
-
 
 function UserAuth() {
   const { user, isUserLoading } = useUser();
@@ -95,7 +93,6 @@ function UserAuth() {
     }
   };
 
-
   if (isUserLoading) {
     return <Skeleton className="h-10 w-28" />;
   }
@@ -126,12 +123,12 @@ function UserAuth() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-           <DropdownMenuItem asChild>
-              <Link href="/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </Link>
-            </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogIn className="mr-2 h-4 w-4" />

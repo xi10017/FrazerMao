@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -6,7 +5,6 @@ import type { UserAnswers, ReviewData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Lightbulb } from 'lucide-react';
 
 interface ScantronProps {
   userAnswers: UserAnswers;
@@ -31,11 +29,11 @@ const getReviewColorClasses = (qNum: number, reviewData: ReviewData | null) => {
 };
 
 const getCorrectAnswerText = (correctAnswer: string | string[]): string => {
-    if (Array.isArray(correctAnswer)) {
-      return correctAnswer.join(' / ');
-    }
-    return correctAnswer;
-  };
+  if (Array.isArray(correctAnswer)) {
+    return correctAnswer.join(' / ');
+  }
+  return correctAnswer;
+};
 
 export const Scantron: React.FC<ScantronProps> = ({
   userAnswers,
@@ -72,6 +70,7 @@ export const Scantron: React.FC<ScantronProps> = ({
                       size="icon"
                       className="h-9 w-9 text-base"
                       onClick={() => onAnswerSelect(qNum, choice)}
+                      disabled={isReviewMode}
                     >
                       {choice}
                     </Button>
@@ -83,39 +82,39 @@ export const Scantron: React.FC<ScantronProps> = ({
                 {isReviewMode && reviewData?.[qNum] ? (
                   <div className="flex items-center gap-2">
                     <div className="text-right text-sm font-bold">
-                        {reviewData[qNum].userAnswer === undefined ||
-                        reviewData[qNum].userAnswer === null ? (
+                      {reviewData[qNum].userAnswer === undefined ||
+                      reviewData[qNum].userAnswer === null ? (
                         <span className="text-yellow-400">Omitted</span>
-                        ) : reviewData[qNum].isCorrect ? (
+                      ) : reviewData[qNum].isCorrect ? (
                         <>
-                            <span className="text-green-400">Correct</span>
-                            <div className="text-muted-foreground">
+                          <span className="text-green-400">Correct</span>
+                          <div className="text-muted-foreground">
                             Ans: {getCorrectAnswerText(reviewData[qNum].correctAnswer)}
-                            </div>
+                          </div>
                         </>
-                        ) : (
+                      ) : (
                         <>
-                            <span className="text-red-400">Incorrect</span>
-                            <div className="text-muted-foreground">
+                          <span className="text-red-400">Incorrect</span>
+                          <div className="text-muted-foreground">
                             You: {reviewData[qNum].userAnswer} | Ans:{' '}
                             {getCorrectAnswerText(reviewData[qNum].correctAnswer)}
-                            </div>
+                          </div>
                         </>
-                        )}
+                      )}
                     </div>
                   </div>
                 ) : (
-                   <>
+                  <>
                     <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onAnswerSelect(qNum, null)}
-                        disabled={!userAnswers[qNum]}
-                        className="h-8"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onAnswerSelect(qNum, null)}
+                      disabled={!userAnswers[qNum]}
+                      className="h-8"
                     >
-                        Clear
+                      Clear
                     </Button>
-                   </>
+                  </>
                 )}
               </div>
             </div>
