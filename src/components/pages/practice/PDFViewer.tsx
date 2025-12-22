@@ -8,7 +8,6 @@ interface PDFViewerProps {
 
 export const PDFViewer: React.FC<PDFViewerProps> = ({ url }) => {
   // Use Google's document viewer to ensure cross-browser compatibility.
-  // This viewer does not allow text selection, but it is reliable.
   const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
     url
   )}&embedded=true`;

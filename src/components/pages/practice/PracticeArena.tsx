@@ -35,7 +35,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { PDFViewer } from './PDFViewer';
+import { PDFDisplay } from './PDFDisplay';
 
 // --- Draggable Divider Logic ---
 
@@ -366,7 +366,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                     {isDragging && (
                         <div className="absolute inset-0 z-30" />
                     )}
-                    <PDFViewer url={test.url} />
+                    <PDFDisplay url={test.url} />
                     <Button
                         variant="ghost"
                         size="icon"
@@ -389,8 +389,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         ) : (
             // Three-panel layout for review
             <ThreePanelLayout 
-                testPdf={<PDFViewer url={test.url} />}
-                solutionPdf={<PDFViewer url={solution?.url || test.url} />}
+                testPdf={<PDFDisplay url={test.url} />}
+                solutionPdf={<PDFDisplay url={solution?.url || test.url} />}
                 scantron={scantronComponent}
             />
         )}
@@ -408,5 +408,3 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-
-    

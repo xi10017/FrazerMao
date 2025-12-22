@@ -1,6 +1,3 @@
-
-
-
 export interface FamatTestBase {
   year: number;
   month: string;
@@ -10,6 +7,7 @@ export interface FamatTestBase {
   format: 'Individual' | 'Team';
   name: string;
   url: string;
+  source?: string;
 }
 
 export interface FamatTest extends FamatTestBase {
