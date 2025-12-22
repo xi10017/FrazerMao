@@ -12,7 +12,6 @@ interface ScantronProps {
   userAnswers: UserAnswers;
   onAnswerSelect: (question: number, answer: string | null) => void;
   reviewData: ReviewData | null;
-  headerContent: React.ReactNode;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -42,7 +41,6 @@ export const Scantron: React.FC<ScantronProps> = ({
   userAnswers,
   onAnswerSelect,
   reviewData,
-  headerContent,
 }) => {
   const questionNumbers = Array.from(
     { length: TOTAL_QUESTIONS },
@@ -52,9 +50,6 @@ export const Scantron: React.FC<ScantronProps> = ({
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-end border-b p-4">
-        {headerContent}
-      </header>
       <ScrollArea className="flex-1">
         <div className="space-y-2 p-4">
           {questionNumbers.map((qNum) => (
