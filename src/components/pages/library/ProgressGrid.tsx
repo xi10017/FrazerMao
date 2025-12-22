@@ -106,14 +106,16 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
 
   return (
     <TableCell className={cn('h-auto min-w-[60px] w-[60px] p-0 text-center text-xs font-bold', colorClass)}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="w-full h-full p-1">{text}</div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{tooltipText}</p>
-        </TooltipContent>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-full h-full p-1">{text}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{tooltipText}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </TableCell>
   );
 };
@@ -152,6 +154,12 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
     return data;
   }, [tests, questionNumbers]);
 
+  const getShortTestType = (testType: string) => {
+    if (testType === 'Regional') return 'Reg';
+    if (testType === 'Invitational') return 'Inv';
+    return testType.substring(0,3);
+  }
+
   if (tests.length === 0) {
     return (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 py-20 text-center">
@@ -164,42 +172,40 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
   }
 
   return (
-    <TooltipProvider>
-      <Card>
-        <CardHeader>
-            <CardTitle>Progress Grid</CardTitle>
-            <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests.</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-            <Table className='border table-fixed'>
-                <TableHeader>
-                <TableRow>
-                    <TableHead className="sticky left-0 z-10 bg-background w-10 min-w-10 text-center font-bold border-r p-1 h-auto">Q#</TableHead>
-                    {tests.map(test => (
-                    <TableHead key={test.id} className="w-[60px] min-w-[60px] text-center text-xs p-1 h-auto">
-                        <Link href={`/history/${test.id}`} className="hover:underline">
-                            <div className='font-bold'>{test.division}</div>
-                            <div className='font-normal'>{`${test.year} ${test.month.substring(0,3)}`}</div>
-                            <div className='font-normal text-muted-foreground'>{test.test_type.substring(0,4)}</div>
-                        </Link>
-                    </TableHead>
-                    ))}
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {questionNumbers.map(qNum => (
-                    <TableRow key={qNum} className='h-6'>
-                    <TableCell className="sticky left-0 z-10 bg-background font-medium text-center border-r p-1 text-xs">{qNum}</TableCell>
-                    {tests.map(test => {
-                        const cellData = gridData.get(test.id)?.get(qNum) || null;
-                        return <ResultCell key={`${test.id}-${qNum}`} data={cellData} />;
-                    })}
-                    </TableRow>
-                ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-      </Card>
-    </TooltipProvider>
+    <Card>
+      <CardHeader>
+          <CardTitle>Progress Grid</CardTitle>
+          <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests.</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+          <Table className='border table-fixed'>
+              <TableHeader>
+              <TableRow>
+                  <TableHead className="sticky left-0 z-10 bg-background w-10 min-w-10 text-center font-bold border-r p-1 h-auto">Q#</TableHead>
+                  {tests.map(test => (
+                  <TableHead key={test.id} className="w-[60px] min-w-[60px] text-center text-xs p-1 h-auto">
+                      <Link href={`/history/${test.id}`} className="hover:underline">
+                          <div className='font-bold'>{test.division}</div>
+                          <div className='font-normal'>{`${test.year} ${test.month.substring(0,3)}`}</div>
+                          <div className='font-normal text-muted-foreground'>{getShortTestType(test.test_type)}</div>
+                      </Link>
+                  </TableHead>
+                  ))}
+              </TableRow>
+              </TableHeader>
+              <TableBody>
+              {questionNumbers.map(qNum => (
+                  <TableRow key={qNum} className='h-6'>
+                  <TableCell className="sticky left-0 z-10 bg-background font-medium text-center border-r p-1 text-xs">{qNum}</TableCell>
+                  {tests.map(test => {
+                      const cellData = gridData.get(test.id)?.get(qNum) || null;
+                      return <ResultCell key={`${test.id}-${qNum}`} data={cellData} />;
+                  })}
+                  </TableRow>
+              ))}
+              </TableBody>
+          </Table>
+      </CardContent>
+    </Card>
   );
 };
