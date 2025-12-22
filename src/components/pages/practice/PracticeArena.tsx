@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
+import { Ti84Calculator } from './Ti84Calculator';
 
 // --- Draggable Divider Logic ---
 
@@ -50,18 +51,18 @@ const DraggableDivider: React.FC<{
   </div>
 );
 
+// --- Multi-Panel Layout Logic ---
 
-// --- Three Panel Layout for Review Mode ---
-
-interface ThreePanelLayoutProps {
-    testPdf: React.ReactNode;
-    solutionPdf: React.ReactNode;
-    scantron: React.ReactNode;
+interface MultiPanelLayoutProps {
+    panels: React.ReactNode[];
 }
 
-const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({ testPdf, solutionPdf, scantron }) => {
+const MultiPanelLayout: React.FC<MultiPanelLayoutProps> = ({ panels }) => {
+    const numPanels = panels.length;
+    const initialPositions = Array.from({ length: numPanels - 1 }, (_, i) => (100 / numPanels) * (i + 1));
+    
     const [isDragging, setIsDragging] = useState<number | null>(null);
-    const [positions, setPositions] = useState([33.3, 66.6]);
+    const [positions, setPositions] = useState(initialPositions);
     const containerRef = useRef<HTMLDivElement>(null);
 
     const handleMouseDown = (dividerIndex: number) => (e: React.MouseEvent) => {
@@ -80,13 +81,12 @@ const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({ testPdf, solutionPd
         const newX = e.clientX - containerRef.current.getBoundingClientRect().left;
         let newPosition = (newX / containerWidth) * 100;
 
-        const MIN_WIDTH = 15; // Minimum 15% width for a panel
+        const MIN_WIDTH = 10; // Minimum 10% width for a panel
 
-        if (isDragging === 0) {
-            newPosition = Math.max(MIN_WIDTH, Math.min(newPosition, positions[1] - MIN_WIDTH));
-        } else { // isDragging === 1
-            newPosition = Math.max(positions[0] + MIN_WIDTH, Math.min(newPosition, 100 - MIN_WIDTH));
-        }
+        const leftBoundary = isDragging > 0 ? positions[isDragging - 1] + MIN_WIDTH : MIN_WIDTH;
+        const rightBoundary = isDragging < numPanels - 2 ? positions[isDragging + 1] - MIN_WIDTH : 100 - MIN_WIDTH;
+        
+        newPosition = Math.max(leftBoundary, Math.min(newPosition, rightBoundary));
         
         setPositions(prev => {
             const newPositions = [...prev];
@@ -94,7 +94,7 @@ const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({ testPdf, solutionPd
             return newPositions;
         });
 
-    }, [isDragging, positions]);
+    }, [isDragging, positions, numPanels]);
 
     useEffect(() => {
         if (isDragging !== null) {
@@ -107,24 +107,25 @@ const ThreePanelLayout: React.FC<ThreePanelLayoutProps> = ({ testPdf, solutionPd
         };
     }, [isDragging, handleMouseMove, handleMouseUp]);
     
-    const panel1Width = positions[0];
-    const panel2Width = positions[1] - positions[0];
-    const panel3Width = 100 - positions[1];
+    const panelWidths = positions.map((pos, i) => {
+        const prevPos = i > 0 ? positions[i - 1] : 0;
+        return pos - prevPos;
+    });
+    panelWidths.push(100 - positions[positions.length - 1]);
 
     return (
          <div ref={containerRef} className="flex h-full w-full overflow-hidden">
-             {isDragging !== null && <div className="absolute inset-0 z-30" />}
-            <div style={{ width: `${panel1Width}%` }} className="relative h-full">
-                {testPdf}
-            </div>
-            <DraggableDivider onMouseDown={handleMouseDown(0)} />
-            <div style={{ width: `${panel2Width}%` }} className="relative h-full">
-                {solutionPdf}
-            </div>
-            <DraggableDivider onMouseDown={handleMouseDown(1)} />
-            <div style={{ width: `${panel3Width}%` }} className="h-full">
-                {scantron}
-            </div>
+            {isDragging !== null && <div className="absolute inset-0 z-30" />}
+            {panels.map((panel, index) => (
+                <React.Fragment key={index}>
+                    <div style={{ width: `${panelWidths[index]}%` }} className="relative h-full">
+                        {panel}
+                    </div>
+                    {index < panels.length - 1 && (
+                        <DraggableDivider onMouseDown={handleMouseDown(index)} />
+                    )}
+                </React.Fragment>
+            ))}
         </div>
     )
 }
@@ -149,17 +150,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   
-  // Two-panel layout state
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
-  const [dividerPosition, setDividerPosition] = useState(50);
-  const [isDragging, setIsDragging] = useState(false);
   
   const [isClient, setIsClient] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+
+  const isStatsTest = test.division === 'Stats';
 
   useEffect(() => {
     setIsClient(true);
@@ -197,13 +196,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setReviewData(newReviewData);
       setScoreReport(report);
       setUserAnswers(initialAnswers);
-      setIsScoreModalOpen(false); // Don't show modal when reviewing from history
+      setIsScoreModalOpen(false);
     } else if (user) {
       const savedProgress = getInProgressAnswers(user.uid, test.id);
       if (savedProgress) {
         setUserAnswers(savedProgress);
       } else {
-        setUserAnswers({}); // ensure it's a clean slate
+        setUserAnswers({});
       }
       setReviewData(null);
       setScoreReport(null);
@@ -211,14 +210,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   }, [isReviewFromHistory, solution, initialAnswers, user, test.id, createReviewData]);
 
   useEffect(() => {
-    // Only save progress if we are in practice mode (not reviewing)
     if (user && reviewData === null) {
       saveInProgressAnswers(user.uid, test.id, userAnswers);
     }
   }, [userAnswers, user, test.id, reviewData]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    if (reviewData) return; // Disallow changes in review mode
+    if (reviewData) return;
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
@@ -228,32 +226,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       }
       return newAnswers;
     });
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-
-    const startX = e.clientX;
-    const containerWidth = containerRef.current?.offsetWidth ?? 0;
-    const initialPosition = dividerPosition;
-    const startWidth = containerWidth * (initialPosition / 100);
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const dx = moveEvent.clientX - startX;
-      const newWidth = startWidth + dx;
-      const newPosition = (newWidth / containerWidth) * 100;
-      setDividerPosition(Math.max(20, Math.min(80, newPosition)));
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
   };
 
   const handleSubmit = () => {
@@ -331,63 +303,50 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       )}
     </div>
   );
-
-  const mainContent = (
-    <div className="flex h-full w-full">
-      {isPracticeMode ? (
-          // Two-panel layout for practice
-          <div ref={containerRef} className="flex h-full w-full">
-              <div
-                  className={cn(
-                  'relative h-full transition-all duration-300',
-                  isPdfFullScreen && 'w-full'
-                  )}
-                  style={{ width: isPdfFullScreen ? '100%' : `${dividerPosition}%` }}
-              >
-                  {isDragging && (
-                      <div className="absolute inset-0 z-30" />
-                  )}
-                  <PDFDisplay url={test.url} />
-                  <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
-                      onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
-                  >
-                      {isPdfFullScreen ? <Minimize /> : <Maximize />}
-                  </Button>
-              </div>
-
-              {!isPdfFullScreen && (
-              <>
-                  <DraggableDivider onMouseDown={handleMouseDown} />
-                  <div className="h-full flex-1">
-                      <Scantron
-                          userAnswers={userAnswers}
-                          onAnswerSelect={handleAnswerSelect}
-                          reviewData={reviewData}
-                      />
-                  </div>
-              </>
-              )}
-        </div>
-      ) : (
-          // Three-panel layout for review
-          <ThreePanelLayout 
-              testPdf={<PDFDisplay url={test.url} />}
-              solutionPdf={<PDFDisplay url={solution?.url || test.url} />}
-              scantron={
-                <Scantron
-                    userAnswers={userAnswers}
-                    onAnswerSelect={handleAnswerSelect}
-                    reviewData={reviewData}
-                />
-              }
-          />
-      )}
+  
+  const testPdfPanel = (
+    <div className={cn('relative h-full transition-all duration-300', isPdfFullScreen && 'w-full')}>
+        {isPdfFullScreen && <div className="absolute inset-0 z-30" />}
+        <PDFDisplay url={test.url} />
+        <Button
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
+            onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
+        >
+            {isPdfFullScreen ? <Minimize /> : <Maximize />}
+        </Button>
     </div>
   );
 
+  const scantronPanel = (
+    <Scantron
+      userAnswers={userAnswers}
+      onAnswerSelect={handleAnswerSelect}
+      reviewData={reviewData}
+    />
+  );
+  
+  let panels: React.ReactNode[] = [];
+  if (isPracticeMode) {
+      panels = isStatsTest 
+          ? [testPdfPanel, scantronPanel, <Ti84Calculator key="ti84" />]
+          : [testPdfPanel, scantronPanel];
+  } else { // Review Mode
+      const solutionPdfPanel = <PDFDisplay url={solution?.url || test.url} />;
+      panels = isStatsTest
+        ? [testPdfPanel, solutionPdfPanel, scantronPanel, <Ti84Calculator key="ti84" />]
+        : [testPdfPanel, solutionPdfPanel, scantronPanel];
+  }
+
+
+  if (isPdfFullScreen) {
+      return (
+          <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
+              {testPdfPanel}
+          </div>
+      )
+  }
 
   return (
     <>
@@ -396,7 +355,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             {headerActions}
         </header>
         <div className="flex-1 overflow-hidden">
-            {mainContent}
+            <MultiPanelLayout panels={panels} />
         </div>
       </div>
 
