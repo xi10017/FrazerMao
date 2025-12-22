@@ -105,6 +105,10 @@ export default function SettingsPage() {
     // First, update the user's profile setting
     setDoc(userProfileRef, updatedData, { merge: true })
         .then(() => {
+            toast({
+                title: 'Privacy settings updated!',
+                description: `You will now be ${checked ? 'shown on' : 'hidden from'} leaderboards.`,
+            });
             // After the profile is updated, trigger the leaderboard update.
             // This ensures the leaderboard uses the latest privacy setting.
             updateUserLeaderboardEntries(firestore, user);
