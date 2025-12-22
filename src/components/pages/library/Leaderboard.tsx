@@ -140,22 +140,27 @@ const LeaderboardTable = ({
 
 const DivisionLeaderboard = ({ division }: { division: string }) => {
   const firestore = useFirestore();
+  
+  // Query only by ordering, remove the 'where' clause to avoid needing a composite index.
   const leaderBoardQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
       collection(firestore, 'leaderboard_by_division'),
-      where('division', '==', division),
       orderBy('testsCompleted', 'desc'),
-      limit(100) // Fetch more to allow for client-side filtering
+      limit(200) // Fetch more to allow for client-side filtering
     );
-  }, [firestore, division]);
+  }, [firestore]);
 
   const { data: leaderboardData, isLoading: isLeaderboardLoading } =
     useCollection<LeaderboardEntry>(leaderBoardQuery);
     
+  // Filter on the client-side
   const filteredData = useMemo(() => {
-      return leaderboardData?.filter(entry => entry.showOnLeaderboard).slice(0, 25) || null;
-  }, [leaderboardData]);
+      if (!leaderboardData) return null;
+      return leaderboardData
+        .filter(entry => entry.showOnLeaderboard && entry.division === division)
+        .slice(0, 25);
+  }, [leaderboardData, division]);
 
   return (
     <LeaderboardTable
@@ -171,7 +176,7 @@ export const Leaderboard = () => {
 
   const overallLeaderboardQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // Remove the where clause to avoid needing a composite index
+    // Query without `where` to avoid needing a composite index
     return query(
       collection(firestore, 'leaderboard_overall'),
       orderBy('testsCompleted', 'desc'),
@@ -183,7 +188,7 @@ export const Leaderboard = () => {
     useCollection<LeaderboardEntry>(overallLeaderboardQuery);
 
   const filteredOverallData = useMemo(() => {
-      // Filter on the client-side
+      // Filter on the client-side for privacy
       return overallData?.filter(entry => entry.showOnLeaderboard).slice(0, 100) || null;
   }, [overallData]);
 
