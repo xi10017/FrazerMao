@@ -1,0 +1,125 @@
+/**
+ * This ruleset enforces a security model for a leaderboard application.
+ *
+ * Core Philosophy:
+ * The security model is designed to be highly secure by default. It follows a
+ * "write-once, read-many" pattern. Authenticated users can submit their own
+ * "TestCompletion" records, but cannot read, update, or delete them after
+ * submission. All leaderboard data is considered public and read-only for clients,
+ * assuming it is aggregated and managed by a trusted backend process (e.g., Cloud Functions).
+ * This prevents clients from tampering with leaderboard scores.
+ *
+ * Data Structure:
+ * The data is organized into three distinct top-level collections:
+ * 1. /testCompletions: Stores raw, private records of each test completed by a user.
+ * 2. /leaderboard_overall: Stores public, aggregated scores for all users.
+ * 3. /leaderboard_by_division: Stores public, aggregated scores filtered by division.
+ * This flat structure isolates permissions and improves query performance.
+ *
+ * Key Security Decisions:
+ * - Write-Once for Test Completions: Users can create their own completion records but cannot
+ *   modify or read them back. This ensures data integrity and privacy, as raw
+ *   completion data is not exposed to any client.
+ * - Read-Only Leaderboards: All leaderboard collections are publicly readable but are
+ *   completely locked down from client-side writes. This enforces the architectural
+ *   assumption that a trusted server environment is responsible for calculating and
+ *   maintaining scores.
+ * - No User Data Listing: To protect user privacy, there is no mechanism for one user
+ *   to list the raw data of another.
+ *
+ * Denormalization for Authorization:
+ * Each `TestCompletion` document contains a `userId` field. This allows a simple and
+ * performant rule to verify that a user is creating a record for themselves without
+ * needing any extra document reads.
+ *
+ * Structural Segregation:
+ * Raw, private data (`testCompletions`) is stored in a separate collection from the
+ * public, aggregated data (`leaderboard_*` collections). This is a critical design
+ * choice that allows for simple, secure rules for public listing without accidentally
+ * exposing sensitive user activity.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions to improve readability and maintainability.
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Validates that a user is creating a TestCompletion record for themselves.
+     * This is a critical check to ensure users can only submit their own scores.
+     * It enforces both authentication and ownership of the new data.
+     */
+    function isCreatingOwnRecord() {
+      return isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    /**
+     * @description
+     *   Rules for the `testCompletions` collection. This collection stores raw,
+     *   private records of tests completed by users. The rules enforce a "write-once"
+     *   policy where users can only create records for themselves. All other
+     *   client access (read, update, delete) is denied to protect privacy and
+     *   prevent tampering.
+     * @path /testCompletions/{testCompletionId}
+     * @allow (create) An authenticated user creating a record with their own UID in the `userId` field.
+     * @deny (create) An authenticated user trying to create a record for another user.
+     * @deny (get, list, update, delete) Any user trying to read or modify any record.
+     * @principle
+     *   Enforces data privacy and integrity by allowing users to submit their own data
+     *   but preventing them (or anyone else) from reading or modifying the raw records.
+     */
+    match /testCompletions/{testCompletionId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if isCreatingOwnRecord();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description
+     *   Rules for the overall leaderboard. This collection is public and read-only
+     *   for all clients. It is assumed to be populated by a trusted backend process.
+     * @path /leaderboard_overall/{leaderboardEntryId}
+     * @allow (get, list) Any user (authenticated or not) can read the overall leaderboard.
+     * @deny (create, update, delete) No client is allowed to write to the leaderboard.
+     * @principle
+     *   Provides public read access for application features while completely protecting
+     *   the data from client-side modification, ensuring score integrity.
+     */
+    match /leaderboard_overall/{leaderboardEntryId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description
+     *   Rules for the division-specific leaderboards. This collection is public and
+     *   read-only for all clients. Like the overall leaderboard, it is assumed
+     *   to be populated by a trusted backend process.
+     * @path /leaderboard_by_division/{leaderboardEntryId}
+     * @allow (get, list) Any user (authenticated or not) can read the division leaderboards.
+     * @deny (create, update, delete) No client is allowed to write to the leaderboard.
+     * @principle
+     *   Provides public read access for application features while completely protecting
+     *   the data from client-side modification, ensuring score integrity.
+     */
+    match /leaderboard_by_division/{leaderboardEntryId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
