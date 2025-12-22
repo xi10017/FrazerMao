@@ -2,42 +2,31 @@
  * This ruleset enforces a security model for a leaderboard application.
  *
  * Core Philosophy:
- * The security model is designed to be highly secure by default. It follows a
- * "write-once, read-many" pattern. Authenticated users can submit their own
- * "TestCompletion" records, but cannot read, update, or delete them after
- * submission. All leaderboard data is considered public and read-only for clients,
- * assuming it is aggregated and managed by a trusted backend process (e.g., Cloud Functions).
- * This prevents clients from tampering with leaderboard scores.
+ * This model uses a nested data structure for user-specific data to simplify
+ * security rules and ensure users can only access their own information.
+ * Publicly readable data (leaderboards, user profiles) is kept in separate
+ * top-level collections.
  *
  * Data Structure:
- * The data is organized into three distinct top-level collections:
- * 1. /testCompletions: Stores raw, private records of each test completed by a user.
+ * 1. /users/{userId}: Stores public user profile information.
+ *    - /testCompletions/{completionId}: A subcollection storing private test
+ *      completion records for that specific user.
  * 2. /leaderboard_overall: Stores public, aggregated scores for all users.
  * 3. /leaderboard_by_division: Stores public, aggregated scores filtered by division.
- * 4. /users: Stores public user profile information.
- * This flat structure isolates permissions and improves query performance.
  *
  * Key Security Decisions:
- * - Write-Once for Test Completions: Users can create their own completion records but cannot
- *   modify or read them back. This ensures data integrity and privacy, as raw
- *   completion data is not exposed to any client.
- * - Read-Only Leaderboards: All leaderboard collections are publicly readable but are
- *   completely locked down from client-side writes. This enforces the architectural
- *   assumption that a trusted server environment is responsible for calculating and
- *   maintaining scores.
- * - Public User Profiles: User profiles are publicly readable to display names on leaderboards,
- *   but a user can only write to their own profile document.
- *
- * Denormalization for Authorization:
- * Each `TestCompletion` document contains a `userId` field. This allows a simple and
- * performant rule to verify that a user is creating a record for themselves without
- * needing any extra document reads.
- *
- * Structural Segregation:
- * Raw, private data (`testCompletions`) is stored in a separate collection from the
- * public, aggregated data (`leaderboard_*` collections). This is a critical design
- * choice that allows for simple, secure rules for public listing without accidentally
- * exposing sensitive user activity.
+ * - Nested Test Completions: By placing `testCompletions` as a subcollection
+ *   of `users`, we can create a simple, powerful security rule. A user can
+ *   read and write to any document within their own `/users/{userId}` path,
+ *   but has no access to anyone else's. This solves the "rules are not filters"
+ *   problem for queries, as any query on this subcollection is inherently
+ *   scoped to the correct user.
+ * - Read-Only Public Leaderboards: All leaderboard collections are publicly
+ *   readable but are completely locked down from client-side writes. This
+ *   enforces the architectural assumption that a trusted server environment
+ *   is responsible for calculating and maintaining scores.
+ * - Public User Profiles: User profiles are publicly readable to display names
+ *   on leaderboards, but a user can only write to their own profile document.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -53,13 +42,6 @@ service cloud.firestore {
     }
 
     /**
-     * Validates that a user is creating a TestCompletion record for themselves.
-     */
-    function isCreatingOwnRecord() {
-      return isSignedIn() && request.resource.data.userId == request.auth.uid;
-    }
-    
-    /**
      * Checks if the user is accessing their own document.
      */
     function isOwner(userId) {
@@ -67,28 +49,27 @@ service cloud.firestore {
     }
     
     /**
-     * Validates that a user is querying for their own records.
-     * This rule ensures that a 'where' clause on 'userId' is present and
-     * matches the authenticated user's UID.
-     */
-    function isQueryingOwnRecords() {
-      return isSignedIn() && request.query.resource.data.userId == request.auth.uid;
-    }
-
-    /**
      * @description
-     *   Rules for the `testCompletions` collection. This collection stores raw,
-     *   private records of tests completed by users. The rules enforce a "write-once"
-     *   policy where users can only create records for themselves. Reading individual
-     *   documents is blocked, but querying for one's own documents is allowed.
-     * @path /testCompletions/{testCompletionId}
+     *  Rules for user profiles and their subcollections.
+     * @path /users/{userId}
      */
-    match /testCompletions/{testCompletionId} {
-      allow get: if false;
-      allow list: if isQueryingOwnRecords();
-      allow create: if isCreatingOwnRecord();
-      allow update: if false;
+    match /users/{userId} {
+      // User profiles are public for leaderboards, but only the owner can write.
+      allow get: if true;
+      allow list: if true;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
       allow delete: if false;
+
+      /**
+       * @description
+       *   Rules for a user's private `testCompletions` subcollection.
+       *   Access is granted only to the owner of the parent user document.
+       * @path /users/{userId}/testCompletions/{testCompletionId}
+       */
+      match /testCompletions/{testCompletionId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     /**
@@ -116,20 +97,6 @@ service cloud.firestore {
       allow list: if true;
       allow create: if false;
       allow update: if false;
-      allow delete: if false;
-    }
-    
-     /**
-     * @description
-     *  Rules for user profiles. User data is public for leaderboards,
-     *  but users can only write to their own profile.
-     * @path /users/{userId}
-     */
-    match /users/{userId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
       allow delete: if false;
     }
   }

@@ -115,14 +115,18 @@
   "firestore": {
     "structure": [
       {
-        "path": "testCompletions/{testCompletionId}",
+        "path": "users/{userId}/testCompletions/{testCompletionId}",
         "definition": {
           "entityName": "TestCompletion",
           "schema": {
             "$ref": "#/backend/entities/TestCompletion"
           },
-          "description": "Stores individual test completion records.  Authorization rules should allow users to create their own records and admins to read all.",
+          "description": "Stores individual test completion records for a specific user.",
           "params": [
+            {
+              "name": "userId",
+              "description": "The user's unique ID."
+            },
             {
               "name": "testCompletionId",
               "description": "Unique identifier for the test completion record."
@@ -179,6 +183,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support leaderboards based on the number of tests completed, both overall and by division.  The core design principle is Authorization Independence, achieved primarily through the structure and denormalization of data. Since only leaderboards are asked for, and auth is assumed, only those are focused on.\n\n1.  **`testCompletions/{testCompletionId}`**: Stores individual test completion records. This collection is segregated for test completion records, ensuring a homogeneous security posture. Authorization rules should allow users to create their own test completion records and admins to read all.\n\n2.  **`leaderboard_overall/{leaderboardEntryId}`**: Stores aggregated leaderboard data for overall test completions.  Each document represents a user's total tests completed across all divisions.  The `userId` field links back to the User document.  This approach supports QAPs for displaying the overall leaderboard.\n\n3.  **`leaderboard_by_division/{leaderboardEntryId}`**: Stores aggregated leaderboard data specific to each division.  Each document represents a user's total tests completed within a particular division, indicated by the `division` field.  This approach supports QAPs for displaying leaderboards filtered by division.\n\n4. **`users/{userId}`**: Stores public user profiles. This is necessary to display user names and avatars on the leaderboard. Rules allow public reads but only let a user write to their own document.\n\nThis structure avoids hierarchical authorization dependencies. The denormalization strategy ensures Authorization Independence by including all necessary authorization data within each document. The use of separate collections (`leaderboard_overall` and `leaderboard_by_division`) facilitates secure list operations, ensuring that rules are not filters and that users can only access the data they are authorized to see."
+    "reasoning": "The Firestore data structure is designed to support leaderboards based on the number of tests completed, both overall and by division. The core design principle is to ensure data security and query efficiency.\n\n1. **`users/{userId}/testCompletions/{testCompletionId}`**: This is a subcollection under each user's document. This structure is inherently secure and efficient for fetching a specific user's data. Security rules can simply enforce that a user can only access their own subcollections, which completely resolves the 'rules are not filters' problem for listing completions.\n\n2. **`leaderboard_overall/{leaderboardEntryId}`** and **`leaderboard_by_division/{leaderboardEntryId}`**: These top-level collections store aggregated, denormalized data. They are made publicly readable for leaderboard display. A trusted backend process (like a Cloud Function, not implemented here) would be responsible for aggregating the data from `testCompletions` and updating these collections. This separation of raw user data and public aggregated data is a secure and standard pattern.\n\n3. **`users/{userId}`**: Stores public user profiles (name, avatar) needed for the leaderboard. Rules allow public reads but restrict writes to the user themselves."
   }
 }
