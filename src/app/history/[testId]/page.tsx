@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import type { FamatTest, TestSubmission, AnyFamatTest } from '@/lib/types';
 import famatTests from '@/data/famat_tests.json';
 import { getTestId, getTestName } from '@/lib/test-logic';
@@ -34,6 +34,7 @@ function HistoryPage() {
   const testId = params.testId as string;
 
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,18 +46,22 @@ function HistoryPage() {
   }, [testId]);
 
   useEffect(() => {
-    setIsLoading(true);
-    if (user && testId) {
-      const allSubmissions = getSubmissionsForUser(user.uid);
-      const testSubmissions = allSubmissions
-        .filter((sub) => sub.testId === testId)
-        .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
-      setSubmissions(testSubmissions);
-    } else {
-      setSubmissions([]);
+    const fetchSubmissions = async () => {
+        if (user && testId && firestore) {
+            setIsLoading(true);
+            const allSubmissions = await getSubmissionsForUser(firestore, user.uid);
+            const testSubmissions = allSubmissions
+              .filter((sub) => sub.testId === testId)
+              .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+            setSubmissions(testSubmissions);
+            setIsLoading(false);
+        } else if (!isUserLoading) {
+            setSubmissions([]);
+            setIsLoading(false);
+        }
     }
-    setIsLoading(false);
-  }, [user, testId]);
+    fetchSubmissions();
+  }, [user, testId, firestore, isUserLoading]);
 
   if (isLoading || isUserLoading) {
     return (

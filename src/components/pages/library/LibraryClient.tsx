@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { FamatTest, FamatTestWithHistory, TestSubmission } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { getSubmissionsForUser, getInProgressAnswers } from '@/lib/localStorage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
@@ -15,22 +15,24 @@ interface LibraryClientProps {
 
 const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isUserLoading) {
+    const fetchSubmissions = async () => {
+      if (user && firestore) {
         setIsLoading(true);
-        return;
-    }
-    if (user) {
-        const storedSubmissions = getSubmissionsForUser(user.uid);
+        const storedSubmissions = await getSubmissionsForUser(firestore, user.uid);
         setSubmissions(storedSubmissions);
-    } else {
+        setIsLoading(false);
+      } else if (!isUserLoading) {
         setSubmissions([]); // Clear submissions if user logs out
+        setIsLoading(false);
+      }
     }
-    setIsLoading(false);
-  }, [user, isUserLoading]);
+    fetchSubmissions();
+  }, [user, firestore, isUserLoading]);
 
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
@@ -106,7 +108,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       .sort((a, b) => b.year - a.year || a.division.localeCompare(b.division));
   }, [testsWithHistory, startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
 
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
      return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="text-center">
