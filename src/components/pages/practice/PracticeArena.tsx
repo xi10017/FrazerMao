@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
 import { gradeTest } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import {
   saveSubmission,
   getInProgressAnswers,
@@ -160,6 +160,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
 
   useEffect(() => {
@@ -267,7 +268,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       return;
     }
 
-    if (!user) {
+    if (!user || !firestore) {
       toast({
         variant: 'destructive',
         title: 'Not Signed In',
@@ -277,7 +278,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
 
     const report = gradeTest(userAnswers, solution.answers);
-    saveSubmission(user.uid, test, userAnswers, report);
+    saveSubmission(firestore, user.uid, test, userAnswers, report);
     clearInProgressAnswers(user.uid, test.id);
 
     toast({

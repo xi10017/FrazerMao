@@ -69,8 +69,8 @@ export default function SettingsPage() {
     if (!user) return;
     clearAllUserData(user.uid);
     toast({
-      title: 'Data Cleared',
-      description: 'All your test history and progress has been deleted.',
+      title: 'Local Data Cleared',
+      description: 'Your in-progress test data has been deleted. Submitted test history must be cleared from the database by an administrator.',
     });
     setConfirmationText(''); // Reset for next time
     // Optional: redirect or refresh to reflect changes
@@ -177,15 +177,14 @@ export default function SettingsPage() {
               <AlertDialogTrigger asChild>
                 <Button variant="outline">
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear All Test Data
+                  Clear All Local Data
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all of your saved test
-                    submissions and in-progress work. To confirm, please type{' '}
+                    This will permanently delete all of your saved in-progress work. Submitted test history is stored in the database and is not affected. To confirm, please type{' '}
                     <code className="font-mono bg-muted p-1 rounded-md text-foreground">delete my data</code>{' '}
                     in the box below.
                   </AlertDialogDescription>

@@ -1,8 +1,20 @@
+
 'use client';
 
 import type { TestSubmission, UserAnswers, ScoreReport, FamatTest } from './types';
 import famatTests from '@/data/famat_tests.json';
 import { getTestId } from './test-logic';
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+  Firestore,
+} from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 // NOTE: This will only work on the client-side.
 // Ensure these functions are only called from 'use client' components.
@@ -10,61 +22,79 @@ import { getTestId } from './test-logic';
 // --- Final Submissions ---
 
 /**
- * Retrieves all test submissions for a specific user from localStorage.
+ * Retrieves all test submissions for a specific user from Firestore.
+ * @param db The Firestore instance.
  * @param userId The UID of the user.
  * @returns An array of TestSubmission objects.
  */
-export function getSubmissionsForUser(userId: string): TestSubmission[] {
+export async function getSubmissionsForUser(db: Firestore, userId: string): Promise<TestSubmission[]> {
   if (typeof window === 'undefined') return [];
   try {
-    const submissionsJSON = window.localStorage.getItem(`submissions_${userId}`);
-    if (!submissionsJSON) {
-      return [];
-    }
-    const submissions = JSON.parse(submissionsJSON) as TestSubmission[];
-    // Re-hydrate Date objects from strings
-    return submissions.map(sub => ({
-        ...sub,
-        submittedAt: new Date(sub.submittedAt),
-    }));
+    const submissionsRef = collection(db, 'testCompletions');
+    const q = query(submissionsRef, where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    
+    const submissions: TestSubmission[] = [];
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        submissions.push({
+            ...data,
+            id: doc.id,
+            submittedAt: (data.submittedAt as Timestamp).toDate(),
+        } as TestSubmission);
+    });
+
+    return submissions;
+
   } catch (error) {
-    console.error("Failed to get submissions from localStorage:", error);
+    console.error("Failed to get submissions from Firestore:", error);
+    // In a real app, you might want to handle this more gracefully
     return [];
   }
 }
 
+
 /**
- * Adds a new test submission for a user to localStorage.
+ * Adds a new test submission for a user to Firestore.
+ * @param db The Firestore instance.
  * @param userId The UID of the user.
  * @param test The test object.
  * @param userAnswers The user's answers.
  * @param scoreReport The calculated score report.
  */
 export function saveSubmission(
+    db: Firestore,
     userId: string, 
     test: FamatTest, 
     userAnswers: UserAnswers, 
     scoreReport: ScoreReport
-): TestSubmission | null {
-    if (typeof window === 'undefined') return null;
+) {
+    if (typeof window === 'undefined') return;
     try {
-        const allSubmissions = getSubmissionsForUser(userId);
-        const newSubmission: TestSubmission = {
-            id: `${test.id}-${new Date().toISOString()}`, // Create a unique-enough ID
+        const submissionsRef = collection(db, 'testCompletions');
+        const newSubmission = {
             testId: test.id,
             userId,
             answers: userAnswers,
             score: scoreReport,
-            submittedAt: new Date(),
+            submittedAt: Timestamp.now(),
+            division: test.division,
+            testName: getTestName(test),
+            completionDate: new Date().toISOString(),
         };
 
-        allSubmissions.unshift(newSubmission); // Add to the beginning
+        addDoc(submissionsRef, newSubmission)
+            .catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: submissionsRef.path,
+                    operation: 'create',
+                    requestResourceData: newSubmission,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
 
-        window.localStorage.setItem(`submissions_${userId}`, JSON.stringify(allSubmissions));
-        return newSubmission;
     } catch (error) {
-        console.error("Failed to save submission to localStorage:", error);
-        return null;
+        console.error("Failed to save submission to Firestore:", error);
     }
 }
 
@@ -135,10 +165,13 @@ export function clearInProgressAnswers(userId: string, testId: string) {
 export function clearAllUserData(userId: string) {
     if (typeof window === 'undefined') return;
     try {
-        // Clear all submissions
-        window.localStorage.removeItem(`submissions_${userId}`);
+        // This function will need to be updated to delete Firestore data,
+        // which is a more complex operation and should be handled with care,
+        // likely via a server-side function for security and completeness.
+        // For now, we will clear the local in-progress data.
+        console.log("Clearing local data. Firestore data must be cleared server-side.");
 
-        // Clear all in-progress tests for the user
+        // Clear all in-progress tests for the user from local storage
         const tests = (famatTests as FamatTest[]).filter(t => t.document_type === 'Test');
         tests.forEach(test => {
             const testId = getTestId(test);
