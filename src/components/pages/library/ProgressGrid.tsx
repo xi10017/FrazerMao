@@ -170,8 +170,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
             <CardTitle>Progress Grid</CardTitle>
             <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="w-full overflow-x-auto">
+        <CardContent className="overflow-x-auto">
             <Table className='border table-fixed'>
                 <TableHeader>
                 <TableRow>
@@ -199,7 +198,6 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                 ))}
                 </TableBody>
             </Table>
-          </div>
         </CardContent>
       </Card>
     </TooltipProvider>
