@@ -1,11 +1,35 @@
 'use client';
 
 import React from 'react';
+import { useTheme } from 'next-themes';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
+import { Moon, Sun, Laptop } from 'lucide-react';
+
+function ThemeSwitcher() {
+  const { setTheme } = useTheme();
+
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
+      <Button variant="ghost" size="sm" onClick={() => setTheme('light')}>
+        <Sun className="mr-2 h-4 w-4" />
+        Light
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setTheme('dark')}>
+        <Moon className="mr-2 h-4 w-4" />
+        Dark
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setTheme('system')}>
+        <Laptop className="mr-2 h-4 w-4" />
+        System
+      </Button>
+    </div>
+  );
+}
+
 
 export default function SettingsPage() {
   const { user, isUserLoading } = useUser();
@@ -46,13 +70,13 @@ export default function SettingsPage() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Coming Soon</CardTitle>
+            <CardTitle>Appearance</CardTitle>
             <CardDescription>
-              User settings and preferences will be available here in a future update.
+              Customize the look and feel of the app.
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <p>Thank you for your patience!</p>
+             <ThemeSwitcher />
           </CardContent>
         </Card>
       </div>
