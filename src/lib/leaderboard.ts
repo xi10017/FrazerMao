@@ -8,8 +8,10 @@ import {
   getDoc,
   Firestore,
   deleteDoc,
+  query,
+  where,
 } from 'firebase/firestore';
-import type { UserProfile, LeaderboardEntry } from './types';
+import type { UserProfile, LeaderboardEntry, TestSubmission } from './types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { User } from 'firebase/auth';
@@ -29,106 +31,92 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
   const testCompletionsRef = collection(db, 'users', userId, 'testCompletions');
 
   try {
-    // 1. Fetch the user's profile to get their current privacy setting.
-    const userProfileSnap = await getDoc(userProfileRef);
+    // 1. Fetch all necessary data upfront.
+    const [userProfileSnap, completionsSnapshot] = await Promise.all([
+      getDoc(userProfileRef),
+      getDocs(testCompletionsRef)
+    ]);
+    
     const userProfile = userProfileSnap.data() as UserProfile | undefined;
-    const showOnLeaderboard = userProfile?.showOnLeaderboard ?? true; // Default to visible
+    const showOnLeaderboard = userProfile?.showOnLeaderboard ?? true;
 
+    // 2. If the user wants to be hidden, delete all their leaderboard entries.
     if (!showOnLeaderboard) {
-      // If the user wants to be hidden, we should delete their leaderboard entries.
+      // Delete overall entry
       const overallRef = doc(db, 'leaderboard_overall', userId);
       deleteDoc(overallRef).catch(e => console.error("Could not delete overall leaderboard doc", e));
 
-      // We need to find all their division entries to delete them. This is inefficient but necessary.
-      // A better structure might be to have a subcollection for user leaderboard entries.
-      // For now, we query.
-      // This is not implemented as we would need to query and find all division entries.
-      // The current logic will just anonymize them.
+      // Find and delete all division-specific entries for the user
+      const divisionQuery = query(collection(db, 'leaderboard_by_division'), where('userId', '==', userId));
+      const divisionSnap = await getDocs(divisionQuery);
+      divisionSnap.forEach(doc => {
+        deleteDoc(doc.ref).catch(e => console.error(`Could not delete division entry ${doc.id}`, e));
+      });
+      
+      // Stop here, no need to create new entries.
+      return;
     }
 
+    // 3. If the user wants to be shown, proceed with updating/creating entries.
+    const displayName = user.displayName || 'Anonymous User';
+    const photoURL = user.photoURL || null;
+    const allCompletions = completionsSnapshot.docs.map(doc => doc.data() as TestSubmission);
 
-    // Determine the name and photo to display based on the privacy setting.
-    const displayName = showOnLeaderboard
-      ? user.displayName || 'Anonymous User'
-      : 'Anonymous User';
-    const photoURL = showOnLeaderboard ? user.photoURL || null : null;
-
-
-    // 2. Fetch all test completions to calculate scores.
-    const querySnapshot = await getDocs(testCompletionsRef);
-    const allCompletions = querySnapshot.docs.map((doc) => doc.data());
-
-    // 3. Update the 'Overall' leaderboard.
+    // 4. Update the 'Overall' leaderboard.
     const overallTotal = allCompletions.length;
     const overallLeaderboardRef = doc(db, 'leaderboard_overall', userId);
-    
-    if (showOnLeaderboard) {
-        const overallData: LeaderboardEntry = {
-            userId: userId,
-            testsCompleted: overallTotal,
-            division: 'Overall',
-            displayName,
-            photoURL,
-        };
-        setDoc(overallLeaderboardRef, overallData, { merge: true }).catch(
-          (error) => {
-            const permissionError = new FirestorePermissionError({
-              path: overallLeaderboardRef.path,
-              operation: 'write',
-              requestResourceData: overallData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-          }
-        );
-    } else {
-        deleteDoc(overallLeaderboardRef).catch(e => console.error("Could not delete overall leaderboard doc", e));
-    }
 
-
-    // 4. Group completions by division to update 'By Division' leaderboards.
-    const completionsByDivision: { [key: string]: any[] } =
-      allCompletions.reduce((acc, c) => {
-        if (!acc[c.division]) {
-          acc[c.division] = [];
-        }
-        acc[c.division].push(c);
-        return acc;
-      }, {} as { [key: string]: any[] });
-
-    // 5. Update each relevant 'By Division' leaderboard.
-    for (const division in completionsByDivision) {
-      const divisionTotal = completionsByDivision[division].length;
-      const divisionLeaderboardId = `${userId}_${division
-        .replace(/\s+/g, '_')
-        .toLowerCase()}`;
-      const divisionLeaderboardRef = doc(
-        db,
-        'leaderboard_by_division',
-        divisionLeaderboardId
-      );
-      
-      if (showOnLeaderboard) {
-        const divisionData: LeaderboardEntry = {
-            userId: userId,
-            testsCompleted: divisionTotal,
-            division: division,
-            displayName,
-            photoURL,
-        };
-        setDoc(divisionLeaderboardRef, divisionData, { merge: true }).catch(
-            (error) => {
-            const permissionError = new FirestorePermissionError({
-                path: divisionLeaderboardRef.path,
-                operation: 'write',
-                requestResourceData: divisionData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            }
-        );
-      } else {
-        deleteDoc(divisionLeaderboardRef).catch(e => console.error("Could not delete division leaderboard doc", e));
+    const overallData: LeaderboardEntry = {
+      userId: userId,
+      testsCompleted: overallTotal,
+      division: 'Overall',
+      displayName,
+      photoURL,
+    };
+    setDoc(overallLeaderboardRef, overallData, { merge: true }).catch(
+      (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: overallLeaderboardRef.path,
+          operation: 'write',
+          requestResourceData: overallData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       }
+    );
+
+    // 5. Group completions by division to update 'By Division' leaderboards.
+    const completionsByDivision = allCompletions.reduce((acc, c) => {
+      acc[c.division] = (acc[c.division] || 0) + 1;
+      return acc;
+    }, {} as { [key: string]: number });
+    
+
+    // 6. Update each relevant 'By Division' leaderboard.
+    for (const division in completionsByDivision) {
+      const divisionTotal = completionsByDivision[division];
+      const divisionLeaderboardId = `${userId}_${division.replace(/\s+/g, '_').toLowerCase()}`;
+      const divisionLeaderboardRef = doc(db, 'leaderboard_by_division', divisionLeaderboardId);
+      
+      const divisionData: LeaderboardEntry = {
+        userId: userId,
+        testsCompleted: divisionTotal,
+        division: division,
+        displayName,
+        photoURL,
+      };
+
+      setDoc(divisionLeaderboardRef, divisionData, { merge: true }).catch(
+        (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: divisionLeaderboardRef.path,
+            operation: 'write',
+            requestResourceData: divisionData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
+      );
     }
+
   } catch (error) {
     console.error('Could not update leaderboard entries:', error);
     // This could be a permissions error on reading testCompletions or userProfile
