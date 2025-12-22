@@ -69,4 +69,5 @@ export type UserProfile = {
     displayName: string;
     email: string;
     photoURL?: string;
+    showOnLeaderboard?: boolean;
 };

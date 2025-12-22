@@ -45,6 +45,7 @@ const createUserProfile = async (firestore: any, user: User) => {
         displayName: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
+        showOnLeaderboard: true, // Default to true on creation
     };
 
     setDoc(userRef, userData, { merge: true })
@@ -69,11 +70,13 @@ function UserAuth() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   const handleSignOut = async () => {
+    if (!auth) return;
     await signOut(auth);
     router.push('/');
   };
 
   const handleSignIn = async () => {
+    if (!auth || !firestore) return;
     const provider = new GoogleAuthProvider();
     setIsAuthLoading(true);
     try {
