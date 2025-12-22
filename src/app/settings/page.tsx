@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import {
   Card,
@@ -78,6 +78,12 @@ export default function SettingsPage() {
   }, [firestore, user]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
+  
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
 
   const handleClearData = () => {
     if (!user) return;
@@ -107,7 +113,7 @@ export default function SettingsPage() {
 
   const isConfirmationMatch = confirmationText === 'delete my data';
 
-  if (isUserLoading || (user && isProfileLoading)) {
+  if (isUserLoading || !user || (user && isProfileLoading)) {
     return (
       <div className="container mx-auto max-w-2xl p-4 sm:p-6 lg:p-8">
         <div className="space-y-6">
@@ -126,11 +132,6 @@ export default function SettingsPage() {
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    router.push('/');
-    return null;
   }
 
   return (
