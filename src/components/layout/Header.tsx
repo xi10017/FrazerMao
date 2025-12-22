@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, LogIn, Settings } from 'lucide-react';
+import { BookOpen, LogIn, Settings, User as UserIcon } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
