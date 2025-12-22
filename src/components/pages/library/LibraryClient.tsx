@@ -142,7 +142,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         selectedCompetitions={selectedCompetitions}
         setSelectedCompetitions={setSelectedCompetitions}
       />
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <Tabs defaultValue="library">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="library">Test Library</TabsTrigger>
