@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Maximize, Minimize, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -36,7 +36,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
-import { ChatTutorPanel } from './ChatTutorPanel';
 
 // --- Draggable Divider Logic ---
 
@@ -149,7 +148,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
-  const [isTutorOpen, setIsTutorOpen] = useState(false);
   
   // Two-panel layout state
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
@@ -304,7 +302,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         userAnswers={userAnswers}
         onAnswerSelect={handleAnswerSelect}
         reviewData={reviewData}
-        onAskTutor={() => setIsTutorOpen(true)}
         headerContent={
           <div className="flex items-center gap-2">
             {isClient && (
@@ -354,10 +351,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       />
   )
 
-  const pdfPanelWidth = isTutorOpen ? '65%' : '100%';
   const mainContent = (
     <div className="flex h-full w-full">
-      <div className="flex-1 transition-all duration-300" style={{ width: isPracticeMode ? 'auto' : pdfPanelWidth }}>
+      <div className="flex-1 transition-all duration-300">
       {isPracticeMode ? (
           // Two-panel layout for practice
           <div ref={containerRef} className="flex h-full w-full">
@@ -400,11 +396,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           />
       )}
     </div>
-    {isTutorOpen && (
-      <div className="w-[35%] h-full">
-        <ChatTutorPanel onClose={() => setIsTutorOpen(false)} />
-      </div>
-    )}
   </div>
   );
 
@@ -412,15 +403,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   return (
     <>
       <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-         <Button
-            variant="outline"
-            size="icon"
-            className="absolute top-[calc(3.5rem+1rem)] right-4 z-20"
-            onClick={() => setIsTutorOpen(!isTutorOpen)}
-            title="Toggle AI Tutor"
-        >
-            {isTutorOpen ? <PanelRightClose/> : <PanelRightOpen />}
-        </Button>
         {mainContent}
       </div>
 

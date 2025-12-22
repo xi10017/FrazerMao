@@ -13,7 +13,6 @@ interface ScantronProps {
   onAnswerSelect: (question: number, answer: string | null) => void;
   reviewData: ReviewData | null;
   headerContent: React.ReactNode;
-  onAskTutor: (questionNumber: number) => void;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -44,7 +43,6 @@ export const Scantron: React.FC<ScantronProps> = ({
   onAnswerSelect,
   reviewData,
   headerContent,
-  onAskTutor,
 }) => {
   const questionNumbers = Array.from(
     { length: TOTAL_QUESTIONS },
@@ -92,9 +90,6 @@ export const Scantron: React.FC<ScantronProps> = ({
               <div className="flex items-center gap-2">
                 {isReviewMode && reviewData?.[qNum] ? (
                   <div className="flex items-center gap-2">
-                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onAskTutor(qNum)}>
-                        <Lightbulb className="h-4 w-4 text-yellow-400" />
-                    </Button>
                     <div className="text-right text-sm font-bold">
                         {reviewData[qNum].userAnswer === undefined ||
                         reviewData[qNum].userAnswer === null ? (
