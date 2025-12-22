@@ -1,6 +1,6 @@
 'use client';
 
-import type { TestSubmission, UserAnswers, ScoreReport, FamatTest } from './types';
+import type { TestSubmission, UserAnswers, ScoreReport, FamatTest, UserProfile } from './types';
 import { getTestName } from './test-logic';
 import {
   collection,
@@ -12,6 +12,7 @@ import {
   doc,
   setDoc,
   where,
+  getDoc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -65,9 +66,19 @@ async function updateLeaderboards(db: Firestore, userId: string, submittedDivisi
     const user = getAuth().currentUser;
     if (!user) return; // Not signed in
 
+    const userProfileRef = doc(db, 'users', userId);
     const testCompletionsRef = collection(db, 'users', userId, 'testCompletions');
 
     try {
+        const userProfileSnap = await getDoc(userProfileRef);
+        const userProfile = userProfileSnap.data() as UserProfile | undefined;
+        // Default to true if the setting is not present
+        const showOnLeaderboard = userProfile?.showOnLeaderboard ?? true;
+
+        const displayName = showOnLeaderboard ? (user.displayName || 'Anonymous User') : 'Anonymous User';
+        const photoURL = showOnLeaderboard ? (user.photoURL || undefined) : undefined;
+
+
         const querySnapshot = await getDocs(testCompletionsRef);
         const allCompletions = querySnapshot.docs.map(doc => doc.data());
 
@@ -78,8 +89,8 @@ async function updateLeaderboards(db: Firestore, userId: string, submittedDivisi
             userId: userId,
             testsCompleted: overallTotal,
             division: 'Overall',
-            displayName: user.displayName,
-            photoURL: user.photoURL,
+            displayName,
+            photoURL,
         };
         // Use setDoc with merge to create or update
         setDoc(overallLeaderboardRef, overallData, { merge: true })
@@ -101,8 +112,8 @@ async function updateLeaderboards(db: Firestore, userId: string, submittedDivisi
             userId: userId,
             testsCompleted: divisionTotal,
             division: submittedDivision,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
+            displayName,
+            photoURL,
         };
          // Use setDoc with merge to create or update
         setDoc(divisionLeaderboardRef, divisionData, { merge: true })

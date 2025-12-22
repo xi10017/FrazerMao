@@ -48,6 +48,10 @@
           "type": "string",
           "format": "uri",
           "description": "URL to the user's profile picture."
+        },
+        "showOnLeaderboard": {
+          "type": "boolean",
+          "description": "Whether the user wishes to appear on public leaderboards. Defaults to true."
         }
       },
       "required": [
