@@ -6,7 +6,8 @@ import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
 import { useUser } from '@/firebase';
 import { getSubmissionsForUser, getInProgressAnswers } from '@/lib/localStorage';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ProgressGrid } from './ProgressGrid';
 
 interface LibraryClientProps {
   tests: FamatTest[];
@@ -47,9 +48,13 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
     return tests.map(test => {
         const hasInProgress = !!getInProgressAnswers(user.uid, test.id);
+        const testSubmissions = submissionsByTestId[test.id] || [];
+        // Ensure history is sorted most recent first
+        testSubmissions.sort((a,b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+
         return {
             ...test,
-            history: submissionsByTestId[test.id] || [],
+            history: testSubmissions,
             inProgress: hasInProgress
         }
     });
@@ -138,7 +143,18 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setSelectedCompetitions={setSelectedCompetitions}
       />
       <div className="flex-1">
-        <TestList tests={filteredTests} />
+        <Tabs defaultValue="library">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="library">Test Library</TabsTrigger>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+          </TabsList>
+          <TabsContent value="library" className="mt-4">
+            <TestList tests={filteredTests} />
+          </TabsContent>
+          <TabsContent value="progress" className="mt-4">
+             <ProgressGrid tests={filteredTests} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

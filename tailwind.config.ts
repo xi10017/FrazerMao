@@ -22,6 +22,10 @@ const config = {
         headline: ['var(--font-body)'],
         code: ['var(--font-code)'],
       },
+      gridTemplateColumns: {
+        '15': 'repeat(15, minmax(0, 1fr))',
+        '30': 'repeat(30, minmax(0, 1fr))',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
