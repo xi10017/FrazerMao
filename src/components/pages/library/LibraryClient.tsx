@@ -8,6 +8,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { getSubmissionsForUser, getInProgressAnswers } from '@/lib/localStorage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
+import { Leaderboard } from './Leaderboard';
 
 interface LibraryClientProps {
   tests: FamatTest[];
@@ -146,15 +147,19 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       />
       <div className="flex-1 min-w-0">
         <Tabs defaultValue="library">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="library">Test Library</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           </TabsList>
           <TabsContent value="library" className="mt-4">
             <TestList tests={filteredTests} />
           </TabsContent>
           <TabsContent value="progress" className="mt-4">
              <ProgressGrid tests={filteredTests} />
+          </TabsContent>
+          <TabsContent value="leaderboard" className="mt-4">
+             <Leaderboard />
           </TabsContent>
         </Tabs>
       </div>

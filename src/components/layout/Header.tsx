@@ -8,8 +8,9 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
+  User,
 } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ import { Skeleton } from '../ui/skeleton';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { doc, setDoc } from 'firebase/firestore';
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -31,9 +33,28 @@ function getInitials(name?: string | null) {
   return initials.length > 2 ? initials.substring(0, 2) : initials;
 }
 
+// Function to create or update user profile in Firestore
+const createUserProfile = async (firestore: any, user: User) => {
+    if (!firestore || !user) return;
+
+    const userRef = doc(firestore, 'users', user.uid);
+    try {
+        await setDoc(userRef, {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+        }, { merge: true }); // Merge true to avoid overwriting existing data if user logs in again
+    } catch (error) {
+        console.error("Error creating user profile:", error);
+    }
+};
+
+
 function UserAuth() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -47,7 +68,8 @@ function UserAuth() {
     const provider = new GoogleAuthProvider();
     setIsAuthLoading(true);
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await createUserProfile(firestore, result.user);
       // The onAuthStateChanged listener will handle the UI update.
     } catch (error: any) {
       console.error('Error during sign-in:', error);
