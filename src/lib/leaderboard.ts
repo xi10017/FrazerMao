@@ -129,8 +129,8 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
     console.error('Could not update leaderboard entries:', error);
     // This could be a permissions error on reading testCompletions or userProfile
     const permissionError = new FirestorePermissionError({
-      path: `users/${userId}`,
-      operation: 'get',
+      path: `users/${userId}/testCompletions`,
+      operation: 'list',
     });
     errorEmitter.emit('permission-error', permissionError);
   }
