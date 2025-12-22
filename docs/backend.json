@@ -80,28 +80,32 @@
       "type": "object",
       "description": "Represents aggregated leaderboard data, showing number of tests completed per division.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the leaderboard entry."
-        },
         "userId": {
           "type": "string",
           "description": "Reference to the User. (Relationship: User 1:N Leaderboard)"
         },
         "division": {
           "type": "string",
-          "description": "The division for which the leaderboard entry is calculated."
+          "description": "The division for which the leaderboard entry is calculated. Can be 'Overall' for all divisions."
         },
         "testsCompleted": {
           "type": "number",
           "description": "The number of tests completed by the user in the specified division."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name for leaderboard display."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "The user's photo URL for leaderboard display."
         }
       },
       "required": [
-        "id",
         "userId",
         "division",
-        "testsCompleted"
+        "testsCompleted",
+        "displayName"
       ]
     }
   },
@@ -135,33 +139,33 @@
         }
       },
       {
-        "path": "leaderboard_overall/{leaderboardEntryId}",
+        "path": "leaderboard_overall/{userId}",
         "definition": {
           "entityName": "Leaderboard",
           "schema": {
             "$ref": "#/backend/entities/Leaderboard"
           },
-          "description": "Stores aggregated leaderboard data for overall test completions.  Each document represents a user's total tests completed across all divisions.",
+          "description": "Stores aggregated leaderboard data for overall test completions. The document ID is the user's UID.",
           "params": [
             {
-              "name": "leaderboardEntryId",
-              "description": "Unique identifier for the leaderboard entry."
+              "name": "userId",
+              "description": "The user's unique ID."
             }
           ]
         }
       },
       {
-        "path": "leaderboard_by_division/{leaderboardEntryId}",
+        "path": "leaderboard_by_division/{entry_id}",
         "definition": {
           "entityName": "Leaderboard",
           "schema": {
             "$ref": "#/backend/entities/Leaderboard"
           },
-          "description": "Stores aggregated leaderboard data specific to each division.  Each document represents a user's total tests completed within a particular division.",
+          "description": "Stores aggregated leaderboard data specific to each division. The document ID is a unique combination of userId and division.",
           "params": [
-            {
-              "name": "leaderboardEntryId",
-              "description": "Unique identifier for the leaderboard entry."
+             {
+              "name": "entry_id",
+              "description": "A unique ID, typically a composite of userId and division."
             }
           ]
         }
@@ -183,6 +187,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support leaderboards based on the number of tests completed, both overall and by division. The core design principle is to ensure data security and query efficiency.\n\n1. **`users/{userId}/testCompletions/{testCompletionId}`**: This is a subcollection under each user's document. This structure is inherently secure and efficient for fetching a specific user's data. Security rules can simply enforce that a user can only access their own subcollections, which completely resolves the 'rules are not filters' problem for listing completions.\n\n2. **`leaderboard_overall/{leaderboardEntryId}`** and **`leaderboard_by_division/{leaderboardEntryId}`**: These top-level collections store aggregated, denormalized data. They are made publicly readable for leaderboard display. A trusted backend process (like a Cloud Function, not implemented here) would be responsible for aggregating the data from `testCompletions` and updating these collections. This separation of raw user data and public aggregated data is a secure and standard pattern.\n\n3. **`users/{userId}`**: Stores public user profiles (name, avatar) needed for the leaderboard. Rules allow public reads but restrict writes to the user themselves."
+    "reasoning": "The Firestore data structure is designed to support leaderboards based on the number of tests completed, both overall and by division. The core design principle is to ensure data security and query efficiency.\n\n1. **`users/{userId}/testCompletions/{testCompletionId}`**: This is a subcollection under each user's document. This structure is inherently secure and efficient for fetching a specific user's data. Security rules can simply enforce that a user can only access their own subcollections, which completely resolves the 'rules are not filters' problem for listing completions.\n\n2. **`leaderboard_overall/{userId}`** and **`leaderboard_by_division/{entry_id}`**: These top-level collections store aggregated, denormalized data. They are made publicly readable for leaderboard display. A client-side process will update these collections. This separation of raw user data and public aggregated data is a secure and standard pattern.\n\n3. **`users/{userId}`**: Stores public user profiles (name, avatar) needed for the leaderboard. Rules allow public reads but restrict writes to the user themselves."
   }
 }
