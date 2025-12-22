@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, LogIn } from 'lucide-react';
+import { BookOpen, LogIn, Settings } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,6 +91,13 @@ function UserAuth() {
               </p>
             </div>
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+           <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogIn className="mr-2 h-4 w-4" />
