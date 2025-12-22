@@ -2,7 +2,7 @@
 
 import type { TestSubmission, UserAnswers, ScoreReport, FamatTest } from './types';
 import famatTests from '@/data/famat_tests.json';
-import { getTestId } from './test-logic';
+import { getTestId, getTestName } from './test-logic';
 import {
   collection,
   addDoc,
