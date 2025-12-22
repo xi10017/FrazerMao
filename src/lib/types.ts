@@ -61,13 +61,14 @@ export type LeaderboardEntry = {
   division: string;
   testsCompleted: number;
   displayName: string;
-  photoURL?: string | null;
+  photoURL: string | null;
+  showOnLeaderboard: boolean; // Field is now used for filtering reads
 };
 
 export type UserProfile = {
   uid: string;
   displayName: string;
   email: string;
-  photoURL?: string | null;
+  photoURL: string | null;
   showOnLeaderboard: boolean;
 };

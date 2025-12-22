@@ -31,11 +31,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { updateUserLeaderboardEntries } from '@/lib/leaderboard';
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -95,35 +94,56 @@ export default function SettingsPage() {
         'Your in-progress test data has been deleted. Submitted test history must be cleared from the database by an administrator.',
     });
     setConfirmationText(''); // Reset for next time
-    // Optional: redirect or refresh to reflect changes
     router.refresh();
   };
 
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
     if (!userProfileRef || !user || !firestore) return;
-    const updatedData = { showOnLeaderboard: checked };
 
-    // First, update the user's profile setting
-    setDoc(userProfileRef, updatedData, { merge: true })
-      .then(() => {
-        toast({
-          title: 'Privacy settings updated!',
-          description: `You will now be ${
-            checked ? 'shown on' : 'hidden from'
-          } leaderboards.`,
+    const updatedProfileData = { showOnLeaderboard: checked };
+    const updatedLeaderboardData = { showOnLeaderboard: checked, userId: user.uid };
+
+    try {
+        const batch = writeBatch(firestore);
+
+        // 1. Update the user's profile
+        batch.set(userProfileRef, updatedProfileData, { merge: true });
+
+        // 2. Update the overall leaderboard entry
+        const overallRef = doc(firestore, 'leaderboard_overall', user.uid);
+        batch.set(overallRef, updatedLeaderboardData, { merge: true });
+
+        // 3. Update all division-specific leaderboard entries
+        const divisionQuery = query(
+            collection(firestore, 'leaderboard_by_division'),
+            where('userId', '==', user.uid)
+        );
+        const divisionSnapshot = await getDocs(divisionQuery);
+        divisionSnapshot.forEach((doc) => {
+            batch.set(doc.ref, updatedLeaderboardData, { merge: true });
         });
-        // After the profile is updated, trigger the leaderboard update.
-        // This ensures the leaderboard uses the latest privacy setting.
-        updateUserLeaderboardEntries(firestore, user, checked);
-      })
-      .catch((error) => {
+
+        // 4. Commit all changes at once
+        await batch.commit();
+
+        toast({
+            title: 'Privacy settings updated!',
+            description: `You will now be ${
+            checked ? 'shown on' : 'hidden from'
+            } leaderboards.`,
+        });
+
+    } catch (error) {
+        console.error("Error updating leaderboard visibility:", error);
+        // This is a complex operation, so we create a generic error for now
+        // In a real app, you might create a more specific error type for this batch write
         const permissionError = new FirestorePermissionError({
-          path: userProfileRef.path,
-          operation: 'update',
-          requestResourceData: updatedData,
+            path: `user ${user.uid} batch update`,
+            operation: 'write',
+            requestResourceData: updatedLeaderboardData
         });
         errorEmitter.emit('permission-error', permissionError);
-      });
+    }
   };
 
   const isConfirmationMatch = confirmationText === 'delete my data';

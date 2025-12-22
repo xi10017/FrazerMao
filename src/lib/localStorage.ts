@@ -94,8 +94,7 @@ export function saveSubmission(
       // After successful submission, update the leaderboards
       const user = getAuth().currentUser;
       if (user) {
-        // We know the user wants to be on the leaderboard if they just submitted
-        updateUserLeaderboardEntries(db, user, true);
+        updateUserLeaderboardEntries(db, user);
       }
     })
     .catch((serverError) => {
