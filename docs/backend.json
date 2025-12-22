@@ -26,6 +26,18 @@
         "email"
       ]
     },
+    "UserProfile": {
+        "title": "User Profile",
+        "description": "Publicly available information about a user.",
+        "type": "object",
+        "properties": {
+            "uid": { "type": "string", "description": "The user's unique ID." },
+            "displayName": { "type": "string", "description": "The user's public display name." },
+            "email": { "type": "string", "format": "email", "description": "The user's email." },
+            "photoURL": { "type": "string", "format": "uri", "description": "URL to the user's profile picture." }
+        },
+        "required": ["uid", "displayName", "email"]
+    },
     "TestCompletion": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "TestCompletion",
@@ -96,7 +108,8 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "anonymous",
+      "google"
     ]
   },
   "firestore": {
@@ -148,8 +161,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores public information for users.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "User ID"
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support leaderboards based on the number of tests completed, both overall and by division.  The core design principle is Authorization Independence, achieved primarily through the structure and denormalization of data.  Since only leaderboards are asked for, and auth is assumed, only those are focused on.\n\n1.  **`testCompletions/{testCompletionId}`**: Stores individual test completion records. This collection is segregated for test completion records, ensuring a homogeneous security posture. Authorization rules should allow users to create their own test completion records and admins to read all.\n\n2.  **`leaderboard_overall/{leaderboardEntryId}`**: Stores aggregated leaderboard data for overall test completions.  Each document represents a user's total tests completed across all divisions.  The `userId` field links back to the User document.  This approach supports QAPs for displaying the overall leaderboard.\n\n3.  **`leaderboard_by_division/{leaderboardEntryId}`**: Stores aggregated leaderboard data specific to each division.  Each document represents a user's total tests completed within a particular division, indicated by the `division` field.  This approach supports QAPs for displaying leaderboards filtered by division.\n\nThis structure avoids hierarchical authorization dependencies. The denormalization strategy ensures Authorization Independence by including all necessary authorization data within each document. The use of separate collections (`leaderboard_overall` and `leaderboard_by_division`) facilitates secure list operations, ensuring that rules are not filters and that users can only access the data they are authorized to see."
+    "reasoning": "The Firestore data structure is designed to support leaderboards based on the number of tests completed, both overall and by division.  The core design principle is Authorization Independence, achieved primarily through the structure and denormalization of data. Since only leaderboards are asked for, and auth is assumed, only those are focused on.\n\n1.  **`testCompletions/{testCompletionId}`**: Stores individual test completion records. This collection is segregated for test completion records, ensuring a homogeneous security posture. Authorization rules should allow users to create their own test completion records and admins to read all.\n\n2.  **`leaderboard_overall/{leaderboardEntryId}`**: Stores aggregated leaderboard data for overall test completions.  Each document represents a user's total tests completed across all divisions.  The `userId` field links back to the User document.  This approach supports QAPs for displaying the overall leaderboard.\n\n3.  **`leaderboard_by_division/{leaderboardEntryId}`**: Stores aggregated leaderboard data specific to each division.  Each document represents a user's total tests completed within a particular division, indicated by the `division` field.  This approach supports QAPs for displaying leaderboards filtered by division.\n\n4. **`users/{userId}`**: Stores public user profiles. This is necessary to display user names and avatars on the leaderboard. Rules allow public reads but only let a user write to their own document.\n\nThis structure avoids hierarchical authorization dependencies. The denormalization strategy ensures Authorization Independence by including all necessary authorization data within each document. The use of separate collections (`leaderboard_overall` and `leaderboard_by_division`) facilitates secure list operations, ensuring that rules are not filters and that users can only access the data they are authorized to see."
   }
 }
