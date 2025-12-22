@@ -14,6 +14,8 @@ import {
   getDocs,
   Timestamp,
   type Firestore,
+  doc,
+  getDoc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -90,11 +92,18 @@ export function saveSubmission(
   };
 
   addDoc(submissionsRef, newSubmission)
-    .then(() => {
+    .then(async () => {
       // After successful submission, update the leaderboards
       const user = getAuth().currentUser;
       if (user) {
-        updateUserLeaderboardEntries(db, user);
+        // Fetch the user's current preference before updating leaderboards
+        const userProfileRef = doc(db, 'users', user.uid);
+        const userProfileSnap = await getDoc(userProfileRef);
+        const showOnLeaderboard = userProfileSnap.exists()
+          ? userProfileSnap.data()?.showOnLeaderboard ?? true
+          : true;
+        
+        await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
       }
     })
     .catch((serverError) => {
