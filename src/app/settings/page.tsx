@@ -35,6 +35,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { updateUserLeaderboardEntries } from '@/lib/leaderboard';
 
 
 function getInitials(name?: string | null) {
@@ -98,9 +99,16 @@ export default function SettingsPage() {
   };
   
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
-    if (!userProfileRef) return;
+    if (!userProfileRef || !user || !firestore) return;
     const updatedData = { showOnLeaderboard: checked };
+    
+    // First, update the user's profile setting
     setDoc(userProfileRef, updatedData, { merge: true })
+        .then(() => {
+            // After the profile is updated, trigger the leaderboard update.
+            // This ensures the leaderboard uses the latest privacy setting.
+            updateUserLeaderboardEntries(firestore, user);
+        })
         .catch(error => {
             const permissionError = new FirestorePermissionError({
                 path: userProfileRef.path,

@@ -17,6 +17,7 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { getAuth } from 'firebase/auth';
+import { updateUserLeaderboardEntries } from './leaderboard';
 
 // --- Final Submissions ---
 
@@ -56,88 +57,6 @@ export async function getSubmissionsForUser(db: Firestore, userId: string): Prom
 }
 
 /**
- * Updates the leaderboard collections in Firestore for a given user.
- * This should be called after a test submission is saved.
- * @param db The Firestore instance.
- * @param userId The UID of the user.
- * @param submittedDivision The division of the test that was just completed.
- */
-async function updateLeaderboards(db: Firestore, userId: string, submittedDivision: string) {
-    const user = getAuth().currentUser;
-    if (!user) return; // Not signed in
-
-    const userProfileRef = doc(db, 'users', userId);
-    const testCompletionsRef = collection(db, 'users', userId, 'testCompletions');
-
-    try {
-        const userProfileSnap = await getDoc(userProfileRef);
-        const userProfile = userProfileSnap.data() as UserProfile | undefined;
-        // Default to true if the setting is not present
-        const showOnLeaderboard = userProfile?.showOnLeaderboard ?? true;
-
-        const displayName = showOnLeaderboard ? (user.displayName || 'Anonymous User') : 'Anonymous User';
-        const photoURL = showOnLeaderboard ? (user.photoURL || undefined) : undefined;
-
-
-        const querySnapshot = await getDocs(testCompletionsRef);
-        const allCompletions = querySnapshot.docs.map(doc => doc.data());
-
-        // 1. Update Overall Leaderboard
-        const overallTotal = allCompletions.length;
-        const overallLeaderboardRef = doc(db, 'leaderboard_overall', userId);
-        const overallData = {
-            userId: userId,
-            testsCompleted: overallTotal,
-            division: 'Overall',
-            displayName,
-            photoURL,
-        };
-        // Use setDoc with merge to create or update
-        setDoc(overallLeaderboardRef, overallData, { merge: true })
-            .catch(error => {
-                const permissionError = new FirestorePermissionError({
-                    path: overallLeaderboardRef.path,
-                    operation: 'write',
-                    requestResourceData: overallData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-
-        // 2. Update Division-Specific Leaderboard
-        const divisionTotal = allCompletions.filter(c => c.division === submittedDivision).length;
-        // Create a stable ID for the division entry
-        const divisionLeaderboardId = `${userId}_${submittedDivision.replace(/\s+/g, '_').toLowerCase()}`;
-        const divisionLeaderboardRef = doc(db, 'leaderboard_by_division', divisionLeaderboardId);
-        const divisionData = {
-            userId: userId,
-            testsCompleted: divisionTotal,
-            division: submittedDivision,
-            displayName,
-            photoURL,
-        };
-         // Use setDoc with merge to create or update
-        setDoc(divisionLeaderboardRef, divisionData, { merge: true })
-             .catch(error => {
-                const permissionError = new FirestorePermissionError({
-                    path: divisionLeaderboardRef.path,
-                    operation: 'write',
-                    requestResourceData: divisionData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-
-    } catch (error) {
-        console.error("Could not update leaderboards:", error);
-         const permissionError = new FirestorePermissionError({
-            path: testCompletionsRef.path,
-            operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-    }
-}
-
-
-/**
  * Adds a new test submission and updates the leaderboards.
  * @param db The Firestore instance.
  * @param userId The UID of the user.
@@ -169,7 +88,10 @@ export function saveSubmission(
     addDoc(submissionsRef, newSubmission)
         .then(() => {
             // After successful submission, update the leaderboards
-            updateLeaderboards(db, userId, test.division);
+            const user = getAuth().currentUser;
+            if (user) {
+              updateUserLeaderboardEntries(db, user);
+            }
         })
         .catch((serverError) => {
             const permissionError = new FirestorePermissionError({
