@@ -40,7 +40,7 @@ export type ReviewData = {
 };
 
 export type TestSubmission = {
-  id: string; 
+  id: string;
   testId: string;
   userId: string;
   answers: UserAnswers;
@@ -52,22 +52,22 @@ export type TestSubmission = {
 };
 
 export interface FamatTestWithHistory extends FamatTest {
-    history: TestSubmission[];
-    inProgress: boolean;
+  history: TestSubmission[];
+  inProgress: boolean;
 }
 
 export type LeaderboardEntry = {
-    userId: string;
-    division: string;
-    testsCompleted: number;
-    displayName?: string;
-    photoURL?: string | null;
+  userId: string;
+  division: string;
+  testsCompleted: number;
+  displayName: string;
+  photoURL?: string | null;
 };
-  
+
 export type UserProfile = {
-    uid: string;
-    displayName: string;
-    email: string;
-    photoURL?: string;
-    showOnLeaderboard?: boolean;
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string | null;
+  showOnLeaderboard: boolean;
 };
