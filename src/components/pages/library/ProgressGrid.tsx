@@ -66,7 +66,7 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const getCellInfo = () => {
     if (!data) {
         return {
-            colorClass: 'bg-muted/30',
+            colorClass: 'bg-muted/30 border-transparent',
             text: '',
             tooltipText: 'Not Taken'
         };
@@ -78,19 +78,19 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
 
     switch(data.status) {
         case 'correct':
-            colorClass = 'bg-green-500/70 hover:bg-green-500/90 text-white';
+            colorClass = 'bg-green-500/20 border-green-500/30 text-green-800 dark:text-green-200';
             statusText = 'Correct';
             break;
         case 'incorrect':
-            colorClass = 'bg-red-500/70 hover:bg-red-500/90 text-white';
+            colorClass = 'bg-red-500/20 border-red-500/30 text-red-800 dark:text-red-200';
             statusText = 'Incorrect';
             break;
         case 'omitted':
-            colorClass = 'bg-yellow-500/70 hover:bg-yellow-500/90 text-black';
+            colorClass = 'bg-yellow-500/20 border-yellow-500/30 text-yellow-800 dark:text-yellow-200';
             statusText = 'Omitted';
             break;
         default:
-            colorClass = 'bg-muted/30';
+            colorClass = 'bg-muted/30 border-transparent';
             statusText = 'Not Taken';
             break;
     }
@@ -106,11 +106,11 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const { colorClass, text, tooltipText } = getCellInfo();
 
   return (
-    <TableCell className="p-0 h-6 w-14">
+    <TableCell className="h-6 w-14 p-0">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={cn("h-full w-full flex items-center justify-center text-xs font-bold", colorClass)}>
+            <div className={cn("flex h-full w-full items-center justify-center border text-xs font-bold", colorClass)}>
               {text}
             </div>
           </TooltipTrigger>
