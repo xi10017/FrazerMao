@@ -106,11 +106,11 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const { colorClass, text, tooltipText } = getCellInfo();
 
   return (
-    <TableCell className="p-0 h-6">
+    <TableCell className="p-0 h-6 w-14">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={cn("h-full w-full min-w-[60px] flex items-center justify-center text-xs font-bold", colorClass)}>
+            <div className={cn("h-full w-full flex items-center justify-center text-xs font-bold", colorClass)}>
               {text}
             </div>
           </TooltipTrigger>
@@ -184,9 +184,9 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
           <Table className='border-t border-b table-fixed'>
               <TableHeader>
               <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-card w-10 min-w-10 text-center font-bold border-r p-1 h-auto">Q#</TableHead>
+                  <TableHead className="sticky left-0 z-10 bg-card w-12 min-w-12 text-center font-bold border-r p-1 h-auto">Q#</TableHead>
                   {tests.map(test => (
-                  <TableHead key={test.id} className="w-[60px] min-w-[60px] text-center text-xs p-1 h-auto">
+                  <TableHead key={test.id} className="w-14 min-w-14 text-center text-xs p-1 h-auto">
                       <Link href={`/history/${test.id}`} className="hover:underline">
                           <div className='font-bold'>{test.division}</div>
                           <div>{test.year}</div>
