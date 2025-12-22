@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Maximize, Minimize } from 'lucide-react';
+import { Calculator, Maximize, Minimize } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -65,6 +65,11 @@ const MultiPanelLayout: React.FC<MultiPanelLayoutProps> = ({ panels }) => {
     const [positions, setPositions] = useState(initialPositions);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        // Recalculate positions when the number of panels changes
+        setPositions(Array.from({ length: numPanels - 1 }, (_, i) => (100 / numPanels) * (i + 1)));
+    }, [numPanels]);
+
     const handleMouseDown = (dividerIndex: number) => (e: React.MouseEvent) => {
         e.preventDefault();
         setIsDragging(dividerIndex);
@@ -111,8 +116,12 @@ const MultiPanelLayout: React.FC<MultiPanelLayoutProps> = ({ panels }) => {
         const prevPos = i > 0 ? positions[i - 1] : 0;
         return pos - prevPos;
     });
-    panelWidths.push(100 - positions[positions.length - 1]);
-
+    if (positions.length > 0) {
+        panelWidths.push(100 - positions[positions.length - 1]);
+    } else if (numPanels === 1) {
+        panelWidths.push(100);
+    }
+    
     return (
          <div ref={containerRef} className="flex h-full w-full overflow-hidden">
             {isDragging !== null && <div className="absolute inset-0 z-30" />}
@@ -149,6 +158,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
   
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   
@@ -271,6 +281,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   
   const headerActions = (
     <div className="flex items-center gap-2">
+       {isStatsTest && (
+        <Button 
+          variant={showCalculator ? "secondary" : "outline"} 
+          onClick={() => setShowCalculator(!showCalculator)}
+        >
+          <Calculator className="mr-2 h-4 w-4" />
+          Calculator
+        </Button>
+      )}
       {isClient && (
         <>
           {isPracticeMode ? (
@@ -329,14 +348,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   
   let panels: React.ReactNode[] = [];
   if (isPracticeMode) {
-      panels = isStatsTest 
-          ? [testPdfPanel, scantronPanel, <Ti84Calculator key="ti84" />]
-          : [testPdfPanel, scantronPanel];
+      panels = [testPdfPanel, scantronPanel];
+      if (isStatsTest && showCalculator) {
+          panels.push(<Ti84Calculator key="ti84" />);
+      }
   } else { // Review Mode
       const solutionPdfPanel = <PDFDisplay url={solution?.url || test.url} />;
-      panels = isStatsTest
-        ? [testPdfPanel, solutionPdfPanel, scantronPanel, <Ti84Calculator key="ti84" />]
-        : [testPdfPanel, solutionPdfPanel, scantronPanel];
+      panels = [testPdfPanel, solutionPdfPanel, scantronPanel];
+      if (isStatsTest && showCalculator) {
+          panels.push(<Ti84Calculator key="ti84" />);
+      }
   }
 
 
