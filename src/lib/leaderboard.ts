@@ -11,7 +11,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import type { UserProfile, LeaderboardEntry, TestSubmission } from './types';
+import type { UserProfile, LeaderboardEntry } from './types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { User } from 'firebase/auth';
@@ -63,10 +63,10 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
 
     // 3. If the user wants to be shown, proceed with updating/creating entries.
     const allCompletions = completionsSnapshot.docs.map(
-        (doc) => doc.data() as TestSubmission
+        (doc) => doc.data() as any
       );
     const displayName = user.displayName || 'Anonymous User';
-    const photoURL = user.photoURL || null;
+    const photoURL = user.photoURL;
     
     // 4. Update the 'Overall' leaderboard.
     const overallTotal = allCompletions.length;
@@ -77,7 +77,7 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
       testsCompleted: overallTotal,
       division: 'Overall',
       displayName,
-      photoURL,
+      photoURL: photoURL ?? null,
     };
     setDoc(overallLeaderboardRef, overallData, { merge: true }).catch(
       (error) => {
@@ -107,11 +107,11 @@ export async function updateUserLeaderboardEntries(db: Firestore, user: User) {
       );
 
       const divisionData: LeaderboardEntry = {
-        userId: userId,
+        userId: userId, // This was the missing field
         testsCompleted: divisionTotal,
         division: division,
         displayName,
-        photoURL,
+        photoURL: photoURL ?? null,
       };
 
       setDoc(divisionLeaderboardRef, divisionData, { merge: true }).catch(
