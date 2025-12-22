@@ -65,19 +65,27 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    /**
+     * Validates that a user is querying for their own records.
+     * This rule ensures that a 'where' clause on 'userId' is present and
+     * matches the authenticated user's UID.
+     */
+    function isQueryingOwnRecords() {
+      return isSignedIn() && request.query.resource.data.userId == request.auth.uid;
+    }
 
     /**
      * @description
      *   Rules for the `testCompletions` collection. This collection stores raw,
      *   private records of tests completed by users. The rules enforce a "write-once"
-     *   policy where users can only create records for themselves. All other
-     *   client access (read, update, delete) is denied to protect privacy and
-     *   prevent tampering.
+     *   policy where users can only create records for themselves. Reading individual
+     *   documents is blocked, but querying for one's own documents is allowed.
      * @path /testCompletions/{testCompletionId}
      */
     match /testCompletions/{testCompletionId} {
       allow get: if false;
-      allow list: if false;
+      allow list: if isQueryingOwnRecords();
       allow create: if isCreatingOwnRecord();
       allow update: if false;
       allow delete: if false;
