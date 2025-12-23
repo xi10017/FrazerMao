@@ -156,8 +156,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   test,
   solution,
   initialAnswers,
-  isReviewFromHistory,
-  submissionId,
+  isReviewFromHistory: isReviewFromHistoryProp,
+  submissionId: submissionIdProp,
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
@@ -173,6 +173,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+
+  // The component can be in review mode either from prop (history page) or after submission.
+  // We also need to track the submissionId for saving marks.
+  const [currentSubmissionId, setCurrentSubmissionId] = useState(submissionIdProp);
+  const [isReviewMode, setIsReviewMode] = useState(isReviewFromHistoryProp);
+
 
   const isStatsTest = test.division === 'Stats';
 
@@ -206,7 +212,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isReviewFromHistory && solution && initialAnswers && user && submissionId) {
+    if (isReviewFromHistoryProp && solution && initialAnswers && user && submissionIdProp) {
       const report = gradeTest(initialAnswers, solution.answers);
       const newReviewData = createReviewData(initialAnswers, solution.answers);
       setReviewData(newReviewData);
@@ -214,8 +220,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setUserAnswers(initialAnswers);
       setIsScoreModalOpen(false); // Don't show score modal when reviewing from history
       // Load marked questions
-      const savedMarks = getReviewMarks(user.uid, submissionId);
+      const savedMarks = getReviewMarks(user.uid, submissionIdProp);
       setMarkedQuestions(savedMarks);
+      
+      // Set the state for review mode
+      setCurrentSubmissionId(submissionIdProp);
+      setIsReviewMode(true);
+
     } else if (user) {
       const savedProgress = getInProgressAnswers(user.uid, test.id);
       if (savedProgress) {
@@ -226,26 +237,29 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setReviewData(null);
       setScoreReport(null);
       setMarkedQuestions({});
+      setCurrentSubmissionId(undefined);
+      setIsReviewMode(false);
     }
-  }, [isReviewFromHistory, solution, initialAnswers, user, test.id, submissionId, createReviewData]);
+  }, [isReviewFromHistoryProp, solution, initialAnswers, user, test.id, submissionIdProp, createReviewData]);
 
 
   useEffect(() => {
-    if (user && reviewData === null) {
+    // Only save progress if not in review mode
+    if (user && !isReviewMode) {
       saveInProgressAnswers(user.uid, test.id, userAnswers);
     }
-  }, [userAnswers, user, test.id, reviewData]);
+  }, [userAnswers, user, test.id, isReviewMode]);
   
-  // Save marked questions whenever they change
+  // Save marked questions whenever they change, but only in review mode with a valid submission ID.
   useEffect(() => {
-      if (user && submissionId && isReviewFromHistory) {
-          saveReviewMarks(user.uid, submissionId, markedQuestions);
+      if (user && currentSubmissionId && isReviewMode) {
+          saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
       }
-  }, [markedQuestions, user, submissionId, isReviewFromHistory]);
+  }, [markedQuestions, user, currentSubmissionId, isReviewMode]);
 
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    if (reviewData) return;
+    if (isReviewMode) return;
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
@@ -258,7 +272,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
   
   const handleMarkQuestion = (question: number) => {
-    if (!isReviewFromHistory) return;
+    if (!isReviewMode) return;
     setMarkedQuestions(prev => {
         const newMarks = {...prev};
         if (newMarks[question]) {
@@ -270,7 +284,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!solution) {
       toast({
         variant: 'destructive',
@@ -290,30 +304,33 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
 
     const report = gradeTest(userAnswers, solution.answers);
-    // This function now returns the docId of the new submission.
-    saveSubmission(firestore, user.uid, test, userAnswers, report);
-    clearInProgressAnswers(user.uid, test.id);
+    const newSubmissionId = await saveSubmission(firestore, user.uid, test, userAnswers, report);
+    
+    if (newSubmissionId) {
+        clearInProgressAnswers(user.uid, test.id);
+        toast({
+          title: 'Success!',
+          description: 'Your test results have been saved.',
+        });
 
-    toast({
-      title: 'Success!',
-      description: 'Your test results have been saved.',
-    });
-
-    const newReviewData = createReviewData(userAnswers, solution.answers);
-    setReviewData(newReviewData);
-    setScoreReport(report);
-    setIsScoreModalOpen(true);
-    // After submitting, we are now in "review mode" but need a submissionId.
-    // This is a complex state. The simplest approach is to reload the history page
-    // so the user can click "Review" on the new entry.
-    router.push(`/history/${test.id}`);
+        const newReviewData = createReviewData(userAnswers, solution.answers);
+        setReviewData(newReviewData);
+        setScoreReport(report);
+        setIsScoreModalOpen(true);
+        
+        // Transition to review mode for the new submission
+        setIsReviewMode(true);
+        setCurrentSubmissionId(newSubmissionId);
+        // We can now view the submission without a full redirect
+    }
   };
+
 
   const handleBackToLibrary = () => {
     router.push(`/`);
   };
 
-  const isPracticeMode = reviewData === null;
+  const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
   
   const headerActions = (
@@ -405,7 +422,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   if (isPdfFullScreen) {
       return (
           <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-              {testPdfPanel}
+              {export default PracticeArena;
+}
           </div>
       )
   }
