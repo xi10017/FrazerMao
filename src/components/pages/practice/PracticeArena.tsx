@@ -55,100 +55,6 @@ const DraggableDivider: React.FC<{
   </div>
 );
 
-// --- Multi-Panel Layout Logic ---
-
-interface MultiPanelLayoutProps {
-    panels: React.ReactNode[];
-    isPdfFullScreen: boolean;
-}
-
-const MultiPanelLayout: React.FC<MultiPanelLayoutProps> = ({ panels, isPdfFullScreen }) => {
-    const numPanels = panels.length;
-    const initialPositions = Array.from({ length: numPanels - 1 }, (_, i) => (100 / numPanels) * (i + 1));
-    
-    const [isDragging, setIsDragging] = useState<number | null>(null);
-    const [positions, setPositions] = useState(initialPositions);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        // Recalculate positions when the number of panels changes
-        setPositions(Array.from({ length: numPanels - 1 }, (_, i) => (100 / numPanels) * (i + 1)));
-    }, [numPanels]);
-
-    const handleMouseDown = (dividerIndex: number) => (e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsDragging(dividerIndex);
-    };
-
-    const handleMouseUp = useCallback(() => {
-        setIsDragging(null);
-    }, []);
-
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (isDragging === null || !containerRef.current) return;
-
-        const containerWidth = containerRef.current.offsetWidth;
-        const newX = e.clientX - containerRef.current.getBoundingClientRect().left;
-        let newPosition = (newX / containerWidth) * 100;
-
-        const MIN_WIDTH = 10; // Minimum 10% width for a panel
-
-        const leftBoundary = isDragging > 0 ? positions[isDragging - 1] + MIN_WIDTH : MIN_WIDTH;
-        const rightBoundary = isDragging < numPanels - 2 ? positions[isDragging + 1] - MIN_WIDTH : 100 - MIN_WIDTH;
-        
-        newPosition = Math.max(leftBoundary, Math.min(newPosition, rightBoundary));
-        
-        setPositions(prev => {
-            const newPositions = [...prev];
-            newPositions[isDragging] = newPosition;
-            return newPositions;
-        });
-
-    }, [isDragging, positions, numPanels]);
-
-    useEffect(() => {
-        if (isDragging !== null) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        }
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [isDragging, handleMouseMove, handleMouseUp]);
-    
-    const panelWidths = positions.map((pos, i) => {
-        const prevPos = i > 0 ? positions[i - 1] : 0;
-        return pos - prevPos;
-    });
-    if (positions.length > 0) {
-        panelWidths.push(100 - positions[positions.length - 1]);
-    } else if (numPanels === 1) {
-        panelWidths.push(100);
-    }
-    
-    return (
-         <div ref={containerRef} className="flex h-full w-full overflow-hidden">
-            {isDragging !== null && <div className="absolute inset-0 z-20" />}
-            {panels.map((panel, index) => (
-                <React.Fragment key={index}>
-                    <div 
-                      style={{ width: isPdfFullScreen && index > 0 ? '0%' : isPdfFullScreen && index === 0 ? '100%' : `${panelWidths[index]}%` }} 
-                      className={cn("relative h-full transition-all duration-300", isPdfFullScreen && index > 0 && "p-0")}
-                    >
-                        {panel}
-                    </div>
-                    {index < panels.length - 1 && (
-                        <div className={cn("transition-all duration-300", isPdfFullScreen ? 'w-0' : 'w-2')}>
-                            <DraggableDivider onMouseDown={handleMouseDown(index)} />
-                        </div>
-                    )}
-                </React.Fragment>
-            ))}
-        </div>
-    )
-}
-
 // --- Main Arena Component ---
 
 interface PracticeArenaProps {
@@ -174,6 +80,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [showCalculator, setShowCalculator] = useState(false);
   const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
+  const [hasSolutionBeenOpened, setHasSolutionBeenOpened] = useState(false);
   
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   
@@ -183,11 +90,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const firestore = useFirestore();
   const router = useRouter();
 
-  // The component can be in review mode either from prop (history page) or after submission.
-  // We also need to track the submissionId for saving marks.
   const [currentSubmissionId, setCurrentSubmissionId] = useState(submissionIdProp);
   const [isReviewMode, setIsReviewMode] = useState(isReviewFromHistoryProp);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dividerPosition, setDividerPosition] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
 
   const isStatsTest = test.division === 'Stats';
 
@@ -227,12 +135,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setReviewData(newReviewData);
       setScoreReport(report);
       setUserAnswers(initialAnswers);
-      setIsScoreModalOpen(false); // Don't show score modal when reviewing from history
-      // Load marked questions
+      setIsScoreModalOpen(false);
       const savedMarks = getReviewMarks(user.uid, submissionIdProp);
       setMarkedQuestions(savedMarks);
-      
-      // Set the state for review mode
       setCurrentSubmissionId(submissionIdProp);
       setIsReviewMode(true);
 
@@ -253,19 +158,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
 
   useEffect(() => {
-    // Only save progress if not in review mode
     if (user && !isReviewMode) {
       saveInProgressAnswers(user.uid, test.id, userAnswers);
     }
   }, [userAnswers, user, test.id, isReviewMode]);
   
-  // Save marked questions whenever they change, but only in review mode with a valid submission ID.
   useEffect(() => {
       if (user && currentSubmissionId && isReviewMode) {
           saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
       }
   }, [markedQuestions, user, currentSubmissionId, isReviewMode]);
-
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     if (isReviewMode) return;
@@ -326,11 +228,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         setReviewData(newReviewData);
         setScoreReport(report);
         setIsScoreModalOpen(true);
-        
-        // Transition to review mode for the new submission
         setIsReviewMode(true);
         setCurrentSubmissionId(newSubmissionId);
-        // We can now view the submission without a full redirect
     }
   };
 
@@ -345,9 +244,52 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
     setShowCalculator(!showCalculator);
   };
+  
+  const handleToggleSolution = () => {
+    if (!hasSolutionBeenOpened) {
+        setHasSolutionBeenOpened(true);
+    }
+    setShowSolution(!showSolution);
+  }
 
   const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
+
+  // --- Dragging Logic ---
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging && containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const newX = e.clientX - containerRect.left;
+        let newPosition = (newX / containerRect.width) * 100;
+        
+        // Constrain the divider position
+        newPosition = Math.max(20, Math.min(newPosition, 80)); 
+
+        setDividerPosition(newPosition);
+    }
+  }, [isDragging]);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+
   
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -385,13 +327,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
               {solution && (
                  <Button 
                     variant={showSolution ? "secondary" : "outline"}
-                    onClick={() => setShowSolution(!showSolution)}
+                    onClick={handleToggleSolution}
                   >
                    <BookOpenCheck className="mr-2 h-4 w-4" />
                    {showSolution ? 'Hide Solution' : 'Show Solution'}
                  </Button>
               )}
-              {scoreReport && ( // Only show if score is available
+              {scoreReport && ( 
                 <Button variant="outline" onClick={() => setIsScoreModalOpen(true)}>
                   Review Score
                 </Button>
@@ -403,51 +345,69 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       )}
     </div>
   );
-  
-  const testPdfPanel = (
-    <div className="relative h-full w-full">
-        <PDFDisplay url={test.url} />
-        <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 left-4 z-40 bg-background/50 hover:bg-background/80"
-            onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
-        >
-            {isPdfFullScreen ? <Minimize /> : <Maximize />}
-        </Button>
-    </div>
-  );
 
-  const scantronPanel = (
-    <Scantron
-      userAnswers={userAnswers}
-      onAnswerSelect={handleAnswerSelect}
-      reviewData={reviewData}
-      markedQuestions={markedQuestions}
-      onMarkQuestion={handleMarkQuestion}
-    />
-  );
-  
-  let panels: React.ReactNode[] = [];
-  if (isPracticeMode) {
-      panels = [testPdfPanel, scantronPanel];
-  } else { // Review Mode
-      if (showSolution && solution) {
-          const solutionPdfPanel = <PDFDisplay url={solution.url} />;
-          panels = [testPdfPanel, solutionPdfPanel, scantronPanel];
-      } else {
-          panels = [testPdfPanel, scantronPanel];
-      }
-  }
-  
   const mainContent = (
-      <div className={cn(
-        "h-full w-full transition-all duration-300", 
-        isStatsTest && showCalculator ? "pr-[33%]" : "pr-0",
-      )}>
-        <MultiPanelLayout panels={panels} isPdfFullScreen={isPdfFullScreen} />
-      </div>
-  );
+    <div 
+        ref={containerRef}
+        className={cn(
+            "relative flex h-full w-full overflow-hidden",
+            "transition-all duration-300", 
+            isStatsTest && showCalculator ? "pr-[33%]" : "pr-0"
+        )}
+    >
+        {isDragging && <div className="absolute inset-0 z-20" />}
+        
+        <div 
+          className="relative h-full"
+          style={{ width: `${dividerPosition}%`}}
+        >
+          <PDFDisplay url={test.url} />
+        </div>
+
+        <DraggableDivider onMouseDown={handleMouseDown} />
+        
+        <div 
+          className="relative h-full"
+          style={{ width: `calc(100% - ${dividerPosition}%)`}}
+        >
+            {isPracticeMode || !hasSolutionBeenOpened ? (
+                <Scantron
+                    userAnswers={userAnswers}
+                    onAnswerSelect={handleAnswerSelect}
+                    reviewData={reviewData}
+                    markedQuestions={markedQuestions}
+                    onMarkQuestion={handleMarkQuestion}
+                />
+            ) : (
+                <div className="flex h-full w-full">
+                    <div 
+                        className={cn(
+                            "relative h-full transition-all duration-300",
+                            showSolution ? 'w-1/2' : 'w-0'
+                        )}
+                    >
+                       {solution && <PDFDisplay url={solution.url}/>}
+                    </div>
+                    <div 
+                        className={cn(
+                            "relative h-full transition-all duration-300",
+                            showSolution ? 'w-1/2' : 'w-full'
+                        )}
+                    >
+                        <Scantron
+                            userAnswers={userAnswers}
+                            onAnswerSelect={handleAnswerSelect}
+                            reviewData={reviewData}
+                            markedQuestions={markedQuestions}
+                            onMarkQuestion={handleMarkQuestion}
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    </div>
+);
+
 
 
   return (
