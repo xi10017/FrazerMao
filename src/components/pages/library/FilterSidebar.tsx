@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 const FilterSection: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
@@ -69,6 +71,7 @@ interface FilterSidebarProps {
   setSelectedMonths: (months: string[]) => void;
   selectedCompetitions: string[];
   setSelectedCompetitions: (competitions: string[]) => void;
+  onResetFilters: () => void;
 }
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
@@ -83,8 +86,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   setSelectedMonths,
   selectedCompetitions,
   setSelectedCompetitions,
+  onResetFilters,
 }) => {
   const years = uniqueValues.years.sort((a, b) => b - a);
+  const isFiltered =
+    selectedDivisions.length > 0 ||
+    selectedMonths.length > 0 ||
+    selectedCompetitions.length > 0 ||
+    startYear !== uniqueValues.years[0] ||
+    endYear !== uniqueValues.years[uniqueValues.years.length -1];
 
   return (
     <aside className="w-full md:w-64 lg:w-72">
@@ -160,6 +170,16 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               onSelectionChange={setSelectedCompetitions}
             />
           </FilterSection>
+
+          <Button
+            variant="ghost"
+            onClick={onResetFilters}
+            className="w-full"
+            disabled={!isFiltered}
+          >
+            <X className="mr-2 h-4 w-4" />
+            Reset Filters
+          </Button>
         </CardContent>
       </Card>
     </aside>
