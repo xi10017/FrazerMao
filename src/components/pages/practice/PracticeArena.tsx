@@ -407,17 +407,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   let panels: React.ReactNode[] = [];
   if (isPracticeMode) {
       panels = [testPdfPanel, scantronPanel];
-      if (isStatsTest && showCalculator) {
-          panels.push(<Ti84Calculator key="ti84" />);
-      }
   } else { // Review Mode
       const solutionPdfPanel = <PDFDisplay url={solution?.url || test.url} />;
       panels = [testPdfPanel, solutionPdfPanel, scantronPanel];
-      if (isStatsTest && showCalculator) {
-          panels.push(<Ti84Calculator key="ti84" />);
-      }
   }
-
+  
+  // This logic is now outside the panel creation to handle visibility with CSS
+  const visiblePanels = showCalculator ? panels.concat(<div key="calc-placeholder" />) : panels;
 
   if (isPdfFullScreen) {
       return (
@@ -434,8 +430,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             <h2 className="text-xl font-bold tracking-tight">{test.division}: {test.year} {test.month} {test.test_type}</h2>
             {headerActions}
         </header>
-        <div className="flex-1 overflow-hidden">
-            <MultiPanelLayout panels={panels} />
+        <div className="flex-1 overflow-hidden relative">
+            <div className={cn("h-full w-full", isStatsTest && showCalculator ? "pr-[33%]" : "pr-0", "transition-all duration-300")}>
+              <MultiPanelLayout panels={panels} />
+            </div>
+            {isStatsTest && (
+                <div className={cn("absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300", !showCalculator && "translate-x-full")}>
+                    <Ti84Calculator />
+                </div>
+            )}
         </div>
       </div>
 
