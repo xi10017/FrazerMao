@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { FamatTest, FamatTestWithHistory, TestSubmission } from '@/lib/types';
+import type { FamatTest, FamatTestWithHistory, TestSubmission, MarkedQuestions } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
 import { useUser, useFirestore } from '@/firebase';
-import { getSubmissionsForUser, getInProgressAnswers } from '@/lib/localStorage';
+import { getSubmissionsForUser, getInProgressAnswers, getReviewMarks } from '@/lib/localStorage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
 import { Leaderboard } from './Leaderboard';
@@ -19,26 +19,37 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const firestore = useFirestore();
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [allMarks, setAllMarks] = useState<Record<string, MarkedQuestions>>({});
+
 
   useEffect(() => {
-    const fetchSubmissions = async () => {
+    const fetchSubmissionsAndMarks = async () => {
       if (user && firestore) {
         setIsLoading(true);
         const storedSubmissions = await getSubmissionsForUser(firestore, user.uid);
         setSubmissions(storedSubmissions);
+
+        // Fetch all marks for the user
+        const marks: Record<string, MarkedQuestions> = {};
+        for (const sub of storedSubmissions) {
+            marks[sub.id] = getReviewMarks(user.uid, sub.id);
+        }
+        setAllMarks(marks);
+
         setIsLoading(false);
       } else if (!isUserLoading) {
         setSubmissions([]); // Clear submissions if user logs out
+        setAllMarks({});
         setIsLoading(false);
       }
     }
-    fetchSubmissions();
+    fetchSubmissionsAndMarks();
   }, [user, firestore, isUserLoading]);
 
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
     if (!user) {
-      return tests.map(t => ({...t, history: [], inProgress: false}));
+      return tests.map(t => ({...t, history: [], inProgress: false, markedForReview: {}}));
     }
 
     const submissionsByTestId = submissions.reduce((acc, sub) => {
@@ -55,14 +66,19 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         // Ensure history is sorted most recent first
         testSubmissions.sort((a,b) => b.submittedAt.getTime() - a.submittedAt.getTime());
 
+        // Get marks for the most recent submission
+        const lastSubmission = testSubmissions[0];
+        const markedForReview = lastSubmission ? allMarks[lastSubmission.id] || {} : {};
+
         return {
             ...test,
             history: testSubmissions,
-            inProgress: hasInProgress
+            inProgress: hasInProgress,
+            markedForReview: markedForReview,
         }
     });
 
-  }, [tests, submissions, user]);
+  }, [tests, submissions, user, allMarks]);
 
 
   const uniqueValues = useMemo(() => {

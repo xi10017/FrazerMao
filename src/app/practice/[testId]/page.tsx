@@ -26,6 +26,7 @@ export default function PracticePage({ params, searchParams }: Props) {
   
   const fromHistoryParam = searchParams?.fromHistory;
   const isReviewFromHistory = fromHistoryParam === 'true';
+  const submissionId = searchParams?.submissionId as string | undefined;
 
   let initialAnswers: UserAnswers | undefined = undefined;
   const submissionParam = searchParams?.submission;
@@ -37,7 +38,15 @@ export default function PracticePage({ params, searchParams }: Props) {
     }
   }
 
-  return <PracticeArena test={test} solution={solution} initialAnswers={initialAnswers} isReviewFromHistory={isReviewFromHistory} />;
+  return (
+    <PracticeArena
+      test={test}
+      solution={solution}
+      initialAnswers={initialAnswers}
+      isReviewFromHistory={isReviewFromHistory}
+      submissionId={submissionId}
+    />
+  );
 }
 
 export function generateStaticParams() {

@@ -94,12 +94,12 @@ function HistoryPage() {
   }
 
   const handleReview = (submission: TestSubmission) => {
-    // Pass the specific answers from that submission to the practice page for review.
+    // Pass submission ID and answers to practice page
     const submissionData = encodeURIComponent(
       JSON.stringify(submission.answers)
     );
     router.push(
-      `/practice/${testId}?fromHistory=true&submission=${submissionData}`
+      `/practice/${testId}?fromHistory=true&submissionId=${submission.id}&submission=${submissionData}`
     );
   };
 

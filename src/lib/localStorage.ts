@@ -5,6 +5,7 @@ import type {
   UserAnswers,
   ScoreReport,
   FamatTest,
+  MarkedQuestions,
 } from './types';
 import { getTestName } from './test-logic';
 import {
@@ -204,11 +205,78 @@ export function clearAllUserData(userId: string) {
 
     // Clear all in-progress tests for the user from local storage
     Object.keys(window.localStorage).forEach((key) => {
-      if (key.startsWith(`in_progress_${userId}_`)) {
+      if (key.startsWith(`in_progress_${userId}_`) || key.startsWith(`review_marks_${userId}_`)) {
         window.localStorage.removeItem(key);
       }
     });
   } catch (error) {
     console.error('Failed to clear all user data from localStorage:', error);
   }
+}
+
+
+// --- Review Markings ---
+
+const getReviewMarksKey = (userId: string, submissionId: string) => `review_marks_${userId}_${submissionId}`;
+
+/**
+ * Retrieves marked questions for a specific test submission from localStorage.
+ */
+export function getReviewMarks(userId: string, submissionId: string): MarkedQuestions {
+  if (typeof window === 'undefined' || !userId || !submissionId) return {};
+  try {
+    const key = getReviewMarksKey(userId, submissionId);
+    const marksJSON = window.localStorage.getItem(key);
+    return marksJSON ? JSON.parse(marksJSON) : {};
+  } catch (error) {
+    console.error('Failed to get review marks from localStorage:', error);
+    return {};
+  }
+}
+
+/**
+ * Saves marked questions for a specific test submission to localStorage.
+ */
+export function saveReviewMarks(userId: string, submissionId: string, marks: MarkedQuestions) {
+  if (typeof window === 'undefined' || !userId || !submissionId) return;
+  try {
+    const key = getReviewMarksKey(userId, submissionId);
+    if (Object.keys(marks).length === 0) {
+      window.localStorage.removeItem(key);
+    } else {
+      const marksJSON = JSON.stringify(marks);
+      window.localStorage.setItem(key, marksJSON);
+    }
+  } catch (error) {
+    console.error('Failed to save review marks to localStorage:', error);
+  }
+}
+
+/**
+ * Gets all review marks for a user.
+ * This is used to overlay marks on the progress grid.
+ * Returns a map of testId -> submissionId -> marked questions.
+ */
+export function getAllReviewMarksForUser(userId: string): Record<string, Record<string, MarkedQuestions>> {
+    if (typeof window === 'undefined' || !userId) return {};
+    const allMarks: Record<string, Record<string, MarkedQuestions>> = {};
+    try {
+        for (let i = 0; i < window.localStorage.length; i++) {
+            const key = window.localStorage.key(i);
+            if (key && key.startsWith(`review_marks_${userId}_`)) {
+                const parts = key.split('_');
+                const submissionId = parts.slice(3).join('_'); // submissionId can contain underscores
+                const marksJSON = window.localStorage.getItem(key);
+                if (marksJSON) {
+                    // To associate with a testId, we'd need to look up the submission.
+                    // For now, we'll just store by submissionId. This is a simplification.
+                    // The ProgressGrid will need to cross-reference this.
+                    allMarks[submissionId] = JSON.parse(marksJSON);
+                }
+            }
+        }
+    } catch(error) {
+        console.error("Failed to get all review marks for user:", error);
+    }
+    return allMarks;
 }

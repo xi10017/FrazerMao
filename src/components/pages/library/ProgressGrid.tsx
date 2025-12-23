@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import type { FamatTestWithHistory, ReviewData } from '@/lib/types';
+import type { FamatTestWithHistory, ReviewData, MarkedQuestions } from '@/lib/types';
 import { findSolutionForTest } from '@/lib/test-logic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -20,6 +20,7 @@ import {
   } from "@/components/ui/table"
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Flag } from 'lucide-react';
 
 const TOTAL_QUESTIONS = 30;
 
@@ -29,6 +30,7 @@ interface CellData {
     status: ResultStatus;
     userAnswer: string | null | undefined;
     correctAnswer: string | string[];
+    isMarked: boolean;
 }
 
 const createReviewDataFromLastAttempt = (test: FamatTestWithHistory): ReviewData | null => {
@@ -68,7 +70,8 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
         return {
             colorClass: 'bg-muted/30 border-transparent',
             text: '',
-            tooltipText: 'Not Taken'
+            tooltipText: 'Not Taken',
+            isMarked: false,
         };
     }
     
@@ -100,22 +103,24 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
         ? `${statusText} (You: ${text} | Ans: ${correctAnswerText})`
         : data.status !== 'not_taken' ? `${statusText} (Ans: ${correctAnswerText})` : statusText;
 
-    return { colorClass, text, tooltipText };
+    return { colorClass, text, tooltipText, isMarked: data.isMarked };
   }
 
-  const { colorClass, text, tooltipText } = getCellInfo();
+  const { colorClass, text, tooltipText, isMarked } = getCellInfo();
 
   return (
     <TableCell className="h-6 w-14 p-0">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={cn("flex h-full w-full items-center justify-center border text-xs font-bold", colorClass, data?.status === 'not_taken' && 'border-transparent')}>
+            <div className={cn("relative flex h-full w-full items-center justify-center border text-xs font-bold", colorClass, data?.status === 'not_taken' && 'border-transparent')}>
               {text}
+              {isMarked && <Flag className="absolute top-0.5 right-0.5 h-2.5 w-2.5 text-primary fill-primary" />}
             </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>{tooltipText}</p>
+            {isMarked && <p className="font-bold text-primary">Marked for Review</p>}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -137,19 +142,21 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
         const reviewData = createReviewDataFromLastAttempt(test);
         const testMap = new Map<number, CellData>();
         const solution = findSolutionForTest(test);
+        const markedQuestions = test.markedForReview || {};
         
         questionNumbers.forEach(qNum => {
+            const isMarked = !!markedQuestions[qNum];
             if (reviewData && reviewData[qNum]) {
                 const { userAnswer, correctAnswer, isCorrect } = reviewData[qNum];
                 let status: ResultStatus = 'omitted';
                 if (userAnswer) {
                     status = isCorrect ? 'correct' : 'incorrect';
                 }
-                testMap.set(qNum, { status, userAnswer, correctAnswer });
+                testMap.set(qNum, { status, userAnswer, correctAnswer, isMarked });
             } else {
                  // Even if test isn't taken, we want to store correct answer for tooltip
                  const correctAnswer = solution?.answers[qNum-1] || 'N/A';
-                 testMap.set(qNum, { status: 'not_taken', userAnswer: null, correctAnswer });
+                 testMap.set(qNum, { status: 'not_taken', userAnswer: null, correctAnswer, isMarked: false });
             }
         });
         data.set(test.id, testMap);
@@ -178,7 +185,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
     <Card>
       <CardHeader>
           <CardTitle>Progress Grid</CardTitle>
-          <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests.</CardDescription>
+          <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests. A flag indicates a question you've marked for review.</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
           <Table className='border-t border-b table-fixed'>

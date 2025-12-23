@@ -54,6 +54,7 @@ export type TestSubmission = {
 export interface FamatTestWithHistory extends FamatTest {
   history: TestSubmission[];
   inProgress: boolean;
+  markedForReview: MarkedQuestions;
 }
 
 export type LeaderboardEntry = {
@@ -72,3 +73,5 @@ export type UserProfile = {
   photoURL: string | null;
   showOnLeaderboard: boolean;
 };
+
+export type MarkedQuestions = { [questionNumber: number]: true };

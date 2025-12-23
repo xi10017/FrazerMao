@@ -10,6 +10,7 @@ import type {
   UserAnswers,
   ScoreReport,
   ReviewData,
+  MarkedQuestions,
 } from '@/lib/types';
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,8 @@ import {
   getInProgressAnswers,
   saveInProgressAnswers,
   clearInProgressAnswers,
+  getReviewMarks,
+  saveReviewMarks,
 } from '@/lib/localStorage';
 import {
   AlertDialog,
@@ -146,6 +149,7 @@ interface PracticeArenaProps {
   solution?: FamatSolution;
   initialAnswers?: UserAnswers;
   isReviewFromHistory?: boolean;
+  submissionId?: string;
 }
 
 const PracticeArena: React.FC<PracticeArenaProps> = ({
@@ -153,8 +157,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   solution,
   initialAnswers,
   isReviewFromHistory,
+  submissionId,
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
+  const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -200,13 +206,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isReviewFromHistory && solution && initialAnswers) {
+    if (isReviewFromHistory && solution && initialAnswers && user && submissionId) {
       const report = gradeTest(initialAnswers, solution.answers);
       const newReviewData = createReviewData(initialAnswers, solution.answers);
       setReviewData(newReviewData);
       setScoreReport(report);
       setUserAnswers(initialAnswers);
-      setIsScoreModalOpen(false);
+      setIsScoreModalOpen(false); // Don't show score modal when reviewing from history
+      // Load marked questions
+      const savedMarks = getReviewMarks(user.uid, submissionId);
+      setMarkedQuestions(savedMarks);
     } else if (user) {
       const savedProgress = getInProgressAnswers(user.uid, test.id);
       if (savedProgress) {
@@ -216,14 +225,24 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       }
       setReviewData(null);
       setScoreReport(null);
+      setMarkedQuestions({});
     }
-  }, [isReviewFromHistory, solution, initialAnswers, user, test.id, createReviewData]);
+  }, [isReviewFromHistory, solution, initialAnswers, user, test.id, submissionId, createReviewData]);
+
 
   useEffect(() => {
     if (user && reviewData === null) {
       saveInProgressAnswers(user.uid, test.id, userAnswers);
     }
   }, [userAnswers, user, test.id, reviewData]);
+  
+  // Save marked questions whenever they change
+  useEffect(() => {
+      if (user && submissionId && isReviewFromHistory) {
+          saveReviewMarks(user.uid, submissionId, markedQuestions);
+      }
+  }, [markedQuestions, user, submissionId, isReviewFromHistory]);
+
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     if (reviewData) return;
@@ -235,6 +254,19 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         newAnswers[question] = answer;
       }
       return newAnswers;
+    });
+  };
+  
+  const handleMarkQuestion = (question: number) => {
+    if (!isReviewFromHistory) return;
+    setMarkedQuestions(prev => {
+        const newMarks = {...prev};
+        if (newMarks[question]) {
+            delete newMarks[question];
+        } else {
+            newMarks[question] = true;
+        }
+        return newMarks;
     });
   };
 
@@ -258,6 +290,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
 
     const report = gradeTest(userAnswers, solution.answers);
+    // This function now returns the docId of the new submission.
     saveSubmission(firestore, user.uid, test, userAnswers, report);
     clearInProgressAnswers(user.uid, test.id);
 
@@ -270,6 +303,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setReviewData(newReviewData);
     setScoreReport(report);
     setIsScoreModalOpen(true);
+    // After submitting, we are now in "review mode" but need a submissionId.
+    // This is a complex state. The simplest approach is to reload the history page
+    // so the user can click "Review" on the new entry.
+    router.push(`/history/${test.id}`);
   };
 
   const handleBackToLibrary = () => {
@@ -312,9 +349,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             </AlertDialog>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setIsScoreModalOpen(true)}>
-                Review Score
-              </Button>
+              {scoreReport && ( // Only show if score is available
+                <Button variant="outline" onClick={() => setIsScoreModalOpen(true)}>
+                  Review Score
+                </Button>
+              )}
               <Button onClick={handleBackToLibrary}>Back to Library</Button>
             </>
           )}
@@ -343,6 +382,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       userAnswers={userAnswers}
       onAnswerSelect={handleAnswerSelect}
       reviewData={reviewData}
+      markedQuestions={markedQuestions}
+      onMarkQuestion={handleMarkQuestion}
     />
   );
   
@@ -372,7 +413,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   return (
     <>
       <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-background">
-        <header className="flex h-16 flex-shrink-0 items-center justify-end border-b px-4">
+        <header className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
+            <h2 className="text-xl font-bold tracking-tight">{test.division}: {test.year} {test.month} {test.test_type}</h2>
             {headerActions}
         </header>
         <div className="flex-1 overflow-hidden">
