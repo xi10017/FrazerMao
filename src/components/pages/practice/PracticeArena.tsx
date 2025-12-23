@@ -412,9 +412,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       panels = [testPdfPanel, solutionPdfPanel, scantronPanel];
   }
   
-  // This logic is now outside the panel creation to handle visibility with CSS
-  const visiblePanels = showCalculator ? panels.concat(<div key="calc-placeholder" />) : panels;
-
   if (isPdfFullScreen) {
       return (
           <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
@@ -431,11 +428,17 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             {headerActions}
         </header>
         <div className="flex-1 overflow-hidden relative">
-            <div className={cn("h-full w-full", isStatsTest && showCalculator ? "pr-[33%]" : "pr-0", "transition-all duration-300")}>
+            <div className={cn(
+              "h-full w-full transition-[padding]", 
+              isStatsTest && showCalculator ? "pr-[33%]" : "pr-0",
+              )}>
               <MultiPanelLayout panels={panels} />
             </div>
             {isStatsTest && (
-                <div className={cn("absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300", !showCalculator && "translate-x-full")}>
+                <div className={cn(
+                  "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
+                  showCalculator ? 'translate-x-0' : 'translate-x-full'
+                  )}>
                     <Ti84Calculator />
                 </div>
             )}
