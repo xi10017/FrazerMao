@@ -382,12 +382,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   
   const testPdfPanel = (
     <div className={cn('relative h-full transition-all duration-300', isPdfFullScreen && 'w-full')}>
-        {isPdfFullScreen && <div className="absolute inset-0 z-30" />}
         <PDFDisplay url={test.url} />
         <Button
             variant="ghost"
             size="icon"
-            className="absolute bottom-4 right-4 bg-background/50 hover:bg-background/80"
+            className="absolute bottom-4 right-4 z-40 bg-background/50 hover:bg-background/80"
             onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
         >
             {isPdfFullScreen ? <Minimize /> : <Maximize />}
