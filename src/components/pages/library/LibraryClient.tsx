@@ -20,37 +20,44 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [allMarks, setAllMarks] = useState<Record<string, MarkedQuestions>>({});
+  const [inProgress, setInProgress] = useState<Record<string, UserAnswers>>({});
+
 
   useEffect(() => {
-    const fetchSubmissionsAndMarks = async () => {
+    const fetchUserData = async () => {
       if (user && firestore) {
         setIsLoading(true);
         const storedSubmissions = await getSubmissionsForUser(firestore, user.uid);
         setSubmissions(storedSubmissions);
 
-        // Fetch all marks for the user
         const marks: Record<string, MarkedQuestions> = {};
         for (const sub of storedSubmissions) {
             marks[sub.id] = getReviewMarks(user.uid, sub.id);
         }
         setAllMarks(marks);
+        
+        const inProgressAnswers: Record<string, UserAnswers> = {};
+        tests.forEach(test => {
+            const saved = getInProgressAnswers(user.uid, test.id);
+            if (saved) {
+                inProgressAnswers[test.id] = saved;
+            }
+        });
+        setInProgress(inProgressAnswers);
 
         setIsLoading(false);
       } else if (!isUserLoading) {
-        setSubmissions([]); // Clear submissions if user logs out
+        setSubmissions([]);
         setAllMarks({});
+        setInProgress({});
         setIsLoading(false);
       }
     }
-    fetchSubmissionsAndMarks();
-  }, [user, firestore, isUserLoading]);
+    fetchUserData();
+  }, [user, firestore, isUserLoading, tests]);
 
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
-    if (!user) {
-      return tests.map(t => ({...t, history: [], inProgress: false, markedForReview: {}}));
-    }
-
     const submissionsByTestId = submissions.reduce((acc, sub) => {
         if (!acc[sub.testId]) {
             acc[sub.testId] = [];
@@ -60,24 +67,23 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     }, {} as {[key: string]: TestSubmission[]});
 
     return tests.map(test => {
-        const hasInProgress = !!getInProgressAnswers(user.uid, test.id);
         const testSubmissions = submissionsByTestId[test.id] || [];
-        // Ensure history is sorted most recent first
         testSubmissions.sort((a,b) => b.submittedAt.getTime() - a.submittedAt.getTime());
 
-        // Get marks for the most recent submission
         const lastSubmission = testSubmissions[0];
         const markedForReview = lastSubmission ? allMarks[lastSubmission.id] || {} : {};
+        
+        const inProgressAnswers = inProgress[test.id];
 
         return {
             ...test,
             history: testSubmissions,
-            inProgress: hasInProgress,
+            inProgress: inProgressAnswers,
             markedForReview: markedForReview,
         }
     });
 
-  }, [tests, submissions, user, allMarks]);
+  }, [tests, submissions, allMarks, inProgress]);
 
 
   const uniqueValues = useMemo(() => {
@@ -85,14 +91,14 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const months = [...new Set(tests.map((t) => t.month))].sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
     const testTypes = [...new Set(tests.map((t) => t.test_type))].sort();
-    const years = [...new Set(tests.map((t) => t.year))].sort((a, b) => a - b);
+    const years = [...new Set(tests.map((t) => t.year))].sort((a, b) => b - a);
     return {
       divisions,
       months,
       competitions: testTypes,
       years,
-      minYear: years[0],
-      maxYear: years[years.length - 1],
+      minYear: years[years.length - 1],
+      maxYear: years[0],
     };
   }, [tests]);
 
@@ -134,6 +140,20 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       console.error('Failed to save filters to localStorage:', error);
     }
   }, [startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
+
+  const handleResetFilters = () => {
+    setStartYear(uniqueValues.minYear);
+    setEndYear(uniqueValues.maxYear);
+    setSelectedDivisions([]);
+    setSelectedMonths([]);
+    setSelectedCompetitions([]);
+    try {
+      localStorage.removeItem('testFilters');
+    } catch (error) {
+      console.error('Failed to clear filters from localStorage:', error);
+    }
+  };
+
 
   useEffect(() => {
     if (startYear > endYear) {
@@ -193,6 +213,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setSelectedMonths={setSelectedMonths}
         selectedCompetitions={selectedCompetitions}
         setSelectedCompetitions={setSelectedCompetitions}
+        onResetFilters={handleResetFilters}
       />
       <div className="flex-1 min-w-0">
         <Tabs defaultValue="library">
