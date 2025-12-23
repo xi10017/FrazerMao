@@ -59,9 +59,10 @@ const DraggableDivider: React.FC<{
 
 interface MultiPanelLayoutProps {
     panels: React.ReactNode[];
+    isPdfFullScreen: boolean;
 }
 
-const MultiPanelLayout: React.FC<MultiPanelLayoutProps> = ({ panels }) => {
+const MultiPanelLayout: React.FC<MultiPanelLayoutProps> = ({ panels, isPdfFullScreen }) => {
     const numPanels = panels.length;
     const initialPositions = Array.from({ length: numPanels - 1 }, (_, i) => (100 / numPanels) * (i + 1));
     
@@ -128,14 +129,19 @@ const MultiPanelLayout: React.FC<MultiPanelLayoutProps> = ({ panels }) => {
     
     return (
          <div ref={containerRef} className="flex h-full w-full overflow-hidden">
-            {isDragging !== null && <div className="absolute inset-0 z-30" />}
+            {isDragging !== null && <div className="absolute inset-0 z-20" />}
             {panels.map((panel, index) => (
                 <React.Fragment key={index}>
-                    <div style={{ width: `${panelWidths[index]}%` }} className="relative h-full">
+                    <div 
+                      style={{ width: isPdfFullScreen && index > 0 ? '0%' : isPdfFullScreen && index === 0 ? '100%' : `${panelWidths[index]}%` }} 
+                      className={cn("relative h-full transition-all duration-300", isPdfFullScreen && index > 0 && "p-0")}
+                    >
                         {panel}
                     </div>
                     {index < panels.length - 1 && (
-                        <DraggableDivider onMouseDown={handleMouseDown(index)} />
+                        <div className={cn("transition-all duration-300", isPdfFullScreen ? 'w-0' : 'w-2')}>
+                            <DraggableDivider onMouseDown={handleMouseDown(index)} />
+                        </div>
                     )}
                 </React.Fragment>
             ))}
@@ -389,7 +395,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   );
   
   const testPdfPanel = (
-    <div className={cn("relative h-full w-full transition-all duration-300", isPdfFullScreen && "absolute inset-0 z-50")}>
+    <div className="relative h-full w-full">
         <PDFDisplay url={test.url} />
         <Button
             variant="ghost"
@@ -422,10 +428,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   
   const mainContent = (
       <div className={cn(
-        "h-full w-full transition-[padding]", 
+        "h-full w-full transition-all duration-300", 
         isStatsTest && showCalculator ? "pr-[33%]" : "pr-0",
       )}>
-        <MultiPanelLayout panels={panels} />
+        <MultiPanelLayout panels={panels} isPdfFullScreen={isPdfFullScreen} />
       </div>
   );
 
@@ -438,12 +444,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             {headerActions}
         </header>
         <div className="flex-1 overflow-hidden relative">
-           <div className={cn("h-full w-full", isPdfFullScreen ? 'invisible' : '')}>
-            {mainContent}
-          </div>
-          
-           {isPdfFullScreen && testPdfPanel}
-
+          {mainContent}
           {isStatsTest && hasCalculatorBeenOpened && (
               <div className={cn(
                 "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
