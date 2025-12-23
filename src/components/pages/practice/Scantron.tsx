@@ -1,15 +1,19 @@
 'use client';
 
 import React from 'react';
-import type { UserAnswers, ReviewData } from '@/lib/types';
+import type { UserAnswers, ReviewData, MarkedQuestions } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { Flag } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ScantronProps {
   userAnswers: UserAnswers;
   onAnswerSelect: (question: number, answer: string | null) => void;
   reviewData: ReviewData | null;
+  markedQuestions: MarkedQuestions;
+  onMarkQuestion: (question: number) => void;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -39,6 +43,8 @@ export const Scantron: React.FC<ScantronProps> = ({
   userAnswers,
   onAnswerSelect,
   reviewData,
+  markedQuestions,
+  onMarkQuestion,
 }) => {
   const questionNumbers = Array.from(
     { length: TOTAL_QUESTIONS },
@@ -81,6 +87,23 @@ export const Scantron: React.FC<ScantronProps> = ({
               <div className="flex items-center gap-2">
                 {isReviewMode && reviewData?.[qNum] ? (
                   <div className="flex items-center gap-2">
+                     <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant={markedQuestions[qNum] ? 'secondary' : 'ghost'} 
+                            size="icon"
+                            onClick={() => onMarkQuestion(qNum)}
+                          >
+                            <Flag className={cn('h-4 w-4', markedQuestions[qNum] && 'text-primary fill-primary')} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Mark for Review</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
                     <div className="text-right text-sm font-bold">
                       {reviewData[qNum].userAnswer === undefined ||
                       reviewData[qNum].userAnswer === null ? (
