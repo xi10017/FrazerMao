@@ -389,12 +389,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   );
   
   const testPdfPanel = (
-    <div className={cn('relative h-full transition-all duration-300', isPdfFullScreen && 'w-full')}>
+    <div className="relative h-full w-full">
         <PDFDisplay url={test.url} />
         <Button
             variant="ghost"
             size="icon"
-            className="absolute bottom-4 right-4 z-40 bg-background/50 hover:bg-background/80"
+            className="absolute top-4 left-4 z-40 bg-background/50 hover:bg-background/80"
             onClick={() => setIsPdfFullScreen(!isPdfFullScreen)}
         >
             {isPdfFullScreen ? <Minimize /> : <Maximize />}
@@ -420,11 +420,20 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       panels = [testPdfPanel, solutionPdfPanel, scantronPanel];
   }
   
+  const mainContent = (
+      <div className={cn(
+        "h-full w-full transition-[padding]", 
+        isStatsTest && showCalculator ? "pr-[33%]" : "pr-0",
+      )}>
+        <MultiPanelLayout panels={panels} />
+      </div>
+  );
+
   if (isPdfFullScreen) {
       return (
-          <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-              {testPdfPanel}
-          </div>
+        <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background transition-all duration-300">
+          {testPdfPanel}
+        </div>
       )
   }
 
@@ -436,20 +445,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             {headerActions}
         </header>
         <div className="flex-1 overflow-hidden relative">
-            <div className={cn(
-              "h-full w-full transition-[padding]", 
-              isStatsTest && showCalculator ? "pr-[33%]" : "pr-0",
-              )}>
-              <MultiPanelLayout panels={panels} />
-            </div>
-            {isStatsTest && hasCalculatorBeenOpened && (
-                <div className={cn(
-                  "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
-                  showCalculator ? 'translate-x-0' : 'translate-x-full'
-                  )}>
-                    <Ti84Calculator />
-                </div>
-            )}
+          {mainContent}
+          {isStatsTest && hasCalculatorBeenOpened && (
+              <div className={cn(
+                "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
+                showCalculator ? 'translate-x-0' : 'translate-x-full'
+                )}>
+                  <Ti84Calculator />
+              </div>
+          )}
         </div>
       </div>
 
