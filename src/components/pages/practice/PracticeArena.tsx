@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Calculator, Maximize, Minimize } from 'lucide-react';
+import { Calculator, Maximize, Minimize, BookOpenCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -173,6 +173,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
   
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   
@@ -381,6 +382,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             </AlertDialog>
           ) : (
             <>
+              {solution && (
+                 <Button 
+                    variant={showSolution ? "secondary" : "outline"}
+                    onClick={() => setShowSolution(!showSolution)}
+                  >
+                   <BookOpenCheck className="mr-2 h-4 w-4" />
+                   {showSolution ? 'Hide Solution' : 'Show Solution'}
+                 </Button>
+              )}
               {scoreReport && ( // Only show if score is available
                 <Button variant="outline" onClick={() => setIsScoreModalOpen(true)}>
                   Review Score
@@ -422,8 +432,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   if (isPracticeMode) {
       panels = [testPdfPanel, scantronPanel];
   } else { // Review Mode
-      const solutionPdfPanel = <PDFDisplay url={solution?.url || test.url} />;
-      panels = [testPdfPanel, solutionPdfPanel, scantronPanel];
+      if (showSolution && solution) {
+          const solutionPdfPanel = <PDFDisplay url={solution.url} />;
+          panels = [testPdfPanel, solutionPdfPanel, scantronPanel];
+      } else {
+          panels = [testPdfPanel, scantronPanel];
+      }
   }
   
   const mainContent = (
