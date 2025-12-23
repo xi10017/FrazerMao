@@ -166,6 +166,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
   
   const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   
@@ -331,6 +332,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     router.push(`/`);
   };
 
+  const handleToggleCalculator = () => {
+    if (!hasCalculatorBeenOpened) {
+      setHasCalculatorBeenOpened(true);
+    }
+    setShowCalculator(!showCalculator);
+  };
+
   const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
   
@@ -339,7 +347,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
        {isStatsTest && (
         <Button 
           variant={showCalculator ? "secondary" : "outline"} 
-          onClick={() => setShowCalculator(!showCalculator)}
+          onClick={handleToggleCalculator}
         >
           <Calculator className="mr-2 h-4 w-4" />
           Calculator
@@ -434,7 +442,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
               )}>
               <MultiPanelLayout panels={panels} />
             </div>
-            {isStatsTest && (
+            {isStatsTest && hasCalculatorBeenOpened && (
                 <div className={cn(
                   "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
                   showCalculator ? 'translate-x-0' : 'translate-x-full'
