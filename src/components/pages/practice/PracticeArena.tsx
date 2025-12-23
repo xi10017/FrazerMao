@@ -389,7 +389,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   );
   
   const testPdfPanel = (
-    <div className="relative h-full w-full">
+    <div className={cn("relative h-full w-full transition-all duration-300", isPdfFullScreen && "absolute inset-0 z-50")}>
         <PDFDisplay url={test.url} />
         <Button
             variant="ghost"
@@ -429,13 +429,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       </div>
   );
 
-  if (isPdfFullScreen) {
-      return (
-        <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background transition-all duration-300">
-          {testPdfPanel}
-        </div>
-      )
-  }
 
   return (
     <>
@@ -445,7 +438,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             {headerActions}
         </header>
         <div className="flex-1 overflow-hidden relative">
-          {mainContent}
+           <div className={cn("h-full w-full", isPdfFullScreen ? 'invisible' : '')}>
+            {mainContent}
+          </div>
+          
+           {isPdfFullScreen && testPdfPanel}
+
           {isStatsTest && hasCalculatorBeenOpened && (
               <div className={cn(
                 "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
