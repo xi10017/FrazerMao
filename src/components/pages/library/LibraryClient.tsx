@@ -21,7 +21,6 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [allMarks, setAllMarks] = useState<Record<string, MarkedQuestions>>({});
 
-
   useEffect(() => {
     const fetchSubmissionsAndMarks = async () => {
       if (user && firestore) {
@@ -103,6 +102,39 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>([]);
   
+  // Load filters from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedFiltersJSON = localStorage.getItem('testFilters');
+      if (savedFiltersJSON) {
+        const savedFilters = JSON.parse(savedFiltersJSON);
+        if (savedFilters.startYear) setStartYear(savedFilters.startYear);
+        if (savedFilters.endYear) setEndYear(savedFilters.endYear);
+        if (savedFilters.selectedDivisions) setSelectedDivisions(savedFilters.selectedDivisions);
+        if (savedFilters.selectedMonths) setSelectedMonths(savedFilters.selectedMonths);
+        if (savedFilters.selectedCompetitions) setSelectedCompetitions(savedFilters.selectedCompetitions);
+      }
+    } catch (error) {
+      console.error('Failed to load filters from localStorage:', error);
+    }
+  }, []);
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    try {
+      const filtersToSave = {
+        startYear,
+        endYear,
+        selectedDivisions,
+        selectedMonths,
+        selectedCompetitions,
+      };
+      localStorage.setItem('testFilters', JSON.stringify(filtersToSave));
+    } catch (error) {
+      console.error('Failed to save filters to localStorage:', error);
+    }
+  }, [startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
+
   useEffect(() => {
     if (startYear > endYear) {
       setEndYear(startYear);
