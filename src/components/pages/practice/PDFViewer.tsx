@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 
 interface PDFViewerProps {
   url: string;
 }
 
-export const PDFViewer: React.FC<PDFViewerProps> = ({ url }) => {
+const PDFViewerComponent: React.FC<PDFViewerProps> = ({ url }) => {
   // Use Google's document viewer to ensure cross-browser compatibility.
   const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
     url
@@ -23,3 +23,5 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url }) => {
     </div>
   );
 };
+
+export const PDFViewer = memo(PDFViewerComponent);

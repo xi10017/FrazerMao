@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { PDFViewer } from './PDFViewer';
 import { GoogleDrivePDFViewer } from './GoogleDrivePDFViewer';
 
@@ -8,7 +8,7 @@ interface PDFDisplayProps {
   url: string;
 }
 
-export const PDFDisplay: React.FC<PDFDisplayProps> = ({ url }) => {
+const PDFDisplayComponent: React.FC<PDFDisplayProps> = ({ url }) => {
   const isGoogleDriveUrl = url.includes('drive.google.com');
 
   if (isGoogleDriveUrl) {
@@ -17,3 +17,5 @@ export const PDFDisplay: React.FC<PDFDisplayProps> = ({ url }) => {
 
   return <PDFViewer url={url} />;
 };
+
+export const PDFDisplay = memo(PDFDisplayComponent);
