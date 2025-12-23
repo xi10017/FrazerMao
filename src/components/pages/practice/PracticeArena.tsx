@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -422,8 +423,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   if (isPdfFullScreen) {
       return (
           <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-background">
-              {export default PracticeArena;
-}
+              {testPdfPanel}
           </div>
       )
   }
