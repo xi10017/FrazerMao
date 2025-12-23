@@ -70,15 +70,16 @@ export async function getSubmissionsForUser(
  * @param test The test object.
  * @param userAnswers The user's answers.
  * @param scoreReport The calculated score report.
+ * @returns The ID of the newly created submission document, or null on failure.
  */
-export function saveSubmission(
+export async function saveSubmission(
   db: Firestore,
   userId: string,
   test: FamatTest,
   userAnswers: UserAnswers,
   scoreReport: ScoreReport
-) {
-  if (typeof window === 'undefined' || !userId) return;
+): Promise<string | null> {
+  if (typeof window === 'undefined' || !userId) return null;
 
   const submissionsRef = collection(db, 'users', userId, 'testCompletions');
   const newSubmission = {
@@ -92,31 +93,35 @@ export function saveSubmission(
     completionDate: new Date().toISOString(),
   };
 
-  addDoc(submissionsRef, newSubmission)
-    .then(async () => {
-      // After successful submission, update the leaderboards
-      const user = getAuth().currentUser;
-      if (user) {
-        // Fetch the user's current preference before updating leaderboards
-        const userProfileRef = doc(db, 'users', user.uid);
-        const userProfileSnap = await getDoc(userProfileRef);
-        const showOnLeaderboard = userProfileSnap.exists()
-          ? userProfileSnap.data()?.showOnLeaderboard ?? true
-          : true;
-        
-        await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
-      }
-    })
-    .catch((serverError) => {
-      const permissionError = new FirestorePermissionError({
-        path: submissionsRef.path,
-        operation: 'create',
-        requestResourceData: newSubmission,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      console.error('Error saving submission:', serverError);
+  try {
+    const docRef = await addDoc(submissionsRef, newSubmission);
+    
+    // After successful submission, update the leaderboards
+    const user = getAuth().currentUser;
+    if (user) {
+      const userProfileRef = doc(db, 'users', user.uid);
+      const userProfileSnap = await getDoc(userProfileRef);
+      const showOnLeaderboard = userProfileSnap.exists()
+        ? userProfileSnap.data()?.showOnLeaderboard ?? true
+        : true;
+      
+      await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
+    }
+    
+    return docRef.id; // Return the new document ID
+
+  } catch (serverError) {
+    const permissionError = new FirestorePermissionError({
+      path: submissionsRef.path,
+      operation: 'create',
+      requestResourceData: newSubmission,
     });
+    errorEmitter.emit('permission-error', permissionError);
+    console.error('Error saving submission:', serverError);
+    return null;
+  }
 }
+
 
 // --- In-Progress Answers ---
 
