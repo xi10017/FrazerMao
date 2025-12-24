@@ -78,11 +78,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
-  const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [hasSolutionBeenOpened, setHasSolutionBeenOpened] = useState(false);
-  
-  const [isPdfFullScreen, setIsPdfFullScreen] = useState(false);
   
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
@@ -170,7 +167,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   }, [markedQuestions, user, currentSubmissionId, isReviewMode]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
-    if (isReviewMode) return;
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
@@ -239,9 +235,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
 
   const handleToggleCalculator = () => {
-    if (!hasCalculatorBeenOpened) {
-      setHasCalculatorBeenOpened(true);
-    }
     setShowCalculator(!showCalculator);
   };
   
@@ -330,7 +323,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                     onClick={handleToggleSolution}
                   >
                    <BookOpenCheck className="mr-2 h-4 w-4" />
-                   {showSolution ? 'Hide Solution' : 'Show Solution'}
+                   {showSolution ? 'Hide Solutions' : 'Show Solutions'}
                  </Button>
               )}
               {scoreReport && ( 
@@ -419,7 +412,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         </header>
         <div className="flex-1 overflow-hidden relative">
           {mainContent}
-          {isStatsTest && hasCalculatorBeenOpened && (
+          {isStatsTest && (
               <div className={cn(
                 "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
                 showCalculator ? 'translate-x-0' : 'translate-x-full'
