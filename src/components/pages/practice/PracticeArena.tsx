@@ -60,7 +60,7 @@ const DraggableDivider: React.FC<{
 );
 
 const HIDE_CHECK_WARNING_KEY = 'hideCheckAnswerWarning';
-const ONE_HOUR_IN_SECONDS = 3600;
+const TIMER_DURATION_SECONDS = 10;
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -88,7 +88,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [showSolution, setShowSolution] = useState(false);
   const [hasSolutionBeenOpened, setHasSolutionBeenOpened] = useState(false);
   const [timerState, setTimerState] = useState<TimerState>({
-    timeRemaining: ONE_HOUR_IN_SECONDS,
+    timeRemaining: TIMER_DURATION_SECONDS,
     isRunning: false,
   });
 
@@ -223,7 +223,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       if (savedTimerState) {
           setTimerState(savedTimerState);
       } else {
-          setTimerState({ timeRemaining: ONE_HOUR_IN_SECONDS, isRunning: false });
+          setTimerState({ timeRemaining: TIMER_DURATION_SECONDS, isRunning: false });
       }
 
       setReviewData(null);
@@ -325,14 +325,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
     setShowSolution(!showSolution);
   };
-  
-  const handleTimerToggle = () => {
-      setTimerState(prev => ({...prev, isRunning: !prev.isRunning}));
-  }
-
-  const handleTimerTick = (newTime: number) => {
-    setTimerState(prev => ({...prev, timeRemaining: newTime}));
-  }
 
   const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
@@ -378,7 +370,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     <div className="flex items-center gap-2">
       {isPracticeMode && isClient && (
         <Timer
-          duration={ONE_HOUR_IN_SECONDS}
+          duration={TIMER_DURATION_SECONDS}
           initialTimeRemaining={timerState.timeRemaining}
           initialIsRunning={timerState.isRunning}
           onStateChange={setTimerState}
