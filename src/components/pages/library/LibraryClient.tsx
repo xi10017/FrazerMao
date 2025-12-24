@@ -16,10 +16,12 @@ import {
   getInProgressAnswers,
   getReviewMarks,
   getInProgressFlags,
+  getTimerState,
 } from '@/lib/user-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
 import { Leaderboard } from './Leaderboard';
+import { LandingPage } from '@/components/pages/landing/LandingPage';
 
 interface LibraryClientProps {
   tests: FamatTest[];
@@ -103,6 +105,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
       const inProgressAnswers = inProgress[test.id];
       const inProgFlags = inProgressFlags[test.id];
+      const timerState = user ? getTimerState(user.uid, test.id) : null;
 
       return {
         ...test,
@@ -110,9 +113,10 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         inProgress: inProgressAnswers,
         markedForReview: markedForReview,
         inProgressFlags: inProgFlags,
+        timerState: timerState || undefined,
       };
     });
-  }, [tests, submissions, allMarks, inProgress, inProgressFlags]);
+  }, [tests, submissions, allMarks, inProgress, inProgressFlags, user]);
 
   const uniqueValues = useMemo(() => {
     const divisions = [...new Set(tests.map((t) => t.division))].sort();
@@ -249,16 +253,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   }
 
   if (!user) {
-    return (
-      <div className="flex h-[80vh] items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">Welcome to MuPractice</h2>
-          <p className="mt-2 text-muted-foreground">
-            Please sign in to save your progress and view test history.
-          </p>
-        </div>
-      </div>
-    );
+    return <LandingPage />;
   }
 
   return (
