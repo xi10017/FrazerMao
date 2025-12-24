@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -20,6 +19,9 @@ interface ScantronProps {
   reviewData: ReviewData | null;
   markedQuestions: MarkedQuestions;
   onMarkQuestion: (question: number) => void;
+  checkedQuestions: MarkedQuestions;
+  onCheckQuestion: (question: number) => void;
+  isReviewMode: boolean | undefined;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -38,6 +40,9 @@ const ScantronRow: React.FC<{
   reviewData: ReviewData | null;
   markedQuestions: MarkedQuestions;
   onMarkQuestion: (question: number) => void;
+  isReviewMode: boolean;
+  isChecked: boolean;
+  onCheckQuestion: (question: number) => void;
 }> = ({
   qNum,
   userAnswer,
@@ -45,26 +50,23 @@ const ScantronRow: React.FC<{
   reviewData,
   markedQuestions,
   onMarkQuestion,
+  isReviewMode,
+  isChecked,
+  onCheckQuestion,
 }) => {
-  const isReviewMode = !!reviewData;
   const originalReview = reviewData ? reviewData[qNum] : null;
 
   // For review mode, this holds the temporary answer the user is trying.
-  // We initialize it with the original incorrect answer if there was one.
   const [reviewAttempt, setReviewAttempt] = useState<string | null | undefined>(
-    isReviewMode ? originalReview?.userAnswer : null
+    null
   );
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // If the component re-enters review mode for a different submission, reset state.
+  // If the component re-enters review mode or the original answer changes, reset state.
   useEffect(() => {
-    if (isReviewMode) {
-      setReviewAttempt(originalReview?.userAnswer);
-    } else {
-      setReviewAttempt(null);
-    }
+    setReviewAttempt(originalReview?.userAnswer);
+    setShowAnswer(false);
   }, [isReviewMode, originalReview]);
-
 
   const isCorrectOnOriginal = originalReview?.isCorrect;
   const wasOmitted =
@@ -72,54 +74,66 @@ const ScantronRow: React.FC<{
     (originalReview.userAnswer === undefined ||
       originalReview.userAnswer === null);
 
-  const canReattempt = isReviewMode && (!isCorrectOnOriginal || wasOmitted);
+  const canReattemptInReview = isReviewMode && (!isCorrectOnOriginal || wasOmitted);
   
-  // The currently displayed answer. In practice mode, it's the saved answer.
-  // In review mode, it's the temporary re-attempt.
-  const currentAnswer = isReviewMode ? reviewAttempt : userAnswer;
+  // The currently displayed answer.
+  let currentAnswer = userAnswer;
+  if(isReviewMode) {
+    currentAnswer = reviewAttempt;
+  }
 
   const isMarked = !!markedQuestions[qNum];
 
   let isCorrectOnReview = false;
-  if (canReattempt && reviewAttempt && originalReview) {
+  if (canReattemptInReview && reviewAttempt && originalReview) {
     isCorrectOnReview = Array.isArray(originalReview.correctAnswer)
       ? originalReview.correctAnswer.includes(reviewAttempt)
       : reviewAttempt === originalReview.correctAnswer;
   }
 
   const handleChoiceClick = (choice: string) => {
-    if (canReattempt) {
-      setReviewAttempt(choice);
+    if (isReviewMode) {
+        if(canReattemptInReview) {
+            setReviewAttempt(choice);
+        }
     } else {
       onAnswerSelect(qNum, choice);
     }
   };
 
-  const getReviewColorClasses = () => {
-    if (!isReviewMode || !originalReview) return '';
-
-    // If re-attempting, color based on the re-attempt's correctness
-    if (canReattempt && reviewAttempt !== originalReview?.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined) {
-      return isCorrectOnReview
-        ? 'bg-green-500/10 border-green-500/30'
-        : 'bg-red-500/10 border-red-500/30';
+  const getBackgroundColor = () => {
+    // During practice, if a question has been checked, show its status.
+    if (!isReviewMode && isChecked && originalReview) {
+        return originalReview.isCorrect ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'
     }
 
-    // Otherwise, color based on the original submission
-    if (wasOmitted) return 'bg-yellow-500/10 border-yellow-500/30';
-    if (isCorrectOnOriginal) return 'bg-green-500/10 border-green-500/30';
-    return 'bg-red-500/10 border-red-500/30';
-  };
+    // During review mode, determine color based on original submission and re-attempts
+    if (isReviewMode && originalReview) {
+        // If re-attempting, color based on the re-attempt's correctness
+        if (canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined) {
+          return isCorrectOnReview
+            ? 'bg-green-500/10 border-green-500/30'
+            : 'bg-red-500/10 border-red-500/30';
+        }
 
-  const displayCorrectAnswer =
-    showAnswer || (canReattempt && isCorrectOnReview) || isCorrectOnOriginal;
+        // Otherwise, color based on the original submission
+        if (wasOmitted) return 'bg-yellow-500/10 border-yellow-500/30';
+        if (isCorrectOnOriginal) return 'bg-green-500/10 border-green-500/30';
+        return 'bg-red-500/10 border-red-500/30';
+    }
+
+    return ''; // Default: no background color
+  };
+  
+  const displayCorrectAnswerInReview =
+    showAnswer || (canReattemptInReview && isCorrectOnReview) || isCorrectOnOriginal;
 
   return (
     <div
       key={qNum}
       className={cn(
         'flex items-center justify-between rounded-lg border p-3 transition-colors',
-        isReviewMode && getReviewColorClasses()
+        getBackgroundColor()
       )}
     >
       <div className="flex items-center gap-3">
@@ -132,7 +146,7 @@ const ScantronRow: React.FC<{
               size="icon"
               className="h-9 w-9 text-base"
               onClick={() => handleChoiceClick(choice)}
-              disabled={isReviewMode && !canReattempt}
+              disabled={isReviewMode ? !canReattemptInReview : isChecked}
             >
               {choice}
             </Button>
@@ -163,41 +177,107 @@ const ScantronRow: React.FC<{
           </Tooltip>
         </TooltipProvider>
 
-        {isReviewMode && originalReview ? (
-          <div className="flex items-center gap-2">
-            {canReattempt && !isCorrectOnReview && (
-              <TooltipProvider>
+        {!isReviewMode ? (
+            // Practice Mode Buttons
+            <>
+            <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setShowAnswer(!showAnswer)}
+                      onClick={() => onCheckQuestion(qNum)}
+                      disabled={isChecked || userAnswer === undefined}
                     >
-                      {showAnswer ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      <Eye className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{showAnswer ? 'Hide' : 'Show'} Correct Answer</p>
+                    <p>Check Answer</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            )}
-
-            <div className="text-right text-sm font-bold">
-              {canReattempt && reviewAttempt !== originalReview.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined ? (
-                isCorrectOnReview ? (
+             <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onAnswerSelect(qNum, null)}
+                disabled={!userAnswer || isChecked}
+                className="h-8"
+              >
+                Clear
+              </Button>
+            </>
+        ) : (
+          // Review Mode Display
+          originalReview && (
+            <div className="flex items-center gap-2 min-w-[7rem] justify-end">
+              {canReattemptInReview && !isCorrectOnReview && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowAnswer(!showAnswer)}
+                      >
+                        {showAnswer ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{showAnswer ? 'Hide' : 'Show'} Correct Answer</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+  
+              <div className="text-right text-sm font-bold">
+                {canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined ? (
+                  isCorrectOnReview ? (
+                    <>
+                      <span className="text-green-600 dark:text-green-400">
+                        Correct!
+                      </span>
+                      <div className="text-muted-foreground">
+                        Ans:{' '}
+                        {getCorrectAnswerText(originalReview.correctAnswer)}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-red-600 dark:text-red-400">
+                        Incorrect
+                      </span>
+                      {displayCorrectAnswerInReview && (
+                        <div className="text-muted-foreground">
+                          Ans:{' '}
+                          {getCorrectAnswerText(originalReview.correctAnswer)}
+                        </div>
+                      )}
+                    </>
+                  )
+                ) : wasOmitted ? (
+                  <>
+                    <span className="text-yellow-600 dark:text-yellow-400">
+                      Omitted
+                    </span>
+                    {displayCorrectAnswerInReview && (
+                      <div className="text-muted-foreground">
+                        Ans:{' '}
+                        {getCorrectAnswerText(originalReview.correctAnswer)}
+                      </div>
+                    )}
+                  </>
+                ) : isCorrectOnOriginal ? (
                   <>
                     <span className="text-green-600 dark:text-green-400">
-                      Correct!
+                      Correct
                     </span>
                     <div className="text-muted-foreground">
-                      Ans:{' '}
-                      {getCorrectAnswerText(originalReview.correctAnswer)}
+                      Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
                     </div>
                   </>
                 ) : (
@@ -205,63 +285,36 @@ const ScantronRow: React.FC<{
                     <span className="text-red-600 dark:text-red-400">
                       Incorrect
                     </span>
-                    {displayCorrectAnswer && (
+                    {displayCorrectAnswerInReview && (
                       <div className="text-muted-foreground">
-                        Ans:{' '}
-                        {getCorrectAnswerText(originalReview.correctAnswer)}
+                        {`You: ${
+                          originalReview.userAnswer
+                        } | Ans: ${getCorrectAnswerText(
+                          originalReview.correctAnswer
+                        )}`}
                       </div>
                     )}
                   </>
-                )
-              ) : wasOmitted ? (
-                <>
-                  <span className="text-yellow-600 dark:text-yellow-400">
-                    Omitted
-                  </span>
-                  {displayCorrectAnswer && (
-                    <div className="text-muted-foreground">
-                      Ans:{' '}
-                      {getCorrectAnswerText(originalReview.correctAnswer)}
-                    </div>
-                  )}
-                </>
-              ) : isCorrectOnOriginal ? (
-                <>
+                )}
+              </div>
+            </div>
+          )
+        )}
+         {(isChecked && !isReviewMode && originalReview) && (
+            <div className='text-right text-sm font-bold'>
+                 {originalReview.isCorrect ? (
                   <span className="text-green-600 dark:text-green-400">
-                    Correct
+                    Correct!
                   </span>
-                  <div className="text-muted-foreground">
-                    Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span className="text-red-600 dark:text-red-400">
+                ) : (
+                    <span className="text-red-600 dark:text-red-400">
                     Incorrect
                   </span>
-                  {displayCorrectAnswer && (
-                    <div className="text-muted-foreground">
-                      {`You: ${
-                        originalReview.userAnswer
-                      } | Ans: ${getCorrectAnswerText(
-                        originalReview.correctAnswer
-                      )}`}
-                    </div>
-                  )}
-                </>
-              )}
+                )}
+                 <div className="text-muted-foreground">
+                    Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
+                </div>
             </div>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onAnswerSelect(qNum, null)}
-            disabled={!userAnswer}
-            className="h-8"
-          >
-            Clear
-          </Button>
         )}
       </div>
     </div>
@@ -274,6 +327,9 @@ export const Scantron: React.FC<ScantronProps> = ({
   reviewData,
   markedQuestions,
   onMarkQuestion,
+  checkedQuestions,
+  onCheckQuestion,
+  isReviewMode = false,
 }) => {
   const questionNumbers = Array.from(
     { length: TOTAL_QUESTIONS },
@@ -293,6 +349,9 @@ export const Scantron: React.FC<ScantronProps> = ({
               reviewData={reviewData}
               markedQuestions={markedQuestions}
               onMarkQuestion={onMarkQuestion}
+              isReviewMode={isReviewMode}
+              isChecked={!!checkedQuestions[qNum]}
+              onCheckQuestion={onCheckQuestion}
             />
           ))}
         </div>
@@ -300,5 +359,3 @@ export const Scantron: React.FC<ScantronProps> = ({
     </div>
   );
 };
-
-    
