@@ -71,6 +71,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
+  const [checkedQuestions, setCheckedQuestions] = useState<MarkedQuestions>({});
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -156,6 +157,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setScoreReport(null);
       setCurrentSubmissionId(undefined);
       setIsReviewMode(false);
+      setCheckedQuestions({});
     }
   }, [
     user,
@@ -211,6 +213,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       return newMarks;
     });
   };
+  
+  const handleCheckQuestion = useCallback((question: number) => {
+    if (!solution) return;
+    const correctAnswers = solution.answers;
+    const review = createReviewData(userAnswers, correctAnswers);
+    setReviewData(review);
+
+    setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
+  }, [userAnswers, solution, createReviewData]);
+
 
   const handleSubmit = async () => {
     if (!solution) {
@@ -388,69 +400,88 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           </h2>
           {headerActions}
         </header>
+
         <div className="flex flex-1 overflow-hidden">
-          <div className="relative flex-1">
+          <div
+            ref={containerRef}
+            className={cn('relative flex h-full flex-1 overflow-hidden')}
+          >
+            {isDragging && <div className="absolute inset-0 z-20" />}
+            {/* Main Content Area */}
             <div
-              ref={containerRef}
-              className={cn('relative flex h-full w-full overflow-hidden')}
+              className="relative h-full transition-all duration-300"
+              style={{
+                width:
+                  isStatsTest && showCalculator
+                    ? 'calc(100% - 33%)'
+                    : '100%',
+              }}
             >
-              {isDragging && <div className="absolute inset-0 z-20" />}
+              <div className="relative flex h-full w-full">
+                {/* Test PDF Panel */}
+                <div
+                  className="relative h-full"
+                  style={{ width: `${dividerPosition}%` }}
+                >
+                  <PDFDisplay url={test.url} />
+                </div>
 
-              {/* Test PDF Panel */}
-              <div className="relative h-full" style={{ width: `${dividerPosition}%` }}>
-                <PDFDisplay url={test.url} />
-              </div>
+                <DraggableDivider onMouseDown={handleMouseDown} />
 
-              <DraggableDivider onMouseDown={handleMouseDown} />
-
-              {/* Right side containing Scantron and Solution */}
-              <div
-                className="relative h-full"
-                style={{ width: `calc(100% - ${dividerPosition}%)` }}
-              >
-                <div className="flex h-full w-full">
-                  {/* Solution Panel - always mounted after first open */}
-                  {hasSolutionBeenOpened && solution && (
+                {/* Right side containing Scantron and Solution */}
+                <div
+                  className="relative h-full"
+                  style={{ width: `calc(100% - ${dividerPosition}%)` }}
+                >
+                  <div className="flex h-full w-full">
+                    {/* Solution Panel - always mounted after first open */}
+                    {hasSolutionBeenOpened && solution && (
+                      <div
+                        className={cn(
+                          'relative h-full transition-all duration-300',
+                          showSolution ? 'w-1/2' : 'w-0'
+                        )}
+                      >
+                        <PDFDisplay url={solution.url} />
+                      </div>
+                    )}
+                    {/* Scantron Panel */}
                     <div
                       className={cn(
                         'relative h-full transition-all duration-300',
-                        showSolution ? 'w-1/2' : 'w-0'
+                        hasSolutionBeenOpened && showSolution
+                          ? 'w-1/2'
+                          : 'w-full'
                       )}
                     >
-                      <PDFDisplay url={solution.url} />
+                      <Scantron
+                        userAnswers={userAnswers}
+                        onAnswerSelect={handleAnswerSelect}
+                        reviewData={reviewData}
+                        markedQuestions={markedQuestions}
+                        onMarkQuestion={handleMarkQuestion}
+                        checkedQuestions={checkedQuestions}
+                        onCheckQuestion={handleCheckQuestion}
+                        isReviewMode={isReviewMode}
+                      />
                     </div>
-                  )}
-                  {/* Scantron Panel */}
-                  <div
-                    className={cn(
-                      'relative h-full transition-all duration-300',
-                      hasSolutionBeenOpened && showSolution ? 'w-1/2' : 'w-full'
-                    )}
-                  >
-                    <Scantron
-                      userAnswers={userAnswers}
-                      onAnswerSelect={handleAnswerSelect}
-                      reviewData={reviewData}
-                      markedQuestions={markedQuestions}
-                      onMarkQuestion={handleMarkQuestion}
-                    />
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Calculator Panel */}
-          {hasCalculatorBeenOpened && isStatsTest && (
-            <div
-              className={cn(
-                'bg-background transition-all duration-300',
-                showCalculator ? 'w-[33%] border-l' : 'w-0'
-              )}
-            >
-              <Ti84Calculator />
-            </div>
-          )}
+            {/* Calculator Panel */}
+            {hasCalculatorBeenOpened && isStatsTest && (
+              <div
+                className={cn(
+                  'bg-background transition-all duration-300',
+                  showCalculator ? 'w-[33%] border-l' : 'w-0'
+                )}
+              >
+                <Ti84Calculator />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
