@@ -117,8 +117,7 @@ export const LandingPage = () => {
           Master Mu Alpha Theta Competitions
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-          A platform for realistic practice, progress tracking, and competitive
-          preparation for FAMAT tests.
+          A platform for completing folders with realistic practice, progress tracking, and competitive preparation.
         </p>
         <UserAuthButton />
       </section>
@@ -134,12 +133,12 @@ export const LandingPage = () => {
           <FeatureCard
             icon={<BookCopy className="h-8 w-8" />}
             title="Folder Library"
-            description="Access a comprehensive collection of 'folders' from recent years, with more being added all the time."
+            description="Access a comprehensive collection of folders from recent years, with more being added all the time."
           />
           <FeatureCard
             icon={<Timer className="h-8 w-8" />}
             title="Realistic Practice Arena"
-            description="Simulate the real exam with a timed environment and integrated scantron. A TI-84 is available for Stats (no, you can't use an Inspire)."
+            description="Simulate the real exam with a timed environment and integrated scantron. A TI-84 is available for Stats (sorry no Inspire)."
           />
           <FeatureCard
             icon={<BarChart3 className="h-8 w-8" />}
