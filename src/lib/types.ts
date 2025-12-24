@@ -57,6 +57,7 @@ export interface FamatTestWithHistory extends FamatTest {
   inProgress?: UserAnswers;
   markedForReview: MarkedQuestions;
   inProgressFlags?: MarkedQuestions;
+  timerState?: TimerState;
 }
 
 export type LeaderboardEntry = {
