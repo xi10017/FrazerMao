@@ -60,7 +60,7 @@ const DraggableDivider: React.FC<{
 );
 
 const HIDE_CHECK_WARNING_KEY = 'hideCheckAnswerWarning';
-const TIMER_DURATION_SECONDS = 10;
+const TIMER_DURATION_SECONDS = 3600;
 
 interface PracticeArenaProps {
   test: FamatTest;
