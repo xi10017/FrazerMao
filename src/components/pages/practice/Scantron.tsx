@@ -74,7 +74,7 @@ const ScantronRow: React.FC<{
     return 'bg-red-500/10 border-red-500/30';
   };
   
-  const displayCorrectAnswer = showAnswer || (canReattempt && isCorrectOnReview);
+  const displayCorrectAnswer = showAnswer || (canReattempt && isCorrectOnReview) || isCorrectOnOriginal;
 
   return (
     <div
@@ -137,7 +137,7 @@ const ScantronRow: React.FC<{
               </TooltipProvider>
             )}
 
-            <div className="text-right text-sm font-bold w-40">
+            <div className="text-right text-sm font-bold min-w-28">
               {canReattempt && reviewAttempt !== null ? (
                 isCorrectOnReview ? (
                   <>
@@ -163,9 +163,11 @@ const ScantronRow: React.FC<{
               ) : (
                 <>
                   <span className="text-red-400">Incorrect</span>
-                  <div className="text-muted-foreground">
-                    {displayCorrectAnswer ? `You: ${originalReview.userAnswer} | Ans: ${getCorrectAnswerText(originalReview.correctAnswer)}` : `You: ${originalReview.userAnswer}`}
-                  </div>
+                  {displayCorrectAnswer && (
+                    <div className="text-muted-foreground">
+                      {`You: ${originalReview.userAnswer} | Ans: ${getCorrectAnswerText(originalReview.correctAnswer)}`}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -218,4 +220,3 @@ export const Scantron: React.FC<ScantronProps> = ({
     </div>
   );
 };
-
