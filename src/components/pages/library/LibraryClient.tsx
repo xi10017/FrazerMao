@@ -1,12 +1,22 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { FamatTest, FamatTestWithHistory, TestSubmission, MarkedQuestions, UserAnswers } from '@/lib/types';
+import type {
+  FamatTest,
+  FamatTestWithHistory,
+  TestSubmission,
+  MarkedQuestions,
+  UserAnswers,
+} from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
 import { useUser, useFirestore } from '@/firebase';
-import { getSubmissionsForUser, getInProgressAnswers, getReviewMarks, getInProgressFlags } from '@/lib/localStorage';
+import {
+  getSubmissionsForUser,
+  getInProgressAnswers,
+  getReviewMarks,
+  getInProgressFlags,
+} from '@/lib/user-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
 import { Leaderboard } from './Leaderboard';
@@ -21,34 +31,40 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [allMarks, setAllMarks] = useState<Record<string, MarkedQuestions>>({});
-  const [inProgress, setInProgress] = useState<Record<string, UserAnswers>>({});
-  const [inProgressFlags, setInProgressFlags] = useState<Record<string, MarkedQuestions>>({});
-
+  const [inProgress, setInProgress] = useState<Record<string, UserAnswers>>(
+    {}
+  );
+  const [inProgressFlags, setInProgressFlags] = useState<
+    Record<string, MarkedQuestions>
+  >({});
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (user && firestore) {
         setIsLoading(true);
-        const storedSubmissions = await getSubmissionsForUser(firestore, user.uid);
+        const storedSubmissions = await getSubmissionsForUser(
+          firestore,
+          user.uid
+        );
         setSubmissions(storedSubmissions);
 
         const marks: Record<string, MarkedQuestions> = {};
         for (const sub of storedSubmissions) {
-            marks[sub.id] = getReviewMarks(user.uid, sub.id);
+          marks[sub.id] = getReviewMarks(user.uid, sub.id);
         }
         setAllMarks(marks);
-        
+
         const inProgressAnswers: Record<string, UserAnswers> = {};
         const inProgFlags: Record<string, MarkedQuestions> = {};
-        tests.forEach(test => {
-            const savedAnswers = getInProgressAnswers(user.uid, test.id);
-            if (savedAnswers) {
-                inProgressAnswers[test.id] = savedAnswers;
-            }
-            const savedFlags = getInProgressFlags(user.uid, test.id);
-            if(savedFlags) {
-                inProgFlags[test.id] = savedFlags;
-            }
+        tests.forEach((test) => {
+          const savedAnswers = getInProgressAnswers(user.uid, test.id);
+          if (savedAnswers) {
+            inProgressAnswers[test.id] = savedAnswers;
+          }
+          const savedFlags = getInProgressFlags(user.uid, test.id);
+          if (savedFlags) {
+            inProgFlags[test.id] = savedFlags;
+          }
         });
         setInProgress(inProgressAnswers);
         setInProgressFlags(inProgFlags);
@@ -61,46 +77,62 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setInProgressFlags({});
         setIsLoading(false);
       }
-    }
+    };
     fetchUserData();
   }, [user, firestore, isUserLoading, tests]);
 
-
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
     const submissionsByTestId = submissions.reduce((acc, sub) => {
-        if (!acc[sub.testId]) {
-            acc[sub.testId] = [];
-        }
-        acc[sub.testId].push(sub);
-        return acc;
-    }, {} as {[key: string]: TestSubmission[]});
+      if (!acc[sub.testId]) {
+        acc[sub.testId] = [];
+      }
+      acc[sub.testId].push(sub);
+      return acc;
+    }, {} as { [key: string]: TestSubmission[] });
 
-    return tests.map(test => {
-        const testSubmissions = submissionsByTestId[test.id] || [];
-        testSubmissions.sort((a,b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    return tests.map((test) => {
+      const testSubmissions = submissionsByTestId[test.id] || [];
+      testSubmissions.sort(
+        (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
+      );
 
-        const lastSubmission = testSubmissions[0];
-        const markedForReview = lastSubmission ? allMarks[lastSubmission.id] || {} : {};
-        
-        const inProgressAnswers = inProgress[test.id];
-        const inProgFlags = inProgressFlags[test.id];
+      const lastSubmission = testSubmissions[0];
+      const markedForReview = lastSubmission
+        ? allMarks[lastSubmission.id] || {}
+        : {};
 
-        return {
-            ...test,
-            history: testSubmissions,
-            inProgress: inProgressAnswers,
-            markedForReview: markedForReview,
-            inProgressFlags: inProgFlags,
-        }
+      const inProgressAnswers = inProgress[test.id];
+      const inProgFlags = inProgressFlags[test.id];
+
+      return {
+        ...test,
+        history: testSubmissions,
+        inProgress: inProgressAnswers,
+        markedForReview: markedForReview,
+        inProgressFlags: inProgFlags,
+      };
     });
-
   }, [tests, submissions, allMarks, inProgress, inProgressFlags]);
-
 
   const uniqueValues = useMemo(() => {
     const divisions = [...new Set(tests.map((t) => t.division))].sort();
-    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    const months = [...new Set(tests.map((t) => t.month))].sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+    const monthOrder = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const months = [...new Set(tests.map((t) => t.month))].sort(
+      (a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b)
+    );
     const testTypes = [...new Set(tests.map((t) => t.test_type))].sort();
     const years = [...new Set(tests.map((t) => t.year))].sort((a, b) => b - a);
     return {
@@ -117,8 +149,10 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [endYear, setEndYear] = useState(uniqueValues.maxYear);
   const [selectedDivisions, setSelectedDivisions] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
-  const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>([]);
-  
+  const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>(
+    []
+  );
+
   // Load filters from localStorage on initial render
   useEffect(() => {
     try {
@@ -127,9 +161,12 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         const savedFilters = JSON.parse(savedFiltersJSON);
         if (savedFilters.startYear) setStartYear(savedFilters.startYear);
         if (savedFilters.endYear) setEndYear(savedFilters.endYear);
-        if (savedFilters.selectedDivisions) setSelectedDivisions(savedFilters.selectedDivisions);
-        if (savedFilters.selectedMonths) setSelectedMonths(savedFilters.selectedMonths);
-        if (savedFilters.selectedCompetitions) setSelectedCompetitions(savedFilters.selectedCompetitions);
+        if (savedFilters.selectedDivisions)
+          setSelectedDivisions(savedFilters.selectedDivisions);
+        if (savedFilters.selectedMonths)
+          setSelectedMonths(savedFilters.selectedMonths);
+        if (savedFilters.selectedCompetitions)
+          setSelectedCompetitions(savedFilters.selectedCompetitions);
       }
     } catch (error) {
       console.error('Failed to load filters from localStorage:', error);
@@ -150,7 +187,13 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     } catch (error) {
       console.error('Failed to save filters to localStorage:', error);
     }
-  }, [startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
+  }, [
+    startYear,
+    endYear,
+    selectedDivisions,
+    selectedMonths,
+    selectedCompetitions,
+  ]);
 
   const handleResetFilters = () => {
     setStartYear(uniqueValues.minYear);
@@ -164,7 +207,6 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       console.error('Failed to clear filters from localStorage:', error);
     }
   };
-
 
   useEffect(() => {
     if (startYear > endYear) {
@@ -187,16 +229,23 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         return yearMatch && divisionMatch && monthMatch && competitionMatch;
       })
       .sort((a, b) => b.year - a.year || a.division.localeCompare(b.division));
-  }, [testsWithHistory, startYear, endYear, selectedDivisions, selectedMonths, selectedCompetitions]);
+  }, [
+    testsWithHistory,
+    startYear,
+    endYear,
+    selectedDivisions,
+    selectedMonths,
+    selectedCompetitions,
+  ]);
 
   if (isLoading || isUserLoading) {
-     return (
+    return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold">Loading...</h2>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -204,10 +253,12 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       <div className="flex h-[80vh] items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold">Welcome to MuPractice</h2>
-          <p className="mt-2 text-muted-foreground">Please sign in to save your progress and view test history.</p>
+          <p className="mt-2 text-muted-foreground">
+            Please sign in to save your progress and view test history.
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -237,10 +288,10 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
             <TestList tests={filteredTests} />
           </TabsContent>
           <TabsContent value="progress" className="mt-4">
-             <ProgressGrid tests={filteredTests} />
+            <ProgressGrid tests={filteredTests} />
           </TabsContent>
           <TabsContent value="leaderboard" className="mt-4">
-             <Leaderboard />
+            <Leaderboard />
           </TabsContent>
         </Tabs>
       </div>

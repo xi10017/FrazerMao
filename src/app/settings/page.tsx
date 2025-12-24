@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { clearAllUserData } from '@/lib/localStorage';
+import { clearAllLocalData } from '@/lib/user-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -88,11 +88,11 @@ export default function SettingsPage() {
 
   const handleClearData = () => {
     if (!user) return;
-    clearAllUserData(user.uid);
+    clearAllLocalData(user.uid);
     toast({
       title: 'Local Data Cleared',
       description:
-        'Your in-progress test data has been deleted. Submitted test history must be cleared from the database by an administrator.',
+        'Your in-progress test data has been deleted from this device.',
     });
     setConfirmationText(''); // Reset for next time
     router.refresh();
@@ -100,16 +100,16 @@ export default function SettingsPage() {
 
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
     if (!userProfileRef || !user || !firestore) return;
-  
+
     const updatedProfileData = { showOnLeaderboard: checked };
-  
+
     // 1. Update the user's profile document.
     setDoc(userProfileRef, updatedProfileData, { merge: true })
       .then(async () => {
         // 2. After the profile is updated, update all leaderboard entries.
         // This ensures the `showOnLeaderboard` flag is consistent everywhere.
         await updateUserLeaderboardEntries(firestore, user, checked);
-  
+
         toast({
           title: 'Privacy settings updated!',
           description: `You will now be ${
@@ -118,7 +118,10 @@ export default function SettingsPage() {
         });
       })
       .catch((error) => {
-        console.error("Error updating user profile for leaderboard visibility:", error);
+        console.error(
+          'Error updating user profile for leaderboard visibility:',
+          error
+        );
         const permissionError = new FirestorePermissionError({
           path: userProfileRef.path,
           operation: 'update',
@@ -248,8 +251,8 @@ export default function SettingsPage() {
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This will permanently delete all of your saved in-progress
-                    work. Submitted test history is stored in the database and
-                    is not affected. To confirm, please type{' '}
+                    work from this device. Submitted test history is stored in the
+                    database and is not affected. To confirm, please type{' '}
                     <code className="font-mono bg-muted p-1 rounded-md text-foreground">
                       delete my data
                     </code>{' '}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -28,7 +27,7 @@ import {
   getInProgressFlags,
   saveInProgressFlags,
   clearInProgressFlags,
-} from '@/lib/localStorage';
+} from '@/lib/user-data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,8 +43,6 @@ import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
 import { Ti84Calculator } from './Ti84Calculator';
 
-// --- Draggable Divider Logic ---
-
 const DraggableDivider: React.FC<{
   onMouseDown: (e: React.MouseEvent) => void;
 }> = ({ onMouseDown }) => (
@@ -56,8 +53,6 @@ const DraggableDivider: React.FC<{
     <div className="mx-auto h-full w-0.5 bg-transparent group-hover:bg-primary-foreground"></div>
   </div>
 );
-
-// --- Main Arena Component ---
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -83,14 +78,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [hasSolutionBeenOpened, setHasSolutionBeenOpened] = useState(false);
-  
+
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
 
-  const [currentSubmissionId, setCurrentSubmissionId] = useState(submissionIdProp);
+  const [currentSubmissionId, setCurrentSubmissionId] =
+    useState(submissionIdProp);
   const [isReviewMode, setIsReviewMode] = useState(isReviewFromHistoryProp);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -103,75 +99,94 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setIsClient(true);
   }, []);
 
-  const createReviewData = useCallback((
-    answers: UserAnswers,
-    correctAnswers: (string | string[])[]
-  ): ReviewData => {
-    const data: ReviewData = {};
-    for (let i = 0; i < correctAnswers.length; i++) {
-      const qNum = i + 1;
-      const userAnswer = answers[qNum];
-      const correctAnswer = correctAnswers[i];
-      let isCorrect = false;
-      if (userAnswer) {
-        isCorrect = Array.isArray(correctAnswer)
-          ? correctAnswer.includes(userAnswer)
-          : userAnswer === correctAnswer;
+  const createReviewData = useCallback(
+    (
+      answers: UserAnswers,
+      correctAnswers: (string | string[])[]
+    ): ReviewData => {
+      const data: ReviewData = {};
+      for (let i = 0; i < correctAnswers.length; i++) {
+        const qNum = i + 1;
+        const userAnswer = answers[qNum];
+        const correctAnswer = correctAnswers[i];
+        let isCorrect = false;
+        if (userAnswer) {
+          isCorrect = Array.isArray(correctAnswer)
+            ? correctAnswer.includes(userAnswer)
+            : userAnswer === correctAnswer;
+        }
+
+        data[qNum] = {
+          userAnswer,
+          correctAnswer,
+          isCorrect,
+        };
       }
+      return data;
+    },
+    []
+  );
 
-      data[qNum] = {
-        userAnswer,
-        correctAnswer,
-        isCorrect,
-      };
-    }
-    return data;
-  }, []);
-
+  // Effect to initialize the arena for either review or practice mode
   useEffect(() => {
-    if (isReviewFromHistoryProp && solution && initialAnswers && user && submissionIdProp) {
+    if (!user) return;
+
+    // REVIEW MODE: Triggered by props from Next.js router
+    if (isReviewFromHistoryProp && solution && initialAnswers && submissionIdProp) {
       const report = gradeTest(initialAnswers, solution.answers);
       const newReviewData = createReviewData(initialAnswers, solution.answers);
-      setReviewData(newReviewData);
-      setScoreReport(report);
-      setUserAnswers(initialAnswers);
-      setIsScoreModalOpen(false);
       const savedMarks = getReviewMarks(user.uid, submissionIdProp);
+
+      setScoreReport(report);
+      setReviewData(newReviewData);
+      setUserAnswers(initialAnswers);
       setMarkedQuestions(savedMarks);
       setCurrentSubmissionId(submissionIdProp);
       setIsReviewMode(true);
-
-    } else if (user) {
+      setIsScoreModalOpen(false); // Don't show score modal on re-entry
+    }
+    // PRACTICE MODE: Default mode
+    else {
       const savedProgress = getInProgressAnswers(user.uid, test.id);
-      if (savedProgress) {
-        setUserAnswers(savedProgress);
-      } else {
-        setUserAnswers({});
-      }
       const savedFlags = getInProgressFlags(user.uid, test.id);
+
+      setUserAnswers(savedProgress || {});
       setMarkedQuestions(savedFlags);
       setReviewData(null);
       setScoreReport(null);
       setCurrentSubmissionId(undefined);
       setIsReviewMode(false);
     }
-  }, [isReviewFromHistoryProp, solution, initialAnswers, user, test.id, submissionIdProp, createReviewData]);
+  }, [
+    user,
+    test.id,
+    isReviewFromHistoryProp,
+    submissionIdProp,
+    initialAnswers,
+    solution,
+    createReviewData,
+  ]);
 
-
+  // Effect to save progress (answers or marks) to localStorage
   useEffect(() => {
-    if (user && !isReviewMode) {
+    if (!user) return;
+
+    if (isReviewMode && currentSubmissionId) {
+      // In review mode, save any changes to review marks
+      saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
+    } else {
+      // In practice mode, save answers and flags
       saveInProgressAnswers(user.uid, test.id, userAnswers);
+      saveInProgressFlags(user.uid, test.id, markedQuestions);
     }
-  }, [userAnswers, user, test.id, isReviewMode]);
-  
-  useEffect(() => {
-      if (user && currentSubmissionId && isReviewMode) {
-          saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
-      }
-      if (user && !isReviewMode) {
-          saveInProgressFlags(user.uid, test.id, markedQuestions);
-      }
-  }, [markedQuestions, user, currentSubmissionId, isReviewMode, test.id]);
+  }, [
+    userAnswers,
+    markedQuestions,
+    user,
+    test.id,
+    isReviewMode,
+    currentSubmissionId,
+  ]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     setUserAnswers((prev) => {
@@ -184,16 +199,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       return newAnswers;
     });
   };
-  
+
   const handleMarkQuestion = (question: number) => {
-    setMarkedQuestions(prev => {
-        const newMarks = {...prev};
-        if (newMarks[question]) {
-            delete newMarks[question];
-        } else {
-            newMarks[question] = true;
-        }
-        return newMarks;
+    setMarkedQuestions((prev) => {
+      const newMarks = { ...prev };
+      if (newMarks[question]) {
+        delete newMarks[question];
+      } else {
+        newMarks[question] = true;
+      }
+      return newMarks;
     });
   };
 
@@ -217,26 +232,33 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
 
     const report = gradeTest(userAnswers, solution.answers);
-    const newSubmissionId = await saveSubmission(firestore, user.uid, test, userAnswers, report, markedQuestions);
-    
-    if (newSubmissionId) {
-        clearInProgressAnswers(user.uid, test.id);
-        clearInProgressFlags(user.uid, test.id);
-        toast({
-          title: 'Success!',
-          description: 'Your test results have been saved.',
-        });
+    const newSubmissionId = await saveSubmission(
+      firestore,
+      user.uid,
+      test,
+      userAnswers,
+      report,
+      markedQuestions
+    );
 
-        const newReviewData = createReviewData(userAnswers, solution.answers);
-        setReviewData(newReviewData);
-        setScoreReport(report);
-        setIsScoreModalOpen(true);
-        setIsReviewMode(true);
-        setCurrentSubmissionId(newSubmissionId);
-        // The `markedQuestions` from the session are now the review marks for this submission.
+    if (newSubmissionId) {
+      clearInProgressAnswers(user.uid, test.id);
+      clearInProgressFlags(user.uid, test.id);
+      toast({
+        title: 'Success!',
+        description: 'Your test results have been saved.',
+      });
+
+      // Transition to review mode
+      const newReviewData = createReviewData(userAnswers, solution.answers);
+      setReviewData(newReviewData);
+      setScoreReport(report);
+      setIsScoreModalOpen(true);
+      setIsReviewMode(true);
+      setCurrentSubmissionId(newSubmissionId);
+      // The `markedQuestions` from the session are now the review marks for this submission.
     }
   };
-
 
   const handleBackToLibrary = () => {
     router.push(`/`);
@@ -248,13 +270,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
     setShowCalculator(!showCalculator);
   };
-  
+
   const handleToggleSolution = () => {
     if (!hasSolutionBeenOpened) {
-        setHasSolutionBeenOpened(true);
+      setHasSolutionBeenOpened(true);
     }
     setShowSolution(!showSolution);
-  }
+  };
 
   const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
@@ -269,18 +291,21 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setIsDragging(false);
   }, []);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging && containerRef.current) {
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (isDragging && containerRef.current) {
         const containerRect = containerRef.current.getBoundingClientRect();
         const newX = e.clientX - containerRect.left;
         let newPosition = (newX / containerRect.width) * 100;
-        
+
         // Constrain the divider position
-        newPosition = Math.max(20, Math.min(newPosition, 80)); 
+        newPosition = Math.max(20, Math.min(newPosition, 80));
 
         setDividerPosition(newPosition);
-    }
-  }, [isDragging]);
+      }
+    },
+    [isDragging]
+  );
 
   useEffect(() => {
     if (isDragging) {
@@ -293,13 +318,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-
-  
   const headerActions = (
     <div className="flex items-center gap-2">
-       {isStatsTest && (
-        <Button 
-          variant={showCalculator ? "secondary" : "outline"} 
+      {isStatsTest && (
+        <Button
+          variant={showCalculator ? 'secondary' : 'outline'}
           onClick={handleToggleCalculator}
         >
           <Calculator className="mr-2 h-4 w-4" />
@@ -317,28 +340,34 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Once you submit, you will not be able to change your answers.
+                    Once you submit, you will not be able to change your
+                    answers.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSubmit}>Submit</AlertDialogAction>
+                  <AlertDialogAction onClick={handleSubmit}>
+                    Submit
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           ) : (
             <>
               {solution && (
-                 <Button 
-                    variant={showSolution ? "secondary" : "outline"}
-                    onClick={handleToggleSolution}
-                  >
-                   <BookOpenCheck className="mr-2 h-4 w-4" />
-                   {showSolution ? 'Hide Solutions' : 'Show Solutions'}
-                 </Button>
+                <Button
+                  variant={showSolution ? 'secondary' : 'outline'}
+                  onClick={handleToggleSolution}
+                >
+                  <BookOpenCheck className="mr-2 h-4 w-4" />
+                  {showSolution ? 'Hide Solutions' : 'Show Solutions'}
+                </Button>
               )}
-              {scoreReport && ( 
-                <Button variant="outline" onClick={() => setIsScoreModalOpen(true)}>
+              {scoreReport && (
+                <Button
+                  variant="outline"
+                  onClick={() => setIsScoreModalOpen(true)}
+                >
                   Review Score
                 </Button>
               )}
@@ -351,75 +380,73 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   );
 
   const mainContent = (
-    <div 
-        ref={containerRef}
-        className={cn(
-            "relative flex h-full w-full overflow-hidden"
-        )}
-    >
-        {isDragging && <div className="absolute inset-0 z-20" />}
-        
-        <div 
-          className="relative h-full"
-          style={{ width: `${dividerPosition}%`}}
-        >
-          <PDFDisplay url={test.url} />
-        </div>
+    <div ref={containerRef} className={cn('relative flex h-full w-full overflow-hidden')}>
+      {isDragging && <div className="absolute inset-0 z-20" />}
 
-        <DraggableDivider onMouseDown={handleMouseDown} />
-        
-        <div 
-          className="relative h-full"
-          style={{ width: `calc(100% - ${dividerPosition}%)`}}
-        >
-            <div className="flex h-full w-full">
-                {hasSolutionBeenOpened && solution ? (
-                    <div 
-                        className={cn(
-                            "relative h-full transition-all duration-300",
-                            showSolution ? 'w-1/2' : 'w-0'
-                        )}
-                    >
-                       <PDFDisplay url={solution.url}/>
-                    </div>
-                ) : null}
-                <div 
-                    className={cn(
-                        "relative h-full transition-all duration-300",
-                        showSolution ? 'w-1/2' : 'w-full'
-                    )}
-                >
-                    <Scantron
-                        userAnswers={userAnswers}
-                        onAnswerSelect={handleAnswerSelect}
-                        reviewData={reviewData}
-                        markedQuestions={markedQuestions}
-                        onMarkQuestion={handleMarkQuestion}
-                    />
-                </div>
+      {/* Test PDF Panel */}
+      <div className="relative h-full" style={{ width: `${dividerPosition}%` }}>
+        <PDFDisplay url={test.url} />
+      </div>
+
+      <DraggableDivider onMouseDown={handleMouseDown} />
+
+      {/* Right side containing Scantron and Solution */}
+      <div
+        className="relative h-full"
+        style={{ width: `calc(100% - ${dividerPosition}%)` }}
+      >
+        <div className="flex h-full w-full">
+          {/* Solution Panel - always mounted after first open */}
+          {hasSolutionBeenOpened && solution && (
+            <div
+              className={cn(
+                'relative h-full transition-all duration-300',
+                showSolution ? 'w-1/2' : 'w-0'
+              )}
+            >
+              <PDFDisplay url={solution.url} />
             </div>
+          )}
+          {/* Scantron Panel */}
+          <div
+            className={cn(
+              'relative h-full transition-all duration-300',
+              hasSolutionBeenOpened && showSolution ? 'w-1/2' : 'w-full'
+            )}
+          >
+            <Scantron
+              userAnswers={userAnswers}
+              onAnswerSelect={handleAnswerSelect}
+              reviewData={reviewData}
+              markedQuestions={markedQuestions}
+              onMarkQuestion={handleMarkQuestion}
+            />
+          </div>
         </div>
+      </div>
     </div>
-);
-
-
+  );
 
   return (
     <>
       <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-background">
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
-            <h2 className="text-xl font-bold tracking-tight">{test.division}: {test.year} {test.month} {test.test_type}</h2>
-            {headerActions}
+          <h2 className="text-xl font-bold tracking-tight">
+            {test.division}: {test.year} {test.month} {test.test_type}
+          </h2>
+          {headerActions}
         </header>
         <div className="flex-1 overflow-hidden relative">
           {mainContent}
           {hasCalculatorBeenOpened && isStatsTest && (
-              <div className={cn(
-                "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
+            <div
+              className={cn(
+                'absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300',
                 showCalculator ? 'translate-x-0' : 'translate-x-full'
-                )}>
-                  <Ti84Calculator />
-              </div>
+              )}
+            >
+              <Ti84Calculator />
+            </div>
           )}
         </div>
       </div>
