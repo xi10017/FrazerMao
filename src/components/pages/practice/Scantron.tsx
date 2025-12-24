@@ -12,6 +12,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 interface ScantronProps {
   userAnswers: UserAnswers;
@@ -22,6 +34,8 @@ interface ScantronProps {
   checkedQuestions: MarkedQuestions;
   onCheckQuestion: (question: number) => void;
   isReviewMode: boolean | undefined;
+  hideCheckWarning: boolean;
+  onSetHideCheckWarning: (hide: boolean) => void;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -40,26 +54,82 @@ const PracticeModeButtons = memo<{
   isChecked: boolean;
   onCheckQuestion: (qNum: number) => void;
   onClear: (qNum: number, answer: null) => void;
-}>(function PracticeModeButtons({ qNum, userAnswer, isChecked, onCheckQuestion, onClear }) {
+  hideCheckWarning: boolean;
+  onSetHideCheckWarning: (hide: boolean) => void;
+}>(function PracticeModeButtons({
+  qNum,
+  userAnswer,
+  isChecked,
+  onCheckQuestion,
+  onClear,
+  hideCheckWarning,
+  onSetHideCheckWarning
+}) {
+
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  const handleCheckClick = () => {
+    if (hideCheckWarning) {
+      onCheckQuestion(qNum);
+    } else {
+      setIsWarningOpen(true);
+    }
+  };
+
+  const handleConfirmCheck = () => {
+    if (dontShowAgain) {
+      onSetHideCheckWarning(true);
+    }
+    onCheckQuestion(qNum);
+    setIsWarningOpen(false);
+  };
+
   return (
     <>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onCheckQuestion(qNum)}
-              disabled={isChecked || userAnswer === undefined || userAnswer === null}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Check Answer</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <AlertDialog open={isWarningOpen} onOpenChange={setIsWarningOpen}>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCheckClick}
+                disabled={isChecked || userAnswer === undefined || userAnswer === null}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Check Answer</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to check?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Checking your answer will lock it in, and you won't be able to change it for this practice session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+           <div className="flex items-center space-x-2 my-4">
+            <Checkbox
+              id={`dont-show-again-${qNum}`}
+              checked={dontShowAgain}
+              onCheckedChange={(checked) => setDontShowAgain(!!checked)}
+            />
+            <Label htmlFor={`dont-show-again-${qNum}`} className="cursor-pointer">
+              Don't show this again
+            </Label>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCheck}>Yes, check my answer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <Button
         variant="ghost"
         size="sm"
@@ -159,16 +229,10 @@ const ReviewModeDisplay = memo<{
 });
 
 
-const ScantronRow: React.FC<{
+const ScantronRow: React.FC<Omit<ScantronProps, 'userAnswers' | 'checkedQuestions'> & {
   qNum: number;
   userAnswer: string | null | undefined;
-  onAnswerSelect: (question: number, answer: string | null) => void;
-  reviewData: ReviewData | null;
-  markedQuestions: MarkedQuestions;
-  onMarkQuestion: (question: number) => void;
-  isReviewMode: boolean;
   isChecked: boolean;
-  onCheckQuestion: (question: number) => void;
 }> = ({
   qNum,
   userAnswer,
@@ -179,6 +243,8 @@ const ScantronRow: React.FC<{
   isReviewMode,
   isChecked,
   onCheckQuestion,
+  hideCheckWarning,
+  onSetHideCheckWarning,
 }) => {
   const originalReview = reviewData ? reviewData[qNum] : null;
 
@@ -297,6 +363,8 @@ const ScantronRow: React.FC<{
                 isChecked={isChecked}
                 onCheckQuestion={onCheckQuestion}
                 onClear={onAnswerSelect}
+                hideCheckWarning={hideCheckWarning}
+                onSetHideCheckWarning={onSetHideCheckWarning}
             />
         ) : (
           originalReview && (
@@ -338,6 +406,8 @@ export const Scantron: React.FC<ScantronProps> = ({
   checkedQuestions,
   onCheckQuestion,
   isReviewMode = false,
+  hideCheckWarning,
+  onSetHideCheckWarning,
 }) => {
   const questionNumbers = Array.from(
     { length: TOTAL_QUESTIONS },
@@ -353,13 +423,15 @@ export const Scantron: React.FC<ScantronProps> = ({
               key={qNum}
               qNum={qNum}
               userAnswer={userAnswers[qNum]}
+              isChecked={!!checkedQuestions[qNum]}
               onAnswerSelect={onAnswerSelect}
               reviewData={reviewData}
               markedQuestions={markedQuestions}
               onMarkQuestion={onMarkQuestion}
               isReviewMode={isReviewMode}
-              isChecked={!!checkedQuestions[qNum]}
               onCheckQuestion={onCheckQuestion}
+              hideCheckWarning={hideCheckWarning}
+              onSetHideCheckWarning={onSetHideCheckWarning}
             />
           ))}
         </div>
@@ -367,5 +439,3 @@ export const Scantron: React.FC<ScantronProps> = ({
     </div>
   );
 };
-
-    
