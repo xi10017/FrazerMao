@@ -186,7 +186,7 @@ export const Leaderboard = () => {
       return overallData?.filter(entry => entry.showOnLeaderboard).slice(0, 100) || null;
   }, [overallData]);
 
-  const divisions = ['Stats', 'Calculus', 'Alpha', 'Pre-calculus', 'Algebra 2', 'Geometry'];
+  const divisions = ['Stats', 'Calculus', 'Pre-calculus', 'Algebra 2', 'Geometry'];
 
   return (
     <Card>
@@ -211,7 +211,7 @@ export const Leaderboard = () => {
           </TabsContent>
           <TabsContent value="by_division">
             <Tabs defaultValue={divisions[0]} className="mt-4">
-              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 md:grid-cols-6">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 md:grid-cols-5">
                 {divisions.map((div) => (
                   <TabsTrigger key={div} value={div}>
                     {div}
