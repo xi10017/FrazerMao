@@ -6,7 +6,6 @@ import { useAuth, useFirestore } from '@/firebase';
 import {
   BarChart3,
   BookCopy,
-  CheckCircle2,
   ChevronRight,
   LogIn,
   Swords,
@@ -118,29 +117,29 @@ export const LandingPage = () => {
           Master Mu Alpha Theta Competitions
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-          Your all-in-one platform for realistic practice, detailed progress
-          tracking, and competitive preparation for FAMAT tests.
+          A platform for realistic practice, progress tracking, and competitive
+          preparation for FAMAT tests.
         </p>
         <UserAuthButton />
       </section>
 
       <section className="py-16">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold">Why Choose MuPractice?</h2>
+          <h2 className="text-3xl font-bold">Features</h2>
           <p className="mt-2 text-muted-foreground">
-            Everything you need to excel, all in one place.
+            Everything you need, all in one place.
           </p>
         </div>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={<BookCopy className="h-8 w-8" />}
-            title="Extensive Test Library"
-            description="Access a comprehensive collection of official FAMAT practice tests from recent years, with more being added all the time."
+            title="Folder Library"
+            description="Access a comprehensive collection of 'folders' from recent years, with more being added all the time."
           />
           <FeatureCard
             icon={<Timer className="h-8 w-8" />}
             title="Realistic Practice Arena"
-            description="Simulate the real exam with a timed environment, integrated scantron, and a TI-84 calculator for Statistics tests."
+            description="Simulate the real exam with a timed environment and integrated scantron. A TI-84 is available for Stats (no, you can't use an Inspire)."
           />
           <FeatureCard
             icon={<BarChart3 className="h-8 w-8" />}
@@ -165,12 +164,7 @@ export const LandingPage = () => {
                 leaderboards. Your journey to the top starts now.
               </p>
             </div>
-            <Button size="lg" asChild>
-              <a href="#">
-                Sign Up for Free
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </a>
-            </Button>
+            <UserAuthButton />
           </CardContent>
         </Card>
       </section>
