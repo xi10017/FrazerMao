@@ -186,7 +186,7 @@ export const Leaderboard = () => {
       return overallData?.filter(entry => entry.showOnLeaderboard).slice(0, 100) || null;
   }, [overallData]);
 
-  const divisions = ['Stats', 'Calculus', 'Pre-calculus', 'Algebra 2', 'Geometry'];
+  const divisions = ['Stats', 'Mu', 'Pre-calculus', 'Algebra 2', 'Geometry'];
 
   return (
     <Card>
