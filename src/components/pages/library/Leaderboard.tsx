@@ -32,13 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LeaderboardEntry } from '@/lib/types';
 import { Trophy } from 'lucide-react';
-
-function getInitials(name?: string | null) {
-  if (!name) return '?';
-  const names = name.split(' ');
-  const initials = names.map((n) => n[0]).join('');
-  return initials.length > 2 ? initials.substring(0, 2) : initials;
-}
+import { getInitials } from '@/lib/utils';
 
 const LeaderboardTable = ({
   entries,
@@ -192,7 +186,7 @@ export const Leaderboard = () => {
       return overallData?.filter(entry => entry.showOnLeaderboard).slice(0, 100) || null;
   }, [overallData]);
 
-  const divisions = ['Stats', 'Calculus', 'Pre-calculus', 'Algebra 2', 'Geometry'];
+  const divisions = ['Stats', 'Calculus', 'Alpha', 'Pre-calculus', 'Algebra 2', 'Geometry'];
 
   return (
     <Card>
@@ -217,7 +211,7 @@ export const Leaderboard = () => {
           </TabsContent>
           <TabsContent value="by_division">
             <Tabs defaultValue={divisions[0]} className="mt-4">
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 md:grid-cols-6">
                 {divisions.map((div) => (
                   <TabsTrigger key={div} value={div}>
                     {div}
