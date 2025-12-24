@@ -36,13 +36,8 @@ import type { UserProfile } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { updateUserLeaderboardEntries } from '@/lib/leaderboard';
+import { getInitials } from '@/lib/utils';
 
-function getInitials(name?: string | null) {
-  if (!name) return '?';
-  const names = name.split(' ');
-  const initials = names.map((n) => n[0]).join('');
-  return initials.length > 2 ? initials.substring(0, 2) : initials;
-}
 
 function ThemeSwitcher() {
   const { setTheme } = useTheme();

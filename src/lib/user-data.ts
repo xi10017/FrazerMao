@@ -7,6 +7,7 @@ import type {
   FamatTest,
   MarkedQuestions,
   TimerState,
+  UserProfile,
 } from './types';
 import { getTestName } from './test-logic';
 import {
@@ -18,15 +19,46 @@ import {
   type Firestore,
   doc,
   getDoc,
+  setDoc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { getAuth } from 'firebase/auth';
+import { getAuth, type User } from 'firebase/auth';
 import { updateUserLeaderboardEntries } from './leaderboard';
 
 // =================================================================
 // FIRESTORE INTERACTIONS (Submissions & Leaderboards)
 // =================================================================
+
+/**
+ * Creates or updates a user's public profile in Firestore.
+ * This function is non-blocking and uses the global error emitter for permissions issues.
+ * @param firestore The Firestore instance.
+ * @param user The authenticated Firebase User object from the auth result.
+ */
+export const createUserProfile = (firestore: Firestore, user: User) => {
+  if (!firestore || !user) return;
+
+  const userRef = doc(firestore, 'users', user.uid);
+  const userData: UserProfile = {
+    uid: user.uid,
+    displayName: user.displayName || 'Anonymous User',
+    email: user.email!,
+    photoURL: user.photoURL,
+    showOnLeaderboard: true, // Default to true on creation
+  };
+
+  // Use non-blocking write with centralized error handling
+  setDoc(userRef, userData, { merge: true }).catch(() => {
+    const permissionError = new FirestorePermissionError({
+      path: userRef.path,
+      operation: 'write', // Covers both create and update with merge
+      requestResourceData: userData,
+    });
+    errorEmitter.emit('permission-error', permissionError);
+  });
+};
+
 
 /**
  * Retrieves all test submissions for a specific user from Firestore.

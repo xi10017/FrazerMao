@@ -8,7 +8,6 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  type User,
 } from 'firebase/auth';
 import {
   DropdownMenu,
@@ -23,41 +22,9 @@ import { Skeleton } from '../ui/skeleton';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-import type { UserProfile } from '@/lib/types';
+import { createUserProfile } from '@/lib/user-data';
+import { getInitials } from '@/lib/utils';
 
-function getInitials(name?: string | null) {
-  if (!name) return '?';
-  const names = name.split(' ');
-  const initials = names.map((n) => n[0]).join('');
-  return initials.length > 2 ? initials.substring(0, 2) : initials;
-}
-
-// Function to create or update user profile in Firestore
-const createUserProfile = async (firestore: any, user: User) => {
-  if (!firestore || !user) return;
-
-  const userRef = doc(firestore, 'users', user.uid);
-  const userData: UserProfile = {
-    uid: user.uid,
-    displayName: user.displayName || 'Anonymous User',
-    email: user.email!,
-    photoURL: user.photoURL,
-    showOnLeaderboard: true, // Default to true on creation
-  };
-
-  setDoc(userRef, userData, { merge: true }).catch((error) => {
-    const permissionError = new FirestorePermissionError({
-      path: userRef.path,
-      operation: 'write',
-      requestResourceData: userData,
-    });
-    errorEmitter.emit('permission-error', permissionError);
-    console.error('Error creating user profile:', error);
-  });
-};
 
 function UserAuth() {
   const { user, isUserLoading } = useUser();
@@ -79,8 +46,9 @@ function UserAuth() {
     setIsAuthLoading(true);
     try {
       const result = await signInWithPopup(auth, provider);
+      // The onAuthStateChanged listener in FirebaseProvider will trigger
+      // a re-render and UI update. We can create the profile here.
       await createUserProfile(firestore, result.user);
-      // The onAuthStateChanged listener will handle the UI update.
     } catch (error: any) {
       console.error('Error during sign-in:', error);
       toast({

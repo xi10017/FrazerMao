@@ -14,35 +14,8 @@ import {
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { User } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import type { UserProfile } from '@/lib/types';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { createUserProfile } from '@/lib/user-data';
 
-// Function to create or update user profile in Firestore
-const createUserProfile = async (firestore: any, user: User) => {
-  if (!firestore || !user) return;
-
-  const userRef = doc(firestore, 'users', user.uid);
-  const userData: UserProfile = {
-    uid: user.uid,
-    displayName: user.displayName || 'Anonymous User',
-    email: user.email!,
-    photoURL: user.photoURL,
-    showOnLeaderboard: true, // Default to true on creation
-  };
-
-  setDoc(userRef, userData, { merge: true }).catch((error) => {
-    const permissionError = new FirestorePermissionError({
-      path: userRef.path,
-      operation: 'write',
-      requestResourceData: userData,
-    });
-    errorEmitter.emit('permission-error', permissionError);
-    console.error('Error creating user profile:', error);
-  });
-};
 
 const FeatureCard = ({
   icon,
