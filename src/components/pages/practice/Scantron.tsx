@@ -137,7 +137,7 @@ const ScantronRow: React.FC<{
               </TooltipProvider>
             )}
 
-            <div className="text-right text-sm font-bold min-w-28">
+            <div className="text-right text-sm font-bold">
               {canReattempt && reviewAttempt !== null ? (
                 isCorrectOnReview ? (
                   <>
