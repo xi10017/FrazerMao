@@ -54,6 +54,8 @@ const DraggableDivider: React.FC<{
   </div>
 );
 
+const HIDE_CHECK_WARNING_KEY = 'hideCheckAnswerWarning';
+
 interface PracticeArenaProps {
   test: FamatTest;
   solution?: FamatSolution;
@@ -90,6 +92,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     useState(submissionIdProp);
   const [isReviewMode, setIsReviewMode] = useState(isReviewFromHistoryProp);
 
+  const [hideCheckWarning, setHideCheckWarning] = useState(true);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [dividerPosition, setDividerPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -98,6 +102,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   useEffect(() => {
     setIsClient(true);
+    const storedPreference = localStorage.getItem(HIDE_CHECK_WARNING_KEY);
+    setHideCheckWarning(storedPreference === 'true');
   }, []);
 
   const createReviewData = useCallback(
@@ -223,6 +229,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
   }, [userAnswers, solution, createReviewData]);
 
+ const handleSetHideCheckWarning = (hide: boolean) => {
+    localStorage.setItem(HIDE_CHECK_WARNING_KEY, String(hide));
+    setHideCheckWarning(hide);
+  };
 
   const handleSubmit = async () => {
     if (!solution) {
@@ -269,7 +279,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setIsReviewMode(true);
       setCurrentSubmissionId(newSubmissionId);
       setCheckedQuestions({});
-      // The `markedQuestions` from the session are now the review marks for this submission.
+      // The `markedQuestions` from the session are now the review marks for this new submission.
     }
   };
 
@@ -464,6 +474,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                         checkedQuestions={checkedQuestions}
                         onCheckQuestion={handleCheckQuestion}
                         isReviewMode={isReviewMode}
+                        hideCheckWarning={hideCheckWarning}
+                        onSetHideCheckWarning={handleSetHideCheckWarning}
                       />
                     </div>
                   </div>
@@ -498,5 +510,3 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-
-    
