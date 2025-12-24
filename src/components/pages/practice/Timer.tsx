@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Timer as TimerIcon, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { TimerState } from '@/lib/types';
 
 interface TimerProps {
   duration: number; // in seconds
   initialTimeRemaining: number;
-  isRunning: boolean;
-  onToggle: () => void;
-  onTick: (newTime: number) => void;
+  initialIsRunning: boolean;
+  onStateChange: (newState: TimerState) => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -24,40 +24,42 @@ const formatTime = (seconds: number) => {
 export const Timer: React.FC<TimerProps> = ({
   duration,
   initialTimeRemaining,
-  isRunning,
-  onToggle,
-  onTick,
+  initialIsRunning,
+  onStateChange,
 }) => {
   const [timeRemaining, setTimeRemaining] = useState(initialTimeRemaining);
+  const [isRunning, setIsRunning] = useState(initialIsRunning);
   const isTimeUp = timeRemaining <= 0;
 
+  // Sync with parent when props change
   useEffect(() => {
     setTimeRemaining(initialTimeRemaining);
-  }, [initialTimeRemaining]);
+    setIsRunning(initialIsRunning);
+  }, [initialTimeRemaining, initialIsRunning]);
 
+  // The actual timer logic
   useEffect(() => {
     let timerId: NodeJS.Timeout | undefined;
     if (isRunning && !isTimeUp) {
       timerId = setInterval(() => {
-        setTimeRemaining((prevTime) => {
-          const newTime = prevTime - 1;
-          onTick(newTime); // Notify parent of the tick
-          return newTime;
-        });
+        setTimeRemaining((prevTime) => prevTime - 1);
       }, 1000);
     }
-
     return () => {
       if (timerId) {
         clearInterval(timerId);
       }
     };
-  }, [isRunning, isTimeUp, onTick]);
+  }, [isRunning, isTimeUp]);
+
+  // Inform parent when timer state changes
+  useEffect(() => {
+    onStateChange({ timeRemaining, isRunning });
+  }, [timeRemaining, isRunning, onStateChange]);
 
   const handleToggle = () => {
-    // Don't allow pausing/resuming if time is up
-    if (isTimeUp && isRunning) return;
-    onToggle();
+    if (isTimeUp && isRunning) return; // Don't allow restart if time is up
+    setIsRunning(prev => !prev);
   };
 
   return (
