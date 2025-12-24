@@ -56,17 +56,22 @@ const ScantronRow: React.FC<{
 }) => {
   const originalReview = reviewData ? reviewData[qNum] : null;
 
-  // For review mode, this holds the temporary answer the user is trying.
   const [reviewAttempt, setReviewAttempt] = useState<string | null | undefined>(
     null
   );
   const [showAnswer, setShowAnswer] = useState(false);
-
-  // If the component re-enters review mode or the original answer changes, reset state.
+  
   useEffect(() => {
-    setReviewAttempt(originalReview?.userAnswer);
+    // When review data becomes available (or changes), set the initial review attempt
+    // to what the user originally answered.
+    if (isReviewMode && originalReview) {
+      setReviewAttempt(originalReview.userAnswer);
+    } else {
+      setReviewAttempt(null);
+    }
     setShowAnswer(false);
   }, [isReviewMode, originalReview]);
+  
 
   const isCorrectOnOriginal = originalReview?.isCorrect;
   const wasOmitted =
@@ -76,12 +81,8 @@ const ScantronRow: React.FC<{
 
   const canReattemptInReview = isReviewMode && (!isCorrectOnOriginal || wasOmitted);
   
-  // The currently displayed answer.
-  let currentAnswer = userAnswer;
-  if(isReviewMode) {
-    currentAnswer = reviewAttempt;
-  }
-
+  let currentAnswer = isReviewMode ? reviewAttempt : userAnswer;
+  
   const isMarked = !!markedQuestions[qNum];
 
   let isCorrectOnReview = false;
@@ -93,11 +94,14 @@ const ScantronRow: React.FC<{
 
   const handleChoiceClick = (choice: string) => {
     if (isReviewMode) {
-        if(canReattemptInReview) {
-            setReviewAttempt(choice);
-        }
+      if (canReattemptInReview) {
+        setReviewAttempt(choice);
+      }
     } else {
-      onAnswerSelect(qNum, choice);
+      // In practice mode, only allow answer changes if the question hasn't been checked
+      if (!isChecked) {
+        onAnswerSelect(qNum, choice);
+      }
     }
   };
 
@@ -146,7 +150,7 @@ const ScantronRow: React.FC<{
               size="icon"
               className="h-9 w-9 text-base"
               onClick={() => handleChoiceClick(choice)}
-              disabled={isReviewMode ? !canReattemptInReview : isChecked}
+              disabled={(isReviewMode && !canReattemptInReview) || (!isReviewMode && isChecked)}
             >
               {choice}
             </Button>
@@ -187,7 +191,7 @@ const ScantronRow: React.FC<{
                       variant="ghost"
                       size="icon"
                       onClick={() => onCheckQuestion(qNum)}
-                      disabled={isChecked || userAnswer === undefined}
+                      disabled={isChecked || userAnswer === undefined || userAnswer === null}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -359,5 +363,3 @@ export const Scantron: React.FC<ScantronProps> = ({
     </div>
   );
 };
-
-    

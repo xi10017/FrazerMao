@@ -268,6 +268,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setIsScoreModalOpen(true);
       setIsReviewMode(true);
       setCurrentSubmissionId(newSubmissionId);
+      setCheckedQuestions({});
       // The `markedQuestions` from the session are now the review marks for this submission.
     }
   };
@@ -497,5 +498,3 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-
-    
