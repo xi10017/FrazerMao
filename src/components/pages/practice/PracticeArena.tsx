@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -191,8 +192,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setCurrentSubmissionId(newSubmissionId);
       setCheckedQuestions({});
     }
-  }, [solution, user, firestore, test, userAnswers, markedQuestions, toast, createReviewData]);
-
+  }, [
+    solution,
+    user,
+    firestore,
+    test,
+    userAnswers,
+    markedQuestions,
+    toast,
+    createReviewData,
+  ]);
 
   // Effect to initialize the arena for either review or practice mode
   useEffect(() => {
@@ -221,9 +230,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setUserAnswers(savedProgress || {});
       setMarkedQuestions(savedFlags);
       if (savedTimerState) {
-          setTimerState(savedTimerState);
+        setTimerState(savedTimerState);
       } else {
-          setTimerState({ timeRemaining: TIMER_DURATION_SECONDS, isRunning: false });
+        setTimerState({
+          timeRemaining: TIMER_DURATION_SECONDS,
+          isRunning: false,
+        });
       }
 
       setReviewData(null);
@@ -264,7 +276,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     isClient,
   ]);
 
-    // Effect to save timer state to localStorage, only when it changes
+  // Effect to save timer state to localStorage, only when it changes
   useEffect(() => {
     if (!user || !isClient || isReviewMode) return;
     saveTimerState(user.uid, test.id, timerState);
@@ -282,28 +294,31 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     });
   };
 
-  const handleMarkQuestion = (question: number) => {
+  const handleMarkQuestion = (question: number, note: string) => {
+    setMarkedQuestions((prev) => ({ ...prev, [question]: note }));
+  };
+
+  const handleUnmarkQuestion = (question: number) => {
     setMarkedQuestions((prev) => {
       const newMarks = { ...prev };
-      if (newMarks[question]) {
-        delete newMarks[question];
-      } else {
-        newMarks[question] = true;
-      }
+      delete newMarks[question];
       return newMarks;
     });
   };
-  
-  const handleCheckQuestion = useCallback((question: number) => {
-    if (!solution) return;
-    const correctAnswers = solution.answers;
-    const review = createReviewData(userAnswers, correctAnswers);
-    setReviewData(review);
 
-    setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
-  }, [userAnswers, solution, createReviewData]);
+  const handleCheckQuestion = useCallback(
+    (question: number) => {
+      if (!solution) return;
+      const correctAnswers = solution.answers;
+      const review = createReviewData(userAnswers, correctAnswers);
+      setReviewData(review);
 
- const handleSetHideCheckWarning = (hide: boolean) => {
+      setCheckedQuestions((prev) => ({ ...prev, [question]: '' }));
+    },
+    [userAnswers, solution, createReviewData]
+  );
+
+  const handleSetHideCheckWarning = (hide: boolean) => {
     localStorage.setItem(HIDE_CHECK_WARNING_KEY, String(hide));
     setHideCheckWarning(hide);
   };
@@ -456,9 +471,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
               className="relative h-full transition-all duration-300"
               style={{
                 width:
-                  isStatsTest && showCalculator
-                    ? 'calc(100% - 33%)'
-                    : '100%',
+                  isStatsTest && showCalculator ? 'calc(100% - 33%)' : '100%',
               }}
             >
               <div className="relative flex h-full w-full">
@@ -504,6 +517,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                         reviewData={reviewData}
                         markedQuestions={markedQuestions}
                         onMarkQuestion={handleMarkQuestion}
+                        onUnmarkQuestion={handleUnmarkQuestion}
                         checkedQuestions={checkedQuestions}
                         onCheckQuestion={handleCheckQuestion}
                         isReviewMode={isReviewMode}

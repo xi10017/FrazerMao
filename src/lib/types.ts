@@ -77,7 +77,9 @@ export type UserProfile = {
   showOnLeaderboard: boolean;
 };
 
-export type MarkedQuestions = { [questionNumber: number]: true };
+// A question number mapped to the note string. The presence of the key means it's marked.
+export type MarkedQuestions = { [questionNumber: number]: string };
+
 
 export type TimerState = {
   timeRemaining: number;
