@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { UserAnswers, ReviewData, MarkedQuestions } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -48,8 +49,22 @@ const ScantronRow: React.FC<{
   const isReviewMode = !!reviewData;
   const originalReview = reviewData ? reviewData[qNum] : null;
 
-  const [reviewAttempt, setReviewAttempt] = useState<string | null>(null);
+  // For review mode, this holds the temporary answer the user is trying.
+  // We initialize it with the original incorrect answer if there was one.
+  const [reviewAttempt, setReviewAttempt] = useState<string | null | undefined>(
+    isReviewMode ? originalReview?.userAnswer : null
+  );
   const [showAnswer, setShowAnswer] = useState(false);
+
+  // If the component re-enters review mode for a different submission, reset state.
+  useEffect(() => {
+    if (isReviewMode) {
+      setReviewAttempt(originalReview?.userAnswer);
+    } else {
+      setReviewAttempt(null);
+    }
+  }, [isReviewMode, originalReview]);
+
 
   const isCorrectOnOriginal = originalReview?.isCorrect;
   const wasOmitted =
@@ -58,7 +73,11 @@ const ScantronRow: React.FC<{
       originalReview.userAnswer === null);
 
   const canReattempt = isReviewMode && (!isCorrectOnOriginal || wasOmitted);
-  const currentAnswer = canReattempt ? reviewAttempt : userAnswer;
+  
+  // The currently displayed answer. In practice mode, it's the saved answer.
+  // In review mode, it's the temporary re-attempt.
+  const currentAnswer = isReviewMode ? reviewAttempt : userAnswer;
+
   const isMarked = !!markedQuestions[qNum];
 
   let isCorrectOnReview = false;
@@ -79,12 +98,14 @@ const ScantronRow: React.FC<{
   const getReviewColorClasses = () => {
     if (!isReviewMode || !originalReview) return '';
 
-    if (canReattempt && reviewAttempt !== null) {
+    // If re-attempting, color based on the re-attempt's correctness
+    if (canReattempt && reviewAttempt !== originalReview?.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined) {
       return isCorrectOnReview
         ? 'bg-green-500/10 border-green-500/30'
         : 'bg-red-500/10 border-red-500/30';
     }
 
+    // Otherwise, color based on the original submission
     if (wasOmitted) return 'bg-yellow-500/10 border-yellow-500/30';
     if (isCorrectOnOriginal) return 'bg-green-500/10 border-green-500/30';
     return 'bg-red-500/10 border-red-500/30';
@@ -167,8 +188,8 @@ const ScantronRow: React.FC<{
               </TooltipProvider>
             )}
 
-            <div className="text-right text-sm font-bold min-w-28">
-              {canReattempt && reviewAttempt !== null ? (
+            <div className="text-right text-sm font-bold">
+              {canReattempt && reviewAttempt !== originalReview.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined ? (
                 isCorrectOnReview ? (
                   <>
                     <span className="text-green-600 dark:text-green-400">
@@ -279,3 +300,5 @@ export const Scantron: React.FC<ScantronProps> = ({
     </div>
   );
 };
+
+    
