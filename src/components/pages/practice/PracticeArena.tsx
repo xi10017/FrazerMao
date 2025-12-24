@@ -413,7 +413,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         </header>
         <div className="flex-1 overflow-hidden relative">
           {mainContent}
-          {isStatsTest && hasCalculatorBeenOpened && (
+          {hasCalculatorBeenOpened && isStatsTest && (
               <div className={cn(
                 "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
                 showCalculator ? 'translate-x-0' : 'translate-x-full'
