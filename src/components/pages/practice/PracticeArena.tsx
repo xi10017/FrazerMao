@@ -42,6 +42,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
 import { Ti84Calculator } from './Ti84Calculator';
+import { Timer } from './Timer';
 
 const DraggableDivider: React.FC<{
   onMouseDown: (e: React.MouseEvent) => void;
@@ -55,6 +56,7 @@ const DraggableDivider: React.FC<{
 );
 
 const HIDE_CHECK_WARNING_KEY = 'hideCheckAnswerWarning';
+const ONE_HOUR_IN_SECONDS = 3600;
 
 interface PracticeArenaProps {
   test: FamatTest;
@@ -81,6 +83,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [hasSolutionBeenOpened, setHasSolutionBeenOpened] = useState(false);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+
 
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
@@ -133,6 +137,57 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     },
     []
   );
+
+  const handleSubmit = useCallback(async () => {
+    if (!solution) {
+      toast({
+        variant: 'destructive',
+        title: 'Submission Error',
+        description: 'Cannot grade test as no solution is available.',
+      });
+      return;
+    }
+
+    if (!user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Not Signed In',
+        description: 'You must be signed in to submit a test.',
+      });
+      return;
+    }
+
+    const report = gradeTest(userAnswers, solution.answers);
+    const newSubmissionId = await saveSubmission(
+      firestore,
+      user.uid,
+      test,
+      userAnswers,
+      report,
+      markedQuestions
+    );
+
+    if (newSubmissionId) {
+      clearInProgressAnswers(user.uid, test.id);
+      clearInProgressFlags(user.uid, test.id);
+      toast({
+        title: 'Success!',
+        description: 'Your test results have been saved.',
+      });
+
+      // Transition to review mode
+      const newReviewData = createReviewData(userAnswers, solution.answers);
+      setReviewData(newReviewData);
+      setScoreReport(report);
+      setIsScoreModalOpen(true);
+      setIsReviewMode(true);
+      setCurrentSubmissionId(newSubmissionId);
+      setCheckedQuestions({});
+      setIsTimerRunning(false);
+      // The `markedQuestions` from the session are now the review marks for this new submission.
+    }
+  }, [solution, user, firestore, test, userAnswers, markedQuestions, toast, createReviewData]);
+
 
   // Effect to initialize the arena for either review or practice mode
   useEffect(() => {
@@ -234,55 +289,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setHideCheckWarning(hide);
   };
 
-  const handleSubmit = async () => {
-    if (!solution) {
-      toast({
-        variant: 'destructive',
-        title: 'Submission Error',
-        description: 'Cannot grade test as no solution is available.',
-      });
-      return;
-    }
-
-    if (!user || !firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Not Signed In',
-        description: 'You must be signed in to submit a test.',
-      });
-      return;
-    }
-
-    const report = gradeTest(userAnswers, solution.answers);
-    const newSubmissionId = await saveSubmission(
-      firestore,
-      user.uid,
-      test,
-      userAnswers,
-      report,
-      markedQuestions
-    );
-
-    if (newSubmissionId) {
-      clearInProgressAnswers(user.uid, test.id);
-      clearInProgressFlags(user.uid, test.id);
-      toast({
-        title: 'Success!',
-        description: 'Your test results have been saved.',
-      });
-
-      // Transition to review mode
-      const newReviewData = createReviewData(userAnswers, solution.answers);
-      setReviewData(newReviewData);
-      setScoreReport(report);
-      setIsScoreModalOpen(true);
-      setIsReviewMode(true);
-      setCurrentSubmissionId(newSubmissionId);
-      setCheckedQuestions({});
-      // The `markedQuestions` from the session are now the review marks for this new submission.
-    }
-  };
-
   const handleBackToLibrary = () => {
     router.push(`/`);
   };
@@ -300,6 +306,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
     setShowSolution(!showSolution);
   };
+
+  const handleTimeUp = useCallback(() => {
+    toast({
+      title: "Time's up!",
+      description: "Your test is being submitted automatically.",
+    });
+    handleSubmit();
+  }, [handleSubmit, toast]);
 
   const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
@@ -343,6 +357,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      {isPracticeMode && (
+         <Timer
+          duration={ONE_HOUR_IN_SECONDS}
+          onTimeUp={handleTimeUp}
+          isRunning={isTimerRunning}
+          onToggle={() => setIsTimerRunning(!isTimerRunning)}
+        />
+      )}
       {isStatsTest && (
         <Button
           variant={showCalculator ? 'secondary' : 'outline'}
