@@ -1,3 +1,4 @@
+
 'use client';
 
 import type {
@@ -70,6 +71,7 @@ export async function getSubmissionsForUser(
  * @param test The test object.
  * @param userAnswers The user's answers.
  * @param scoreReport The calculated score report.
+ * @param inProgressFlags Any flags set during the practice session.
  * @returns The ID of the newly created submission document, or null on failure.
  */
 export async function saveSubmission(
@@ -77,7 +79,8 @@ export async function saveSubmission(
   userId: string,
   test: FamatTest,
   userAnswers: UserAnswers,
-  scoreReport: ScoreReport
+  scoreReport: ScoreReport,
+  inProgressFlags: MarkedQuestions
 ): Promise<string | null> {
   if (typeof window === 'undefined' || !userId) return null;
 
@@ -96,6 +99,9 @@ export async function saveSubmission(
   try {
     const docRef = await addDoc(submissionsRef, newSubmission);
     
+    // Save the flags from the session as review marks for this new submission
+    saveReviewMarks(userId, docRef.id, inProgressFlags);
+
     // After successful submission, update the leaderboards
     const user = getAuth().currentUser;
     if (user) {
@@ -210,7 +216,7 @@ export function clearAllUserData(userId: string) {
 
     // Clear all in-progress tests for the user from local storage
     Object.keys(window.localStorage).forEach((key) => {
-      if (key.startsWith(`in_progress_${userId}_`) || key.startsWith(`review_marks_${userId}_`)) {
+      if (key.startsWith(`in_progress_${userId}_`) || key.startsWith(`review_marks_${userId}_`) || key.startsWith(`in_progress_flags_${userId}_`)) {
         window.localStorage.removeItem(key);
       }
     });
@@ -257,31 +263,44 @@ export function saveReviewMarks(userId: string, submissionId: string, marks: Mar
   }
 }
 
-/**
- * Gets all review marks for a user.
- * This is used to overlay marks on the progress grid.
- * Returns a map of testId -> submissionId -> marked questions.
- */
-export function getAllReviewMarksForUser(userId: string): Record<string, Record<string, MarkedQuestions>> {
-    if (typeof window === 'undefined' || !userId) return {};
-    const allMarks: Record<string, Record<string, MarkedQuestions>> = {};
+
+// --- In-Progress Flags ---
+
+const getInProgressFlagsKey = (userId: string, testId: string) => `in_progress_flags_${userId}_${testId}`;
+
+export function getInProgressFlags(userId: string, testId: string): MarkedQuestions {
+    if (typeof window === 'undefined' || !userId || !testId) return {};
     try {
-        for (let i = 0; i < window.localStorage.length; i++) {
-            const key = window.localStorage.key(i);
-            if (key && key.startsWith(`review_marks_${userId}_`)) {
-                const parts = key.split('_');
-                const submissionId = parts.slice(3).join('_'); // submissionId can contain underscores
-                const marksJSON = window.localStorage.getItem(key);
-                if (marksJSON) {
-                    // To associate with a testId, we'd need to look up the submission.
-                    // For now, we'll just store by submissionId. This is a simplification.
-                    // The ProgressGrid will need to cross-reference this.
-                    allMarks[submissionId] = JSON.parse(marksJSON);
-                }
-            }
-        }
-    } catch(error) {
-        console.error("Failed to get all review marks for user:", error);
+        const key = getInProgressFlagsKey(userId, testId);
+        const flagsJSON = window.localStorage.getItem(key);
+        return flagsJSON ? JSON.parse(flagsJSON) : {};
+    } catch (error) {
+        console.error('Failed to get in-progress flags from localStorage:', error);
+        return {};
     }
-    return allMarks;
+}
+
+export function saveInProgressFlags(userId: string, testId: string, flags: MarkedQuestions) {
+    if (typeof window === 'undefined' || !userId || !testId) return;
+    try {
+        const key = getInProgressFlagsKey(userId, testId);
+        if (Object.keys(flags).length === 0) {
+            window.localStorage.removeItem(key);
+        } else {
+            const flagsJSON = JSON.stringify(flags);
+            window.localStorage.setItem(key, flagsJSON);
+        }
+    } catch (error) {
+        console.error('Failed to save in-progress flags to localStorage:', error);
+    }
+}
+
+export function clearInProgressFlags(userId: string, testId: string) {
+    if (typeof window === 'undefined' || !userId || !testId) return;
+    try {
+        const key = getInProgressFlagsKey(userId, testId);
+        window.localStorage.removeItem(key);
+    } catch (error) {
+        console.error('Failed to clear in-progress flags from localStorage:', error);
+    }
 }

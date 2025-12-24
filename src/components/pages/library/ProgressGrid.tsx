@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
-import type { FamatTestWithHistory, ReviewData, MarkedQuestions } from '@/lib/types';
+import type { FamatTestWithHistory, ReviewData, MarkedQuestions, UserAnswers } from '@/lib/types';
 import { findSolutionForTest } from '@/lib/test-logic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -24,7 +25,7 @@ import { Flag } from 'lucide-react';
 
 const TOTAL_QUESTIONS = 30;
 
-type ResultStatus = 'correct' | 'incorrect' | 'omitted' | 'not_taken';
+type ResultStatus = 'correct' | 'incorrect' | 'omitted' | 'in_progress' | 'not_taken';
 
 interface CellData {
     status: ResultStatus;
@@ -33,17 +34,15 @@ interface CellData {
     isMarked: boolean;
 }
 
-const createReviewDataFromLastAttempt = (test: FamatTestWithHistory): ReviewData | null => {
-    if (test.history.length === 0) return null;
-    
-    const lastAttempt = test.history[0]; // Assumes history is pre-sorted
-    const solution = findSolutionForTest(test);
+const createReviewDataFromAttempt = (
+    answers: UserAnswers,
+    solution: ReturnType<typeof findSolutionForTest>
+): ReviewData | null => {
     if (!solution) return null;
-
     const reviewData: ReviewData = {};
     for (let i = 0; i < solution.answers.length; i++) {
         const qNum = i + 1;
-        const userAnswer = lastAttempt.answers[qNum];
+        const userAnswer = answers[qNum];
         const correctAnswer = solution.answers[i];
         let isCorrect = false;
 
@@ -92,6 +91,11 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
             colorClass = 'bg-yellow-500/20 border-yellow-500/30 text-yellow-800 dark:text-yellow-200';
             statusText = 'Omitted';
             break;
+        case 'in_progress':
+            colorClass = 'bg-blue-500/20 border-blue-500/30';
+            statusText = 'In Progress';
+            text = '...';
+            break;
         default:
             colorClass = 'bg-muted/30 border-transparent';
             statusText = 'Not Taken';
@@ -99,9 +103,16 @@ const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
     }
 
     const correctAnswerText = Array.isArray(data.correctAnswer) ? data.correctAnswer.join('/') : data.correctAnswer;
-    const tooltipText = data.userAnswer 
-        ? `${statusText} (You: ${text} | Ans: ${correctAnswerText})`
-        : data.status !== 'not_taken' ? `${statusText} (Ans: ${correctAnswerText})` : statusText;
+    
+    let tooltipText = '';
+    if (data.status === 'correct' || data.status === 'incorrect') {
+        tooltipText = `${statusText} (You: ${text} | Ans: ${correctAnswerText})`;
+    } else if (data.status === 'omitted') {
+        tooltipText = `${statusText} (Ans: ${correctAnswerText})`;
+    } else {
+        tooltipText = statusText;
+    }
+
 
     return { colorClass, text, tooltipText, isMarked: data.isMarked };
   }
@@ -139,25 +150,47 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
   const gridData = useMemo(() => {
     const data = new Map<string, Map<number, CellData>>();
     tests.forEach(test => {
-        const reviewData = createReviewDataFromLastAttempt(test);
-        const testMap = new Map<number, CellData>();
         const solution = findSolutionForTest(test);
-        const markedQuestions = test.markedForReview || {};
+        const testMap = new Map<number, CellData>();
         
+        const hasHistory = test.history.length > 0;
+        const isInProgress = test.inProgress && Object.keys(test.inProgress).length > 0;
+
+        let reviewData: ReviewData | null = null;
+        let markedQuestions: MarkedQuestions = {};
+        let status: ResultStatus = 'not_taken';
+        
+        if (hasHistory) {
+            const lastAttempt = test.history[0]; // Assumes history is pre-sorted
+            reviewData = createReviewDataFromAttempt(lastAttempt.answers, solution);
+            markedQuestions = test.markedForReview || {};
+        } else if (isInProgress) {
+            status = 'in_progress';
+            markedQuestions = test.inProgressFlags || {};
+        }
+
         questionNumbers.forEach(qNum => {
             const isMarked = !!markedQuestions[qNum];
+            let cellData: Partial<CellData> = { isMarked };
+            const correctAnswer = solution?.answers[qNum-1] || 'N/A';
+
             if (reviewData && reviewData[qNum]) {
-                const { userAnswer, correctAnswer, isCorrect } = reviewData[qNum];
-                let status: ResultStatus = 'omitted';
-                if (userAnswer) {
-                    status = isCorrect ? 'correct' : 'incorrect';
-                }
-                testMap.set(qNum, { status, userAnswer, correctAnswer, isMarked });
+                const { userAnswer, isCorrect } = reviewData[qNum];
+                cellData = {
+                    ...cellData,
+                    status: userAnswer ? (isCorrect ? 'correct' : 'incorrect') : 'omitted',
+                    userAnswer: userAnswer,
+                    correctAnswer: correctAnswer,
+                };
             } else {
-                 // Even if test isn't taken, we want to store correct answer for tooltip
-                 const correctAnswer = solution?.answers[qNum-1] || 'N/A';
-                 testMap.set(qNum, { status: 'not_taken', userAnswer: null, correctAnswer, isMarked: false });
+                 cellData = {
+                    ...cellData,
+                    status: status,
+                    userAnswer: null,
+                    correctAnswer: correctAnswer,
+                 };
             }
+             testMap.set(qNum, cellData as CellData);
         });
         data.set(test.id, testMap);
     });
@@ -185,7 +218,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
     <Card>
       <CardHeader>
           <CardTitle>Progress Grid</CardTitle>
-          <CardDescription>Performance on your last attempt for each test. Rows are questions, columns are tests. A flag indicates a question you've marked for review.</CardDescription>
+          <CardDescription>Performance on your last attempt for each test. In-progress tests are blue. A flag indicates a question you've marked for review.</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
           <Table className='border-t border-b table-fixed'>
@@ -195,11 +228,12 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                   {tests.map(test => {
                     const lastAttempt = test.history?.[0];
                     const score = lastAttempt?.score.totalScore;
+                    const isInProgress = test.inProgress && Object.keys(test.inProgress).length > 0;
                     return (
                       <TableHead key={test.id} className="w-14 min-w-14 text-center text-xs p-1 h-auto">
-                          <Link href={`/history/${test.id}`} className="flex flex-col hover:underline">
-                            <div className={cn("font-bold text-lg", score ? 'text-primary' : 'text-muted-foreground')}>
-                              {score !== undefined ? score : 'N/A'}
+                          <Link href={isInProgress ? `/practice/${test.id}` : `/history/${test.id}`} className="flex flex-col hover:underline">
+                            <div className={cn("font-bold text-lg", score ? 'text-primary' : (isInProgress ? 'text-blue-500' : 'text-muted-foreground'))}>
+                              {score !== undefined ? score : (isInProgress ? '...' : 'N/A')}
                             </div>
                             <div className='font-bold'>{test.division}</div>
                             <div>{test.year}</div>

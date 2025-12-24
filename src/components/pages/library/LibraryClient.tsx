@@ -1,11 +1,12 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { FamatTest, FamatTestWithHistory, TestSubmission, MarkedQuestions } from '@/lib/types';
+import type { FamatTest, FamatTestWithHistory, TestSubmission, MarkedQuestions, UserAnswers } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
 import { useUser, useFirestore } from '@/firebase';
-import { getSubmissionsForUser, getInProgressAnswers, getReviewMarks } from '@/lib/localStorage';
+import { getSubmissionsForUser, getInProgressAnswers, getReviewMarks, getInProgressFlags } from '@/lib/localStorage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
 import { Leaderboard } from './Leaderboard';
@@ -21,6 +22,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [allMarks, setAllMarks] = useState<Record<string, MarkedQuestions>>({});
   const [inProgress, setInProgress] = useState<Record<string, UserAnswers>>({});
+  const [inProgressFlags, setInProgressFlags] = useState<Record<string, MarkedQuestions>>({});
 
 
   useEffect(() => {
@@ -37,19 +39,26 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setAllMarks(marks);
         
         const inProgressAnswers: Record<string, UserAnswers> = {};
+        const inProgFlags: Record<string, MarkedQuestions> = {};
         tests.forEach(test => {
-            const saved = getInProgressAnswers(user.uid, test.id);
-            if (saved) {
-                inProgressAnswers[test.id] = saved;
+            const savedAnswers = getInProgressAnswers(user.uid, test.id);
+            if (savedAnswers) {
+                inProgressAnswers[test.id] = savedAnswers;
+            }
+            const savedFlags = getInProgressFlags(user.uid, test.id);
+            if(savedFlags) {
+                inProgFlags[test.id] = savedFlags;
             }
         });
         setInProgress(inProgressAnswers);
+        setInProgressFlags(inProgFlags);
 
         setIsLoading(false);
       } else if (!isUserLoading) {
         setSubmissions([]);
         setAllMarks({});
         setInProgress({});
+        setInProgressFlags({});
         setIsLoading(false);
       }
     }
@@ -74,16 +83,18 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         const markedForReview = lastSubmission ? allMarks[lastSubmission.id] || {} : {};
         
         const inProgressAnswers = inProgress[test.id];
+        const inProgFlags = inProgressFlags[test.id];
 
         return {
             ...test,
             history: testSubmissions,
             inProgress: inProgressAnswers,
             markedForReview: markedForReview,
+            inProgressFlags: inProgFlags,
         }
     });
 
-  }, [tests, submissions, allMarks, inProgress]);
+  }, [tests, submissions, allMarks, inProgress, inProgressFlags]);
 
 
   const uniqueValues = useMemo(() => {

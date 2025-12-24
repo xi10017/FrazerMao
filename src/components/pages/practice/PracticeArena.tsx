@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Calculator, Maximize, Minimize, BookOpenCheck } from 'lucide-react';
+import { Calculator, BookOpenCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -26,6 +25,9 @@ import {
   clearInProgressAnswers,
   getReviewMarks,
   saveReviewMarks,
+  getInProgressFlags,
+  saveInProgressFlags,
+  clearInProgressFlags,
 } from '@/lib/localStorage';
 import {
   AlertDialog,
@@ -146,9 +148,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       } else {
         setUserAnswers({});
       }
+      const savedFlags = getInProgressFlags(user.uid, test.id);
+      setMarkedQuestions(savedFlags);
       setReviewData(null);
       setScoreReport(null);
-      setMarkedQuestions({});
       setCurrentSubmissionId(undefined);
       setIsReviewMode(false);
     }
@@ -165,7 +168,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       if (user && currentSubmissionId && isReviewMode) {
           saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
       }
-  }, [markedQuestions, user, currentSubmissionId, isReviewMode]);
+      if (user && !isReviewMode) {
+          saveInProgressFlags(user.uid, test.id, markedQuestions);
+      }
+  }, [markedQuestions, user, currentSubmissionId, isReviewMode, test.id]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     setUserAnswers((prev) => {
@@ -180,7 +186,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
   
   const handleMarkQuestion = (question: number) => {
-    if (!isReviewMode) return;
     setMarkedQuestions(prev => {
         const newMarks = {...prev};
         if (newMarks[question]) {
@@ -212,10 +217,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
 
     const report = gradeTest(userAnswers, solution.answers);
-    const newSubmissionId = await saveSubmission(firestore, user.uid, test, userAnswers, report);
+    const newSubmissionId = await saveSubmission(firestore, user.uid, test, userAnswers, report, markedQuestions);
     
     if (newSubmissionId) {
         clearInProgressAnswers(user.uid, test.id);
+        clearInProgressFlags(user.uid, test.id);
         toast({
           title: 'Success!',
           description: 'Your test results have been saved.',
@@ -227,6 +233,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         setIsScoreModalOpen(true);
         setIsReviewMode(true);
         setCurrentSubmissionId(newSubmissionId);
+        // The `markedQuestions` from the session are now the review marks for this submission.
     }
   };
 
@@ -365,40 +372,32 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           className="relative h-full"
           style={{ width: `calc(100% - ${dividerPosition}%)`}}
         >
-            {isPracticeMode || !hasSolutionBeenOpened ? (
-                <Scantron
-                    userAnswers={userAnswers}
-                    onAnswerSelect={handleAnswerSelect}
-                    reviewData={reviewData}
-                    markedQuestions={markedQuestions}
-                    onMarkQuestion={handleMarkQuestion}
-                />
-            ) : (
-                <div className="flex h-full w-full">
+            <div className="flex h-full w-full">
+                {hasSolutionBeenOpened && solution ? (
                     <div 
                         className={cn(
                             "relative h-full transition-all duration-300",
                             showSolution ? 'w-1/2' : 'w-0'
                         )}
                     >
-                       {solution && <PDFDisplay url={solution.url}/>}
+                       <PDFDisplay url={solution.url}/>
                     </div>
-                    <div 
-                        className={cn(
-                            "relative h-full transition-all duration-300",
-                            showSolution ? 'w-1/2' : 'w-full'
-                        )}
-                    >
-                        <Scantron
-                            userAnswers={userAnswers}
-                            onAnswerSelect={handleAnswerSelect}
-                            reviewData={reviewData}
-                            markedQuestions={markedQuestions}
-                            onMarkQuestion={handleMarkQuestion}
-                        />
-                    </div>
+                ) : null}
+                <div 
+                    className={cn(
+                        "relative h-full transition-all duration-300",
+                        showSolution ? 'w-1/2' : 'w-full'
+                    )}
+                >
+                    <Scantron
+                        userAnswers={userAnswers}
+                        onAnswerSelect={handleAnswerSelect}
+                        reviewData={reviewData}
+                        markedQuestions={markedQuestions}
+                        onMarkQuestion={handleMarkQuestion}
+                    />
                 </div>
-            )}
+            </div>
         </div>
     </div>
 );

@@ -53,10 +53,12 @@ const ScantronRow: React.FC<{
       ? originalReview.correctAnswer.includes(reviewAttempt)
       : reviewAttempt === originalReview.correctAnswer;
   }
-
-  const handleReviewAnswerSelect = (answer: string) => {
+  
+  const handleChoiceClick = (choice: string) => {
     if (canReattempt) {
-      setReviewAttempt(answer);
+      setReviewAttempt(choice);
+    } else {
+      onAnswerSelect(qNum, choice);
     }
   };
 
@@ -81,7 +83,7 @@ const ScantronRow: React.FC<{
       key={qNum}
       className={cn(
         'flex items-center justify-between rounded-lg border p-3 transition-colors',
-        getReviewColorClasses()
+        isReviewMode && getReviewColorClasses()
       )}
     >
       <div className="flex items-center gap-3">
@@ -93,7 +95,7 @@ const ScantronRow: React.FC<{
               variant={currentAnswer === choice ? 'default' : 'outline'}
               size="icon"
               className="h-9 w-9 text-base"
-              onClick={() => canReattempt ? handleReviewAnswerSelect(choice) : onAnswerSelect(qNum, choice)}
+              onClick={() => handleChoiceClick(choice)}
               disabled={isReviewMode && !canReattempt}
             >
               {choice}
@@ -103,25 +105,25 @@ const ScantronRow: React.FC<{
       </div>
 
       <div className="flex items-center gap-2">
+         <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={markedQuestions[qNum] ? 'secondary' : 'ghost'}
+                size="icon"
+                onClick={() => onMarkQuestion(qNum)}
+              >
+                <Flag className={cn('h-4 w-4', markedQuestions[qNum] && 'text-primary fill-primary')} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Mark for Review</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         {isReviewMode && originalReview ? (
           <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={markedQuestions[qNum] ? 'secondary' : 'ghost'}
-                    size="icon"
-                    onClick={() => onMarkQuestion(qNum)}
-                  >
-                    <Flag className={cn('h-4 w-4', markedQuestions[qNum] && 'text-primary fill-primary')} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Mark for Review</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
             {canReattempt && !isCorrectOnReview && (
               <TooltipProvider>
                 <Tooltip>
