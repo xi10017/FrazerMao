@@ -210,7 +210,7 @@ const ScantronRow: React.FC<{
         ) : (
           // Review Mode Display
           originalReview && (
-            <div className="flex items-center gap-2 min-w-[7rem] justify-end">
+            <div className="flex items-center gap-2 justify-end">
               {canReattemptInReview && !isCorrectOnReview && (
                 <TooltipProvider>
                   <Tooltip>
@@ -359,3 +359,5 @@ export const Scantron: React.FC<ScantronProps> = ({
     </div>
   );
 };
+
+    

@@ -497,3 +497,5 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
+
+    
