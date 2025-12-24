@@ -138,7 +138,7 @@ export const LandingPage = () => {
           <FeatureCard
             icon={<Timer className="h-8 w-8" />}
             title="Realistic Practice Arena"
-            description="Simulate the real exam with a timed environment and integrated scantron. A TI-84 is available for Stats (sorry no Inspire)."
+            description="Simulate the real exam with a timed environment and integrated scantron. A TI-84 is available for Stats (sorry, no Inspire)."
           />
           <FeatureCard
             icon={<BarChart3 className="h-8 w-8" />}
