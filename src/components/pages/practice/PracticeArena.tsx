@@ -78,6 +78,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [hasSolutionBeenOpened, setHasSolutionBeenOpened] = useState(false);
   
@@ -235,6 +236,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
 
   const handleToggleCalculator = () => {
+    if (!hasCalculatorBeenOpened) {
+      setHasCalculatorBeenOpened(true);
+    }
     setShowCalculator(!showCalculator);
   };
   
@@ -343,9 +347,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     <div 
         ref={containerRef}
         className={cn(
-            "relative flex h-full w-full overflow-hidden",
-            "transition-all duration-300", 
-            isStatsTest && showCalculator ? "pr-[33%]" : "pr-0"
+            "relative flex h-full w-full overflow-hidden"
         )}
     >
         {isDragging && <div className="absolute inset-0 z-20" />}
@@ -412,7 +414,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         </header>
         <div className="flex-1 overflow-hidden relative">
           {mainContent}
-          {isStatsTest && (
+          {isStatsTest && hasCalculatorBeenOpened && (
               <div className={cn(
                 "absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300",
                 showCalculator ? 'translate-x-0' : 'translate-x-full'
