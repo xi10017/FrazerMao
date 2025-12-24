@@ -250,21 +250,25 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       // In review mode, save any changes to review marks
       saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
     } else {
-      // In practice mode, save answers, flags, and timer state
+      // In practice mode, save answers and flags
       saveInProgressAnswers(user.uid, test.id, userAnswers);
       saveInProgressFlags(user.uid, test.id, markedQuestions);
-      saveTimerState(user.uid, test.id, timerState);
     }
   }, [
     userAnswers,
     markedQuestions,
-    timerState,
     user,
     test.id,
     isReviewMode,
     currentSubmissionId,
     isClient,
   ]);
+
+    // Effect to save timer state to localStorage, only when it changes
+  useEffect(() => {
+    if (!user || !isClient || isReviewMode) return;
+    saveTimerState(user.uid, test.id, timerState);
+  }, [timerState, user, test.id, isClient, isReviewMode]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     setUserAnswers((prev) => {
@@ -376,9 +380,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         <Timer
           duration={ONE_HOUR_IN_SECONDS}
           initialTimeRemaining={timerState.timeRemaining}
-          isRunning={timerState.isRunning}
-          onToggle={handleTimerToggle}
-          onTick={handleTimerTick}
+          initialIsRunning={timerState.isRunning}
+          onStateChange={setTimerState}
         />
       )}
       {isStatsTest && (
