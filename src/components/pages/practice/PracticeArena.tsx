@@ -379,54 +379,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     </div>
   );
 
-  const mainContent = (
-    <div ref={containerRef} className={cn('relative flex h-full w-full overflow-hidden')}>
-      {isDragging && <div className="absolute inset-0 z-20" />}
-
-      {/* Test PDF Panel */}
-      <div className="relative h-full" style={{ width: `${dividerPosition}%` }}>
-        <PDFDisplay url={test.url} />
-      </div>
-
-      <DraggableDivider onMouseDown={handleMouseDown} />
-
-      {/* Right side containing Scantron and Solution */}
-      <div
-        className="relative h-full"
-        style={{ width: `calc(100% - ${dividerPosition}%)` }}
-      >
-        <div className="flex h-full w-full">
-          {/* Solution Panel - always mounted after first open */}
-          {hasSolutionBeenOpened && solution && (
-            <div
-              className={cn(
-                'relative h-full transition-all duration-300',
-                showSolution ? 'w-1/2' : 'w-0'
-              )}
-            >
-              <PDFDisplay url={solution.url} />
-            </div>
-          )}
-          {/* Scantron Panel */}
-          <div
-            className={cn(
-              'relative h-full transition-all duration-300',
-              hasSolutionBeenOpened && showSolution ? 'w-1/2' : 'w-full'
-            )}
-          >
-            <Scantron
-              userAnswers={userAnswers}
-              onAnswerSelect={handleAnswerSelect}
-              reviewData={reviewData}
-              markedQuestions={markedQuestions}
-              onMarkQuestion={handleMarkQuestion}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
       <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-background">
@@ -436,13 +388,64 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           </h2>
           {headerActions}
         </header>
-        <div className="flex-1 overflow-hidden relative">
-          {mainContent}
+        <div className="flex flex-1 overflow-hidden">
+          <div className="relative flex-1">
+            <div
+              ref={containerRef}
+              className={cn('relative flex h-full w-full overflow-hidden')}
+            >
+              {isDragging && <div className="absolute inset-0 z-20" />}
+
+              {/* Test PDF Panel */}
+              <div className="relative h-full" style={{ width: `${dividerPosition}%` }}>
+                <PDFDisplay url={test.url} />
+              </div>
+
+              <DraggableDivider onMouseDown={handleMouseDown} />
+
+              {/* Right side containing Scantron and Solution */}
+              <div
+                className="relative h-full"
+                style={{ width: `calc(100% - ${dividerPosition}%)` }}
+              >
+                <div className="flex h-full w-full">
+                  {/* Solution Panel - always mounted after first open */}
+                  {hasSolutionBeenOpened && solution && (
+                    <div
+                      className={cn(
+                        'relative h-full transition-all duration-300',
+                        showSolution ? 'w-1/2' : 'w-0'
+                      )}
+                    >
+                      <PDFDisplay url={solution.url} />
+                    </div>
+                  )}
+                  {/* Scantron Panel */}
+                  <div
+                    className={cn(
+                      'relative h-full transition-all duration-300',
+                      hasSolutionBeenOpened && showSolution ? 'w-1/2' : 'w-full'
+                    )}
+                  >
+                    <Scantron
+                      userAnswers={userAnswers}
+                      onAnswerSelect={handleAnswerSelect}
+                      reviewData={reviewData}
+                      markedQuestions={markedQuestions}
+                      onMarkQuestion={handleMarkQuestion}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Calculator Panel */}
           {hasCalculatorBeenOpened && isStatsTest && (
             <div
               className={cn(
-                'absolute top-0 right-0 h-full w-[33%] border-l bg-background transition-transform duration-300',
-                showCalculator ? 'translate-x-0' : 'translate-x-full'
+                'bg-background transition-all duration-300',
+                showCalculator ? 'w-[33%] border-l' : 'w-0'
               )}
             >
               <Ti84Calculator />
