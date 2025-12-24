@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -24,6 +25,7 @@ export const TestList: React.FC<TestListProps> = ({ tests }) => {
           {tests.map((test) => {
             const hasHistory = test.history && test.history.length > 0;
             const mostRecentScore = hasHistory ? test.history.sort((a,b) => b.submittedAt.getTime() - a.submittedAt.getTime())[0].score.totalScore : null;
+            const isInProgress = test.inProgress && Object.keys(test.inProgress).length > 0;
 
             return (
               <Card key={test.id} className="flex flex-col justify-between transition-all hover:shadow-lg hover:border-primary">
@@ -48,7 +50,7 @@ export const TestList: React.FC<TestListProps> = ({ tests }) => {
                     </Button>
                   )}
 
-                  {test.inProgress ? (
+                  {isInProgress ? (
                      <Button asChild className={!hasHistory ? "col-span-2" : ""}>
                         <Link href={`/practice/${test.id}`}>
                           <Play className="mr-2 h-4 w-4" />

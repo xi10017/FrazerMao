@@ -1,3 +1,4 @@
+
 export interface FamatTestBase {
   year: number;
   month: string;
@@ -53,8 +54,9 @@ export type TestSubmission = {
 
 export interface FamatTestWithHistory extends FamatTest {
   history: TestSubmission[];
-  inProgress: boolean;
+  inProgress?: UserAnswers;
   markedForReview: MarkedQuestions;
+  inProgressFlags?: MarkedQuestions;
 }
 
 export type LeaderboardEntry = {
