@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, memo } from 'react';
@@ -22,15 +23,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ScantronProps {
   userAnswers: UserAnswers;
   onAnswerSelect: (question: number, answer: string | null) => void;
   reviewData: ReviewData | null;
   markedQuestions: MarkedQuestions;
-  onMarkQuestion: (question: number) => void;
+  onMarkQuestion: (question: number, note: string) => void;
+  onUnmarkQuestion: (question: number) => void;
   checkedQuestions: MarkedQuestions;
   onCheckQuestion: (question: number) => void;
   isReviewMode: boolean | undefined;
@@ -63,9 +71,8 @@ const PracticeModeButtons = memo<{
   onCheckQuestion,
   onClear,
   hideCheckWarning,
-  onSetHideCheckWarning
+  onSetHideCheckWarning,
 }) {
-
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -95,7 +102,9 @@ const PracticeModeButtons = memo<{
                 variant="ghost"
                 size="icon"
                 onClick={handleCheckClick}
-                disabled={isChecked || userAnswer === undefined || userAnswer === null}
+                disabled={
+                  isChecked || userAnswer === undefined || userAnswer === null
+                }
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -110,26 +119,32 @@ const PracticeModeButtons = memo<{
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to check?</AlertDialogTitle>
             <AlertDialogDescription>
-              Checking your answer will lock it in, and you won't be able to change it for this practice session.
+              Checking your answer will lock it in, and you won't be able to
+              change it for this practice session.
             </AlertDialogDescription>
           </AlertDialogHeader>
-           <div className="flex items-center space-x-2 my-4">
+          <div className="flex items-center space-x-2 my-4">
             <Checkbox
               id={`dont-show-again-${qNum}`}
               checked={dontShowAgain}
               onCheckedChange={(checked) => setDontShowAgain(!!checked)}
             />
-            <Label htmlFor={`dont-show-again-${qNum}`} className="cursor-pointer">
+            <Label
+              htmlFor={`dont-show-again-${qNum}`}
+              className="cursor-pointer"
+            >
               Don't show this again
             </Label>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCheck}>Yes, check my answer</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmCheck}>
+              Yes, check my answer
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -143,72 +158,60 @@ const PracticeModeButtons = memo<{
   );
 });
 
-
 // Memoized component for Review Mode feedback display
 const ReviewModeDisplay = memo<{
   originalReview: ReviewData[number];
   canReattemptInReview: boolean;
   isCorrectOnReview: boolean;
   reviewAttempt: string | null | undefined;
-}>(function ReviewModeDisplay({ originalReview, canReattemptInReview, isCorrectOnReview, reviewAttempt }) {
+}>(function ReviewModeDisplay({
+  originalReview,
+  canReattemptInReview,
+  isCorrectOnReview,
+  reviewAttempt,
+}) {
   const [showAnswer, setShowAnswer] = useState(false);
   const wasOmitted = !originalReview.userAnswer;
   const isCorrectOnOriginal = originalReview.isCorrect;
   const displayCorrectAnswerInReview =
-    showAnswer || (canReattemptInReview && isCorrectOnReview) || isCorrectOnOriginal;
+    showAnswer ||
+    (canReattemptInReview && isCorrectOnReview) ||
+    isCorrectOnOriginal;
 
   return (
-     <div className="flex items-center gap-2 justify-end">
-        {canReattemptInReview && !isCorrectOnReview && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowAnswer(!showAnswer)}
-                >
-                  {showAnswer ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{showAnswer ? 'Hide' : 'Show'} Correct Answer</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-
-        <div className="text-right text-sm font-bold">
-          {canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt ? (
-            isCorrectOnReview ? (
-              <>
-                <span className="text-green-600 dark:text-green-400">Correct!</span>
-                <div className="text-muted-foreground">
-                  Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
-                </div>
-              </>
-            ) : (
-              <>
-                <span className="text-red-600 dark:text-red-400">Incorrect</span>
-                {displayCorrectAnswerInReview && (
-                  <div className="text-muted-foreground">
-                    Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
-                  </div>
+    <div className="flex items-center gap-2 justify-end">
+      {canReattemptInReview && !isCorrectOnReview && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowAnswer(!showAnswer)}
+              >
+                {showAnswer ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
                 )}
-              </>
-            )
-          ) : wasOmitted ? (
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{showAnswer ? 'Hide' : 'Show'} Correct Answer</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
+      <div className="text-right text-sm font-bold">
+        {canReattemptInReview &&
+        reviewAttempt !== originalReview.userAnswer &&
+        reviewAttempt ? (
+          isCorrectOnReview ? (
             <>
-              <span className="text-yellow-600 dark:text-yellow-400">Omitted</span>
-              {displayCorrectAnswerInReview && (
-                <div className="text-muted-foreground">
-                  Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
-                </div>
-              )}
-            </>
-          ) : isCorrectOnOriginal ? (
-            <>
-              <span className="text-green-600 dark:text-green-400">Correct</span>
+              <span className="text-green-600 dark:text-green-400">
+                Correct!
+              </span>
               <div className="text-muted-foreground">
                 Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
               </div>
@@ -218,28 +221,140 @@ const ReviewModeDisplay = memo<{
               <span className="text-red-600 dark:text-red-400">Incorrect</span>
               {displayCorrectAnswerInReview && (
                 <div className="text-muted-foreground">
-                  {`You: ${originalReview.userAnswer} | Ans: ${getCorrectAnswerText(originalReview.correctAnswer)}`}
+                  Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
                 </div>
               )}
             </>
-          )}
-        </div>
+          )
+        ) : wasOmitted ? (
+          <>
+            <span className="text-yellow-600 dark:text-yellow-400">
+              Omitted
+            </span>
+            {displayCorrectAnswerInReview && (
+              <div className="text-muted-foreground">
+                Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
+              </div>
+            )}
+          </>
+        ) : isCorrectOnOriginal ? (
+          <>
+            <span className="text-green-600 dark:text-green-400">Correct</span>
+            <div className="text-muted-foreground">
+              Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="text-red-600 dark:text-red-400">Incorrect</span>
+            {displayCorrectAnswerInReview && (
+              <div className="text-muted-foreground">
+                {`You: ${
+                  originalReview.userAnswer
+                } | Ans: ${getCorrectAnswerText(originalReview.correctAnswer)}`}
+              </div>
+            )}
+          </>
+        )}
       </div>
+    </div>
   );
 });
 
-
-const ScantronRow: React.FC<Omit<ScantronProps, 'userAnswers' | 'checkedQuestions'> & {
+const MarkForReviewPopover: React.FC<{
   qNum: number;
-  userAnswer: string | null | undefined;
-  isChecked: boolean;
-}> = ({
+  note: string;
+  onMarkQuestion: (qNum: number, note: string) => void;
+  onUnmarkQuestion: (qNum: number) => void;
+  isMarked: boolean;
+}> = ({ qNum, note, onMarkQuestion, onUnmarkQuestion, isMarked }) => {
+  const [currentNote, setCurrentNote] = useState(note);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setCurrentNote(note);
+  }, [note]);
+
+  const handleSave = () => {
+    onMarkQuestion(qNum, currentNote);
+    setIsOpen(false);
+  };
+
+  const handleUnmark = () => {
+    onUnmarkQuestion(qNum);
+    setIsOpen(false);
+  };
+  
+  const popoverContent = (
+    <PopoverContent className="w-80" align="end">
+      <div className="grid gap-4">
+        <div className="space-y-2">
+          <h4 className="font-medium leading-none">Note for Question {qNum}</h4>
+          <p className="text-sm text-muted-foreground">
+            Add a note to remember why you marked this question.
+          </p>
+        </div>
+        <Textarea
+          value={currentNote}
+          onChange={(e) => setCurrentNote(e.target.value)}
+          placeholder="e.g., 'Double check formula' or 'Come back to this if time permits'"
+        />
+        <div className="flex justify-between">
+          {isMarked ? (
+             <Button variant="destructive" size="sm" onClick={handleUnmark}>
+                Unmark
+            </Button>
+          ) : <div />}
+          <Button size="sm" onClick={handleSave}>Save</Button>
+        </div>
+      </div>
+    </PopoverContent>
+  );
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button
+                variant={isMarked ? 'secondary' : 'ghost'}
+                size="icon"
+              >
+                <Flag
+                  className={cn(
+                    'h-4 w-4',
+                    isMarked && 'text-primary fill-primary'
+                  )}
+                />
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            {isMarked && note ? <p className='max-w-xs'>{note}</p> : <p>Mark for Review</p>}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      {popoverContent}
+    </Popover>
+  );
+};
+
+
+const ScantronRow: React.FC<
+  Omit<ScantronProps, 'userAnswers' | 'checkedQuestions'> & {
+    qNum: number;
+    userAnswer: string | null | undefined;
+    isChecked: boolean;
+  }
+> = ({
   qNum,
   userAnswer,
   onAnswerSelect,
   reviewData,
   markedQuestions,
   onMarkQuestion,
+  onUnmarkQuestion,
   isReviewMode,
   isChecked,
   onCheckQuestion,
@@ -260,13 +375,15 @@ const ScantronRow: React.FC<Omit<ScantronProps, 'userAnswers' | 'checkedQuestion
       setReviewAttempt(null);
     }
   }, [isReviewMode, originalReview]);
-  
+
   const wasOmitted = originalReview && !originalReview.userAnswer;
-  const canReattemptInReview = isReviewMode && (!originalReview?.isCorrect || wasOmitted);
-  
+  const canReattemptInReview =
+    isReviewMode && (!originalReview?.isCorrect || wasOmitted);
+
   let currentAnswer = isReviewMode ? reviewAttempt : userAnswer;
-  
-  const isMarked = !!markedQuestions[qNum];
+
+  const isMarked = markedQuestions.hasOwnProperty(qNum);
+  const note = markedQuestions[qNum] || '';
 
   let isCorrectOnReview = false;
   if (canReattemptInReview && reviewAttempt && originalReview) {
@@ -290,23 +407,30 @@ const ScantronRow: React.FC<Omit<ScantronProps, 'userAnswers' | 'checkedQuestion
   const getBackgroundColor = () => {
     // During practice, if a question has been checked, show its status.
     if (!isReviewMode && isChecked && originalReview) {
-        return originalReview.isCorrect ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'
+      return originalReview.isCorrect
+        ? 'bg-green-500/10 border-green-500/30'
+        : 'bg-red-500/10 border-red-500/30';
     }
 
     // During review mode, determine color based on original submission and re-attempts
     if (isReviewMode && originalReview) {
-        if (canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt) {
-          return isCorrectOnReview
-            ? 'bg-green-500/10 border-green-500/30'
-            : 'bg-red-500/10 border-red-500/30';
-        }
-        if (wasOmitted) return 'bg-yellow-500/10 border-yellow-500/30';
-        if (originalReview.isCorrect) return 'bg-green-500/10 border-green-500/30';
-        return 'bg-red-500/10 border-red-500/30';
+      if (
+        canReattemptInReview &&
+        reviewAttempt !== originalReview.userAnswer &&
+        reviewAttempt
+      ) {
+        return isCorrectOnReview
+          ? 'bg-green-500/10 border-green-500/30'
+          : 'bg-red-500/10 border-red-500/30';
+      }
+      if (wasOmitted) return 'bg-yellow-500/10 border-yellow-500/30';
+      if (originalReview.isCorrect)
+        return 'bg-green-500/10 border-green-500/30';
+      return 'bg-red-500/10 border-red-500/30';
     }
     return ''; // Default: no background color
   };
-  
+
   return (
     <div
       key={qNum}
@@ -325,7 +449,10 @@ const ScantronRow: React.FC<Omit<ScantronProps, 'userAnswers' | 'checkedQuestion
               size="icon"
               className="h-9 w-9 text-base"
               onClick={() => handleChoiceClick(choice)}
-              disabled={(isReviewMode && !canReattemptInReview) || (!isReviewMode && isChecked)}
+              disabled={
+                (isReviewMode && !canReattemptInReview) ||
+                (!isReviewMode && isChecked)
+              }
             >
               {choice}
             </Button>
@@ -334,63 +461,47 @@ const ScantronRow: React.FC<Omit<ScantronProps, 'userAnswers' | 'checkedQuestion
       </div>
 
       <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={isMarked ? 'secondary' : 'ghost'}
-                size="icon"
-                onClick={() => onMarkQuestion(qNum)}
-              >
-                <Flag
-                  className={cn(
-                    'h-4 w-4',
-                    isMarked && 'text-primary fill-primary'
-                  )}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Mark for Review</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <MarkForReviewPopover
+          qNum={qNum}
+          note={note}
+          onMarkQuestion={onMarkQuestion}
+          onUnmarkQuestion={onUnmarkQuestion}
+          isMarked={isMarked}
+        />
 
         {!isReviewMode ? (
-            <PracticeModeButtons 
-                qNum={qNum}
-                userAnswer={userAnswer}
-                isChecked={isChecked}
-                onCheckQuestion={onCheckQuestion}
-                onClear={onAnswerSelect}
-                hideCheckWarning={hideCheckWarning}
-                onSetHideCheckWarning={onSetHideCheckWarning}
-            />
+          <PracticeModeButtons
+            qNum={qNum}
+            userAnswer={userAnswer}
+            isChecked={isChecked}
+            onCheckQuestion={onCheckQuestion}
+            onClear={onAnswerSelect}
+            hideCheckWarning={hideCheckWarning}
+            onSetHideCheckWarning={onSetHideCheckWarning}
+          />
         ) : (
           originalReview && (
-            <ReviewModeDisplay 
-                originalReview={originalReview}
-                canReattemptInReview={canReattemptInReview}
-                isCorrectOnReview={isCorrectOnReview}
-                reviewAttempt={reviewAttempt}
+            <ReviewModeDisplay
+              originalReview={originalReview}
+              canReattemptInReview={canReattemptInReview}
+              isCorrectOnReview={isCorrectOnReview}
+              reviewAttempt={reviewAttempt}
             />
           )
         )}
-         {(isChecked && !isReviewMode && originalReview) && (
-            <div className='text-right text-sm font-bold'>
-                 {originalReview.isCorrect ? (
-                  <span className="text-green-600 dark:text-green-400">
-                    Correct!
-                  </span>
-                ) : (
-                    <span className="text-red-600 dark:text-red-400">
-                    Incorrect
-                  </span>
-                )}
-                 <div className="text-muted-foreground">
-                    Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
-                </div>
+        {isChecked && !isReviewMode && originalReview && (
+          <div className="text-right text-sm font-bold">
+            {originalReview.isCorrect ? (
+              <span className="text-green-600 dark:text-green-400">
+                Correct!
+              </span>
+            ) : (
+              <span className="text-red-600 dark:text-red-400">Incorrect</span>
+            )}
+            <div className="text-muted-foreground">
+              Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
             </div>
+          </div>
         )}
       </div>
     </div>
@@ -403,6 +514,7 @@ export const Scantron: React.FC<ScantronProps> = ({
   reviewData,
   markedQuestions,
   onMarkQuestion,
+  onUnmarkQuestion,
   checkedQuestions,
   onCheckQuestion,
   isReviewMode = false,
@@ -428,6 +540,7 @@ export const Scantron: React.FC<ScantronProps> = ({
               reviewData={reviewData}
               markedQuestions={markedQuestions}
               onMarkQuestion={onMarkQuestion}
+              onUnmarkQuestion={onUnmarkQuestion}
               isReviewMode={isReviewMode}
               onCheckQuestion={onCheckQuestion}
               hideCheckWarning={hideCheckWarning}
