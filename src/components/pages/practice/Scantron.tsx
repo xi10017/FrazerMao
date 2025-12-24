@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import type { UserAnswers, ReviewData, MarkedQuestions } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,6 +33,132 @@ const getCorrectAnswerText = (correctAnswer: string | string[]): string => {
     : correctAnswer;
 };
 
+// Memoized component for Practice Mode buttons
+const PracticeModeButtons = memo<{
+  qNum: number;
+  userAnswer: string | null | undefined;
+  isChecked: boolean;
+  onCheckQuestion: (qNum: number) => void;
+  onClear: (qNum: number, answer: null) => void;
+}>(function PracticeModeButtons({ qNum, userAnswer, isChecked, onCheckQuestion, onClear }) {
+  return (
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onCheckQuestion(qNum)}
+              disabled={isChecked || userAnswer === undefined || userAnswer === null}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Check Answer</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onClear(qNum, null)}
+        disabled={!userAnswer || isChecked}
+        className="h-8"
+      >
+        Clear
+      </Button>
+    </>
+  );
+});
+
+
+// Memoized component for Review Mode feedback display
+const ReviewModeDisplay = memo<{
+  originalReview: ReviewData[number];
+  canReattemptInReview: boolean;
+  isCorrectOnReview: boolean;
+  reviewAttempt: string | null | undefined;
+}>(function ReviewModeDisplay({ originalReview, canReattemptInReview, isCorrectOnReview, reviewAttempt }) {
+  const [showAnswer, setShowAnswer] = useState(false);
+  const wasOmitted = !originalReview.userAnswer;
+  const isCorrectOnOriginal = originalReview.isCorrect;
+  const displayCorrectAnswerInReview =
+    showAnswer || (canReattemptInReview && isCorrectOnReview) || isCorrectOnOriginal;
+
+  return (
+     <div className="flex items-center gap-2 justify-end">
+        {canReattemptInReview && !isCorrectOnReview && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowAnswer(!showAnswer)}
+                >
+                  {showAnswer ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{showAnswer ? 'Hide' : 'Show'} Correct Answer</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        <div className="text-right text-sm font-bold">
+          {canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt ? (
+            isCorrectOnReview ? (
+              <>
+                <span className="text-green-600 dark:text-green-400">Correct!</span>
+                <div className="text-muted-foreground">
+                  Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="text-red-600 dark:text-red-400">Incorrect</span>
+                {displayCorrectAnswerInReview && (
+                  <div className="text-muted-foreground">
+                    Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
+                  </div>
+                )}
+              </>
+            )
+          ) : wasOmitted ? (
+            <>
+              <span className="text-yellow-600 dark:text-yellow-400">Omitted</span>
+              {displayCorrectAnswerInReview && (
+                <div className="text-muted-foreground">
+                  Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
+                </div>
+              )}
+            </>
+          ) : isCorrectOnOriginal ? (
+            <>
+              <span className="text-green-600 dark:text-green-400">Correct</span>
+              <div className="text-muted-foreground">
+                Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-red-600 dark:text-red-400">Incorrect</span>
+              {displayCorrectAnswerInReview && (
+                <div className="text-muted-foreground">
+                  {`You: ${originalReview.userAnswer} | Ans: ${getCorrectAnswerText(originalReview.correctAnswer)}`}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+  );
+});
+
+
 const ScantronRow: React.FC<{
   qNum: number;
   userAnswer: string | null | undefined;
@@ -59,27 +185,18 @@ const ScantronRow: React.FC<{
   const [reviewAttempt, setReviewAttempt] = useState<string | null | undefined>(
     null
   );
-  const [showAnswer, setShowAnswer] = useState(false);
-  
+
   useEffect(() => {
-    // When review data becomes available (or changes), set the initial review attempt
-    // to what the user originally answered.
+    // When entering review mode, set the attempt to the user's original answer.
     if (isReviewMode && originalReview) {
       setReviewAttempt(originalReview.userAnswer);
     } else {
       setReviewAttempt(null);
     }
-    setShowAnswer(false);
   }, [isReviewMode, originalReview]);
   
-
-  const isCorrectOnOriginal = originalReview?.isCorrect;
-  const wasOmitted =
-    originalReview &&
-    (originalReview.userAnswer === undefined ||
-      originalReview.userAnswer === null);
-
-  const canReattemptInReview = isReviewMode && (!isCorrectOnOriginal || wasOmitted);
+  const wasOmitted = originalReview && !originalReview.userAnswer;
+  const canReattemptInReview = isReviewMode && (!originalReview?.isCorrect || wasOmitted);
   
   let currentAnswer = isReviewMode ? reviewAttempt : userAnswer;
   
@@ -98,7 +215,6 @@ const ScantronRow: React.FC<{
         setReviewAttempt(choice);
       }
     } else {
-      // In practice mode, only allow answer changes if the question hasn't been checked
       if (!isChecked) {
         onAnswerSelect(qNum, choice);
       }
@@ -113,25 +229,18 @@ const ScantronRow: React.FC<{
 
     // During review mode, determine color based on original submission and re-attempts
     if (isReviewMode && originalReview) {
-        // If re-attempting, color based on the re-attempt's correctness
-        if (canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined) {
+        if (canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt) {
           return isCorrectOnReview
             ? 'bg-green-500/10 border-green-500/30'
             : 'bg-red-500/10 border-red-500/30';
         }
-
-        // Otherwise, color based on the original submission
         if (wasOmitted) return 'bg-yellow-500/10 border-yellow-500/30';
-        if (isCorrectOnOriginal) return 'bg-green-500/10 border-green-500/30';
+        if (originalReview.isCorrect) return 'bg-green-500/10 border-green-500/30';
         return 'bg-red-500/10 border-red-500/30';
     }
-
     return ''; // Default: no background color
   };
   
-  const displayCorrectAnswerInReview =
-    showAnswer || (canReattemptInReview && isCorrectOnReview) || isCorrectOnOriginal;
-
   return (
     <div
       key={qNum}
@@ -182,126 +291,21 @@ const ScantronRow: React.FC<{
         </TooltipProvider>
 
         {!isReviewMode ? (
-            // Practice Mode Buttons
-            <>
-            <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onCheckQuestion(qNum)}
-                      disabled={isChecked || userAnswer === undefined || userAnswer === null}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Check Answer</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-             <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onAnswerSelect(qNum, null)}
-                disabled={!userAnswer || isChecked}
-                className="h-8"
-              >
-                Clear
-              </Button>
-            </>
+            <PracticeModeButtons 
+                qNum={qNum}
+                userAnswer={userAnswer}
+                isChecked={isChecked}
+                onCheckQuestion={onCheckQuestion}
+                onClear={onAnswerSelect}
+            />
         ) : (
-          // Review Mode Display
           originalReview && (
-            <div className="flex items-center gap-2 justify-end">
-              {canReattemptInReview && !isCorrectOnReview && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowAnswer(!showAnswer)}
-                      >
-                        {showAnswer ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{showAnswer ? 'Hide' : 'Show'} Correct Answer</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-  
-              <div className="text-right text-sm font-bold">
-                {canReattemptInReview && reviewAttempt !== originalReview.userAnswer && reviewAttempt !== null && reviewAttempt !== undefined ? (
-                  isCorrectOnReview ? (
-                    <>
-                      <span className="text-green-600 dark:text-green-400">
-                        Correct!
-                      </span>
-                      <div className="text-muted-foreground">
-                        Ans:{' '}
-                        {getCorrectAnswerText(originalReview.correctAnswer)}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-red-600 dark:text-red-400">
-                        Incorrect
-                      </span>
-                      {displayCorrectAnswerInReview && (
-                        <div className="text-muted-foreground">
-                          Ans:{' '}
-                          {getCorrectAnswerText(originalReview.correctAnswer)}
-                        </div>
-                      )}
-                    </>
-                  )
-                ) : wasOmitted ? (
-                  <>
-                    <span className="text-yellow-600 dark:text-yellow-400">
-                      Omitted
-                    </span>
-                    {displayCorrectAnswerInReview && (
-                      <div className="text-muted-foreground">
-                        Ans:{' '}
-                        {getCorrectAnswerText(originalReview.correctAnswer)}
-                      </div>
-                    )}
-                  </>
-                ) : isCorrectOnOriginal ? (
-                  <>
-                    <span className="text-green-600 dark:text-green-400">
-                      Correct
-                    </span>
-                    <div className="text-muted-foreground">
-                      Ans: {getCorrectAnswerText(originalReview.correctAnswer)}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-red-600 dark:text-red-400">
-                      Incorrect
-                    </span>
-                    {displayCorrectAnswerInReview && (
-                      <div className="text-muted-foreground">
-                        {`You: ${
-                          originalReview.userAnswer
-                        } | Ans: ${getCorrectAnswerText(
-                          originalReview.correctAnswer
-                        )}`}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
+            <ReviewModeDisplay 
+                originalReview={originalReview}
+                canReattemptInReview={canReattemptInReview}
+                isCorrectOnReview={isCorrectOnReview}
+                reviewAttempt={reviewAttempt}
+            />
           )
         )}
          {(isChecked && !isReviewMode && originalReview) && (
@@ -363,3 +367,5 @@ export const Scantron: React.FC<ScantronProps> = ({
     </div>
   );
 };
+
+    
