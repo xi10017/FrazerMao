@@ -77,3 +77,8 @@ export type UserProfile = {
 };
 
 export type MarkedQuestions = { [questionNumber: number]: true };
+
+export type TimerState = {
+  timeRemaining: number;
+  isRunning: boolean;
+};

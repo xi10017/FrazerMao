@@ -10,6 +10,7 @@ import type {
   ScoreReport,
   ReviewData,
   MarkedQuestions,
+  TimerState,
 } from '@/lib/types';
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,9 @@ import {
   getInProgressFlags,
   saveInProgressFlags,
   clearInProgressFlags,
+  getTimerState,
+  saveTimerState,
+  clearTimerState,
 } from '@/lib/user-data';
 import {
   AlertDialog,
@@ -37,7 +41,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
@@ -83,8 +86,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [hasCalculatorBeenOpened, setHasCalculatorBeenOpened] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [hasSolutionBeenOpened, setHasSolutionBeenOpened] = useState(false);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-
+  const [timerState, setTimerState] = useState<TimerState>({
+    timeRemaining: ONE_HOUR_IN_SECONDS,
+    isRunning: false,
+  });
 
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
@@ -170,6 +175,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     if (newSubmissionId) {
       clearInProgressAnswers(user.uid, test.id);
       clearInProgressFlags(user.uid, test.id);
+      clearTimerState(user.uid, test.id);
       toast({
         title: 'Success!',
         description: 'Your test results have been saved.',
@@ -183,8 +189,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setIsReviewMode(true);
       setCurrentSubmissionId(newSubmissionId);
       setCheckedQuestions({});
-      setIsTimerRunning(false);
-      // The `markedQuestions` from the session are now the review marks for this new submission.
     }
   }, [solution, user, firestore, test, userAnswers, markedQuestions, toast, createReviewData]);
 
@@ -211,9 +215,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     else {
       const savedProgress = getInProgressAnswers(user.uid, test.id);
       const savedFlags = getInProgressFlags(user.uid, test.id);
+      const savedTimerState = getTimerState(user.uid, test.id);
 
       setUserAnswers(savedProgress || {});
       setMarkedQuestions(savedFlags);
+      if (savedTimerState) {
+          setTimerState(savedTimerState);
+      } else {
+          setTimerState({ timeRemaining: ONE_HOUR_IN_SECONDS, isRunning: false });
+      }
+
       setReviewData(null);
       setScoreReport(null);
       setCurrentSubmissionId(undefined);
@@ -232,23 +243,26 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   // Effect to save progress (answers or marks) to localStorage
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isClient) return;
 
     if (isReviewMode && currentSubmissionId) {
       // In review mode, save any changes to review marks
       saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
     } else {
-      // In practice mode, save answers and flags
+      // In practice mode, save answers, flags, and timer state
       saveInProgressAnswers(user.uid, test.id, userAnswers);
       saveInProgressFlags(user.uid, test.id, markedQuestions);
+      saveTimerState(user.uid, test.id, timerState);
     }
   }, [
     userAnswers,
     markedQuestions,
+    timerState,
     user,
     test.id,
     isReviewMode,
     currentSubmissionId,
+    isClient,
   ]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
@@ -306,14 +320,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     }
     setShowSolution(!showSolution);
   };
+  
+  const handleTimerToggle = () => {
+      setTimerState(prev => ({...prev, isRunning: !prev.isRunning}));
+  }
 
-  const handleTimeUp = useCallback(() => {
-    toast({
-      title: "Time's up!",
-      description: "Your test is being submitted automatically.",
-    });
-    handleSubmit();
-  }, [handleSubmit, toast]);
+  const handleTimerTick = (newTime: number) => {
+    setTimerState(prev => ({...prev, timeRemaining: newTime}));
+  }
 
   const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
@@ -357,12 +371,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      {isPracticeMode && (
-         <Timer
+      {isPracticeMode && isClient && (
+        <Timer
           duration={ONE_HOUR_IN_SECONDS}
-          onTimeUp={handleTimeUp}
-          isRunning={isTimerRunning}
-          onToggle={() => setIsTimerRunning(!isTimerRunning)}
+          initialTimeRemaining={timerState.timeRemaining}
+          isRunning={timerState.isRunning}
+          onToggle={handleTimerToggle}
+          onTick={handleTimerTick}
         />
       )}
       {isStatsTest && (

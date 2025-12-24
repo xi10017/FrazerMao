@@ -6,6 +6,7 @@ import type {
   ScoreReport,
   FamatTest,
   MarkedQuestions,
+  TimerState,
 } from './types';
 import { getTestName } from './test-logic';
 import {
@@ -186,6 +187,7 @@ function clearFromLocalStorage(key: string) {
 const IN_PROGRESS_PREFIX = 'in_progress_';
 const IN_PROGRESS_FLAGS_PREFIX = 'in_progress_flags_';
 const REVIEW_MARKS_PREFIX = 'review_marks_';
+const TIMER_STATE_PREFIX = 'timer_state_';
 
 // --- In-Progress Answers ---
 const getInProgressKey = (userId: string, testId: string) => `${IN_PROGRESS_PREFIX}${userId}_${testId}`;
@@ -204,6 +206,13 @@ const getReviewMarksKey = (userId: string, submissionId: string) => `${REVIEW_MA
 export const getReviewMarks = (userId: string, submissionId: string) => getFromLocalStorage<MarkedQuestions>(getReviewMarksKey(userId, submissionId), {});
 export const saveReviewMarks = (userId: string, submissionId: string, marks: MarkedQuestions) => saveToLocalStorage(getReviewMarksKey(userId, submissionId), marks);
 
+// --- Timer State ---
+const getTimerStateKey = (userId: string, testId: string) => `${TIMER_STATE_PREFIX}${userId}_${testId}`;
+export const getTimerState = (userId: string, testId: string) => getFromLocalStorage<TimerState | null>(getTimerStateKey(userId, testId), null);
+export const saveTimerState = (userId: string, testId: string, state: TimerState) => saveToLocalStorage(getTimerStateKey(userId, testId), state);
+export const clearTimerState = (userId: string, testId: string) => clearFromLocalStorage(getTimerStateKey(userId, testId));
+
+
 /**
  * Clears all local in-progress work for a specific user.
  * Note: This does not clear Firestore data.
@@ -215,7 +224,8 @@ export function clearAllLocalData(userId: string) {
     const prefixes = [
         `${IN_PROGRESS_PREFIX}${userId}_`,
         `${IN_PROGRESS_FLAGS_PREFIX}${userId}_`,
-        `${REVIEW_MARKS_PREFIX}${userId}_`
+        `${REVIEW_MARKS_PREFIX}${userId}_`,
+        `${TIMER_STATE_PREFIX}${userId}_`,
     ];
 
     Object.keys(window.localStorage).forEach((key) => {
