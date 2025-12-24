@@ -7,7 +7,7 @@ import { useUser, useFirestore } from '@/firebase';
 import type { FamatTest, TestSubmission, AnyFamatTest } from '@/lib/types';
 import famatTests from '@/data/famat_tests.json';
 import { getTestId, getTestName } from '@/lib/test-logic';
-import { getSubmissionsForUser } from '@/lib/localStorage';
+import { getSubmissionsForUser } from '@/lib/user-data';
 import {
   Card,
   CardContent,
@@ -124,15 +124,9 @@ function HistoryPage() {
                 <TableRow>
                   <TableHead className="w-[200px]">Date Taken</TableHead>
                   <TableHead className="text-center">Score</TableHead>
-                  <TableHead className="text-center text-green-400">
-                    Correct
-                  </TableHead>
-                  <TableHead className="text-center text-red-400">
-                    Incorrect
-                  </TableHead>
-                  <TableHead className="text-center text-yellow-400">
-                    Omitted
-                  </TableHead>
+                  <TableHead className="text-center">Correct</TableHead>
+                  <TableHead className="text-center">Incorrect</TableHead>
+                  <TableHead className="text-center">Omitted</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -145,13 +139,13 @@ function HistoryPage() {
                     <TableCell className="text-center text-lg font-bold text-primary">
                       {sub.score.totalScore}
                     </TableCell>
-                    <TableCell className="text-center font-medium">
+                    <TableCell className="text-center font-medium text-green-600 dark:text-green-400">
                       {sub.score.correctCount}
                     </TableCell>
-                    <TableCell className="text-center font-medium">
+                    <TableCell className="text-center font-medium text-red-600 dark:text-red-400">
                       {sub.score.incorrectCount}
                     </TableCell>
-                    <TableCell className="text-center font-medium">
+                    <TableCell className="text-center font-medium text-yellow-600 dark:text-yellow-400">
                       {sub.score.omitCount}
                     </TableCell>
                     <TableCell className="text-right">

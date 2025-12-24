@@ -1,4 +1,3 @@
-
 'use client';
 
 import type {
@@ -24,7 +23,9 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { getAuth } from 'firebase/auth';
 import { updateUserLeaderboardEntries } from './leaderboard';
 
-// --- Final Submissions ---
+// =================================================================
+// FIRESTORE INTERACTIONS (Submissions & Leaderboards)
+// =================================================================
 
 /**
  * Retrieves all test submissions for a specific user from Firestore.
@@ -98,7 +99,7 @@ export async function saveSubmission(
 
   try {
     const docRef = await addDoc(submissionsRef, newSubmission);
-    
+
     // Save the flags from the session as review marks for this new submission
     saveReviewMarks(userId, docRef.id, inProgressFlags);
 
@@ -110,12 +111,11 @@ export async function saveSubmission(
       const showOnLeaderboard = userProfileSnap.exists()
         ? userProfileSnap.data()?.showOnLeaderboard ?? true
         : true;
-      
+
       await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
     }
-    
-    return docRef.id; // Return the new document ID
 
+    return docRef.id; // Return the new document ID
   } catch (serverError) {
     const permissionError = new FirestorePermissionError({
       path: submissionsRef.path,
@@ -128,179 +128,102 @@ export async function saveSubmission(
   }
 }
 
-
-// --- In-Progress Answers ---
-
-const getInProgressKey = (userId: string, testId: string) =>
-  `in_progress_${userId}_${testId}`;
+// =================================================================
+// LOCAL STORAGE INTERACTIONS (In-progress work, flags, etc.)
+// =================================================================
 
 /**
- * Retrieves in-progress answers for a specific test and user.
- * @param userId The UID of the user.
- * @param testId The ID of the test.
- * @returns The user's answers or null if none are found.
+ * A generic helper to retrieve a JSON object from local storage.
+ * @param key The local storage key.
+ * @returns The parsed object or a default value.
  */
-export function getInProgressAnswers(
-  userId: string,
-  testId: string
-): UserAnswers | null {
-  if (typeof window === 'undefined') return null;
+function getFromLocalStorage<T>(key: string, defaultValue: T): T {
+  if (typeof window === 'undefined') return defaultValue;
   try {
-    const key = getInProgressKey(userId, testId);
-    const answersJSON = window.localStorage.getItem(key);
-    return answersJSON ? JSON.parse(answersJSON) : null;
+    const item = window.localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
-    console.error(
-      'Failed to get in-progress answers from localStorage:',
-      error
-    );
-    return null;
+    console.error(`Failed to get item '${key}' from localStorage:`, error);
+    return defaultValue;
   }
 }
 
 /**
- * Saves in-progress answers for a specific test and user.
- * @param userId The UID of the user.
- * @param testId The ID of the test.
- * @param answers The user's current answers.
+ * A generic helper to save a JSON object to local storage.
+ * @param key The local storage key.
+ * @param value The object to save.
  */
-export function saveInProgressAnswers(
-  userId: string,
-  testId: string,
-  answers: UserAnswers
-) {
+function saveToLocalStorage<T>(key: string, value: T) {
   if (typeof window === 'undefined') return;
   try {
-    const key = getInProgressKey(userId, testId);
-    // Don't save if there are no answers to prevent empty records
-    if (Object.keys(answers).length === 0) {
+    // Don't save if the value is an empty object
+    if (typeof value === 'object' && value !== null && Object.keys(value).length === 0) {
       window.localStorage.removeItem(key);
     } else {
-      const answersJSON = JSON.stringify(answers);
-      window.localStorage.setItem(key, answersJSON);
+      const item = JSON.stringify(value);
+      window.localStorage.setItem(key, item);
     }
   } catch (error) {
-    console.error('Failed to save in-progress answers to localStorage:', error);
+    console.error(`Failed to save item '${key}' to localStorage:`, error);
   }
 }
 
 /**
- * Clears any saved in-progress answers for a specific test and user.
- * @param userId The UID of the user.
- * @param testId The ID of the test.
+ * A generic helper to remove an item from local storage.
+ * @param key The local storage key to remove.
  */
-export function clearInProgressAnswers(userId: string, testId: string) {
-  if (typeof window === 'undefined') return;
-  try {
-    const key = getInProgressKey(userId, testId);
-    window.localStorage.removeItem(key);
-  } catch (error) {
-    console.error(
-      'Failed to clear in-progress answers from localStorage:',
-      error
-    );
-  }
+function clearFromLocalStorage(key: string) {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.removeItem(key);
+    } catch (error) {
+        console.error(`Failed to clear item '${key}' from localStorage:`, error);
+    }
 }
+
+
+// --- Key Prefixes ---
+const IN_PROGRESS_PREFIX = 'in_progress_';
+const IN_PROGRESS_FLAGS_PREFIX = 'in_progress_flags_';
+const REVIEW_MARKS_PREFIX = 'review_marks_';
+
+// --- In-Progress Answers ---
+const getInProgressKey = (userId: string, testId: string) => `${IN_PROGRESS_PREFIX}${userId}_${testId}`;
+export const getInProgressAnswers = (userId: string, testId: string) => getFromLocalStorage<UserAnswers | null>(getInProgressKey(userId, testId), null);
+export const saveInProgressAnswers = (userId: string, testId: string, answers: UserAnswers) => saveToLocalStorage(getInProgressKey(userId, testId), answers);
+export const clearInProgressAnswers = (userId: string, testId: string) => clearFromLocalStorage(getInProgressKey(userId, testId));
+
+// --- In-Progress Flags ---
+const getInProgressFlagsKey = (userId: string, testId: string) => `${IN_PROGRESS_FLAGS_PREFIX}${userId}_${testId}`;
+export const getInProgressFlags = (userId: string, testId: string) => getFromLocalStorage<MarkedQuestions>(getInProgressFlagsKey(userId, testId), {});
+export const saveInProgressFlags = (userId: string, testId: string, flags: MarkedQuestions) => saveToLocalStorage(getInProgressFlagsKey(userId, testId), flags);
+export const clearInProgressFlags = (userId: string, testId: string) => clearFromLocalStorage(getInProgressFlagsKey(userId, testId));
+
+// --- Review Markings ---
+const getReviewMarksKey = (userId: string, submissionId: string) => `${REVIEW_MARKS_PREFIX}${userId}_${submissionId}`;
+export const getReviewMarks = (userId: string, submissionId: string) => getFromLocalStorage<MarkedQuestions>(getReviewMarksKey(userId, submissionId), {});
+export const saveReviewMarks = (userId: string, submissionId: string, marks: MarkedQuestions) => saveToLocalStorage(getReviewMarksKey(userId, submissionId), marks);
 
 /**
  * Clears all local in-progress work for a specific user.
  * Note: This does not clear Firestore data.
  * @param userId The UID of the user.
  */
-export function clearAllUserData(userId: string) {
+export function clearAllLocalData(userId: string) {
   if (typeof window === 'undefined' || !userId) return;
   try {
-    console.log(
-      'Clearing local data. Firestore data must be cleared server-side.'
-    );
+    const prefixes = [
+        `${IN_PROGRESS_PREFIX}${userId}_`,
+        `${IN_PROGRESS_FLAGS_PREFIX}${userId}_`,
+        `${REVIEW_MARKS_PREFIX}${userId}_`
+    ];
 
-    // Clear all in-progress tests for the user from local storage
     Object.keys(window.localStorage).forEach((key) => {
-      if (key.startsWith(`in_progress_${userId}_`) || key.startsWith(`review_marks_${userId}_`) || key.startsWith(`in_progress_flags_${userId}_`)) {
+      if (prefixes.some(prefix => key.startsWith(prefix))) {
         window.localStorage.removeItem(key);
       }
     });
   } catch (error) {
     console.error('Failed to clear all user data from localStorage:', error);
   }
-}
-
-
-// --- Review Markings ---
-
-const getReviewMarksKey = (userId: string, submissionId: string) => `review_marks_${userId}_${submissionId}`;
-
-/**
- * Retrieves marked questions for a specific test submission from localStorage.
- */
-export function getReviewMarks(userId: string, submissionId: string): MarkedQuestions {
-  if (typeof window === 'undefined' || !userId || !submissionId) return {};
-  try {
-    const key = getReviewMarksKey(userId, submissionId);
-    const marksJSON = window.localStorage.getItem(key);
-    return marksJSON ? JSON.parse(marksJSON) : {};
-  } catch (error) {
-    console.error('Failed to get review marks from localStorage:', error);
-    return {};
-  }
-}
-
-/**
- * Saves marked questions for a specific test submission to localStorage.
- */
-export function saveReviewMarks(userId: string, submissionId: string, marks: MarkedQuestions) {
-  if (typeof window === 'undefined' || !userId || !submissionId) return;
-  try {
-    const key = getReviewMarksKey(userId, submissionId);
-    if (Object.keys(marks).length === 0) {
-      window.localStorage.removeItem(key);
-    } else {
-      const marksJSON = JSON.stringify(marks);
-      window.localStorage.setItem(key, marksJSON);
-    }
-  } catch (error) {
-    console.error('Failed to save review marks to localStorage:', error);
-  }
-}
-
-
-// --- In-Progress Flags ---
-
-const getInProgressFlagsKey = (userId: string, testId: string) => `in_progress_flags_${userId}_${testId}`;
-
-export function getInProgressFlags(userId: string, testId: string): MarkedQuestions {
-    if (typeof window === 'undefined' || !userId || !testId) return {};
-    try {
-        const key = getInProgressFlagsKey(userId, testId);
-        const flagsJSON = window.localStorage.getItem(key);
-        return flagsJSON ? JSON.parse(flagsJSON) : {};
-    } catch (error) {
-        console.error('Failed to get in-progress flags from localStorage:', error);
-        return {};
-    }
-}
-
-export function saveInProgressFlags(userId: string, testId: string, flags: MarkedQuestions) {
-    if (typeof window === 'undefined' || !userId || !testId) return;
-    try {
-        const key = getInProgressFlagsKey(userId, testId);
-        if (Object.keys(flags).length === 0) {
-            window.localStorage.removeItem(key);
-        } else {
-            const flagsJSON = JSON.stringify(flags);
-            window.localStorage.setItem(key, flagsJSON);
-        }
-    } catch (error) {
-        console.error('Failed to save in-progress flags to localStorage:', error);
-    }
-}
-
-export function clearInProgressFlags(userId: string, testId: string) {
-    if (typeof window === 'undefined' || !userId || !testId) return;
-    try {
-        const key = getInProgressFlagsKey(userId, testId);
-        window.localStorage.removeItem(key);
-    } catch (error) {
-        console.error('Failed to clear in-progress flags from localStorage:', error);
-    }
 }
