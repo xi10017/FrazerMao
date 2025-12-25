@@ -80,7 +80,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
-  const [checkedQuestions, setCheckedQuestions] = useState<MarkedQuestions>({});
+  const [checkedQuestions, setCheckedQuestions] = useState<{[key: number]: boolean}>({});
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -313,7 +313,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       const review = createReviewData(userAnswers, correctAnswers);
       setReviewData(review);
 
-      setCheckedQuestions((prev) => ({ ...prev, [question]: '' }));
+      setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
     [userAnswers, solution, createReviewData]
   );
@@ -557,5 +557,3 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-
-    
