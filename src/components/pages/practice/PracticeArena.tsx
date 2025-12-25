@@ -535,7 +535,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
               <div
                 className={cn(
                   'bg-background transition-all duration-300',
-                  showCalculator ? 'w-[33%] border-l' : 'w-0'
+                  showCalculator ? 'w-[33%]' : 'w-0'
                 )}
               >
                 <Ti84Calculator />
@@ -557,3 +557,5 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
+
+    
