@@ -39,7 +39,7 @@ interface ScantronProps {
   markedQuestions: MarkedQuestions;
   onMarkQuestion: (question: number, note: string) => void;
   onUnmarkQuestion: (question: number) => void;
-  checkedQuestions: MarkedQuestions;
+  checkedQuestions: { [key: number]: boolean };
   onCheckQuestion: (question: number) => void;
   isReviewMode: boolean | undefined;
   hideCheckWarning: boolean;
@@ -543,6 +543,7 @@ export const Scantron: React.FC<ScantronProps> = ({
               onUnmarkQuestion={onUnmarkQuestion}
               isReviewMode={isReviewMode}
               onCheckQuestion={onCheckQuestion}
+              checkedQuestions={checkedQuestions}
               hideCheckWarning={hideCheckWarning}
               onSetHideCheckWarning={onSetHideCheckWarning}
             />
