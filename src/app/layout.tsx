@@ -10,7 +10,7 @@ import { Source_Code_Pro } from 'next/font/google';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'MuPractice',
+  title: 'MAOpractice',
   description: 'Mu Alpha Theta (FAMAT) competition prep',
   icons: {
     icon: '/icon.svg',
