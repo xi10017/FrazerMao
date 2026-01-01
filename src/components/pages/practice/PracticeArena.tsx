@@ -80,7 +80,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
-  const [checkedQuestions, setCheckedQuestions] = useState<{[key: number]: boolean}>({});
+  const [checkedQuestions, setCheckedQuestions] = useState<{
+    [key: number]: boolean;
+  }>({});
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
@@ -106,8 +108,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [hideCheckWarning, setHideCheckWarning] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const rightPanelRef = useRef<HTMLDivElement>(null);
   const [dividerPosition, setDividerPosition] = useState(50);
+  const [solutionDividerPosition, setSolutionDividerPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingSolution, setIsDraggingSolution] = useState(false);
 
   const isStatsTest = test.division === 'Stats';
 
@@ -208,7 +213,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     if (!user) return;
 
     // REVIEW MODE: Triggered by props from Next.js router
-    if (isReviewFromHistoryProp && solution && initialAnswers && submissionIdProp) {
+    if (
+      isReviewFromHistoryProp &&
+      solution &&
+      initialAnswers &&
+      submissionIdProp
+    ) {
       const report = gradeTest(initialAnswers, solution.answers);
       const newReviewData = createReviewData(initialAnswers, solution.answers);
       const savedMarks = getReviewMarks(user.uid, submissionIdProp);
@@ -344,7 +354,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const isPracticeMode = !isReviewMode;
   const isSubmittable = Object.keys(userAnswers).length > 0;
 
-  // --- Dragging Logic ---
+  // --- Main Divider Dragging Logic ---
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -360,26 +370,57 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         const containerRect = containerRef.current.getBoundingClientRect();
         const newX = e.clientX - containerRect.left;
         let newPosition = (newX / containerRect.width) * 100;
-
-        // Constrain the divider position
         newPosition = Math.max(20, Math.min(newPosition, 80));
-
         setDividerPosition(newPosition);
       }
     },
     [isDragging]
   );
 
+  // --- Solution Divider Dragging Logic ---
+  const handleSolutionMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingSolution(true);
+  };
+
+  const handleSolutionMouseUp = useCallback(() => {
+    setIsDraggingSolution(false);
+  }, []);
+
+  const handleSolutionMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (isDraggingSolution && rightPanelRef.current) {
+        const containerRect = rightPanelRef.current.getBoundingClientRect();
+        const newX = e.clientX - containerRect.left;
+        let newPosition = (newX / containerRect.width) * 100;
+        newPosition = Math.max(20, Math.min(newPosition, 80));
+        setSolutionDividerPosition(newPosition);
+      }
+    },
+    [isDraggingSolution]
+  );
+
+  // General event listener effect for both dividers
   useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+    const mm = isDragging ? handleMouseMove : handleSolutionMouseMove;
+    const mu = isDragging ? handleMouseUp : handleSolutionMouseUp;
+
+    if (isDragging || isDraggingSolution) {
+      document.addEventListener('mousemove', mm);
+      document.addEventListener('mouseup', mu);
     }
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', mm);
+      document.removeEventListener('mouseup', mu);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [
+    isDragging,
+    isDraggingSolution,
+    handleMouseMove,
+    handleMouseUp,
+    handleSolutionMouseMove,
+    handleSolutionMouseUp,
+  ]);
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -465,7 +506,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             ref={containerRef}
             className={cn('relative flex h-full flex-1 overflow-hidden')}
           >
-            {isDragging && <div className="absolute inset-0 z-20" />}
+            {(isDragging || isDraggingSolution) && <div className="absolute inset-0 z-20" />}
             {/* Main Content Area */}
             <div
               className="relative h-full transition-all duration-300"
@@ -485,46 +526,48 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
                 <DraggableDivider onMouseDown={handleMouseDown} />
 
-                {/* Right side containing Scantron and Solution */}
+                {/* Right side containing Scantron and possibly Solution */}
                 <div
-                  className="relative h-full"
+                  ref={rightPanelRef}
+                  className="relative flex h-full"
                   style={{ width: `calc(100% - ${dividerPosition}%)` }}
                 >
-                  <div className="flex h-full w-full">
-                    {/* Solution Panel - always mounted after first open */}
-                    {hasSolutionBeenOpened && solution && (
+                  {/* Solution Panel - shown only in review mode */}
+                  {isReviewMode && showSolution && solution ? (
+                    <>
                       <div
-                        className={cn(
-                          'relative h-full transition-all duration-300',
-                          showSolution ? 'w-1/2' : 'w-0'
-                        )}
+                        className="relative h-full"
+                        style={{ width: `${solutionDividerPosition}%` }}
                       >
                         <PDFDisplay url={solution.url} />
                       </div>
-                    )}
-                    {/* Scantron Panel */}
-                    <div
-                      className={cn(
-                        'relative h-full transition-all duration-300',
-                        hasSolutionBeenOpened && showSolution
-                          ? 'w-1/2'
-                          : 'w-full'
-                      )}
-                    >
-                      <Scantron
-                        userAnswers={userAnswers}
-                        onAnswerSelect={handleAnswerSelect}
-                        reviewData={reviewData}
-                        markedQuestions={markedQuestions}
-                        onMarkQuestion={handleMarkQuestion}
-                        onUnmarkQuestion={handleUnmarkQuestion}
-                        checkedQuestions={checkedQuestions}
-                        onCheckQuestion={handleCheckQuestion}
-                        isReviewMode={isReviewMode}
-                        hideCheckWarning={hideCheckWarning}
-                        onSetHideCheckWarning={handleSetHideCheckWarning}
-                      />
-                    </div>
+                      <DraggableDivider onMouseDown={handleSolutionMouseDown} />
+                    </>
+                  ) : null}
+
+                  {/* Scantron Panel */}
+                  <div
+                    className="relative h-full"
+                    style={{
+                      width:
+                        isReviewMode && showSolution
+                          ? `calc(100% - ${solutionDividerPosition}%)`
+                          : '100%',
+                    }}
+                  >
+                    <Scantron
+                      userAnswers={userAnswers}
+                      onAnswerSelect={handleAnswerSelect}
+                      reviewData={reviewData}
+                      markedQuestions={markedQuestions}
+                      onMarkQuestion={handleMarkQuestion}
+                      onUnmarkQuestion={handleUnmarkQuestion}
+                      checkedQuestions={checkedQuestions}
+                      onCheckQuestion={handleCheckQuestion}
+      isReviewMode={isReviewMode}
+      hideCheckWarning={hideCheckWarning}
+                      onSetHideCheckWarning={handleSetHideCheckWarning}
+                    />
                   </div>
                 </div>
               </div>
