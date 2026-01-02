@@ -108,7 +108,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [hideCheckWarning, setHideCheckWarning] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const rightPanelRef = useRef<HTMLDivElement>(null);
+  const leftPanelRef = useRef<HTMLDivElement>(null);
   const [dividerPosition, setDividerPosition] = useState(50);
   const [solutionDividerPosition, setSolutionDividerPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -238,7 +238,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       const savedTimerState = getTimerState(user.uid, test.id);
 
       setUserAnswers(savedProgress || {});
-      setMarkedQuestions(savedFlags);
+      setMarkedQuestions(savedFlags || {});
       if (savedTimerState) {
         setTimerState(savedTimerState);
       } else {
@@ -319,8 +319,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const handleCheckQuestion = useCallback(
     (question: number) => {
       if (!solution) return;
-      const correctAnswers = solution.answers;
-      const review = createReviewData(userAnswers, correctAnswers);
+      const review = createReviewData(userAnswers, solution.answers);
       setReviewData(review);
 
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
@@ -389,8 +388,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const handleSolutionMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (isDraggingSolution && rightPanelRef.current) {
-        const containerRect = rightPanelRef.current.getBoundingClientRect();
+      if (isDraggingSolution && leftPanelRef.current) {
+        const containerRect = leftPanelRef.current.getBoundingClientRect();
         const newX = e.clientX - containerRect.left;
         let newPosition = (newX / containerRect.width) * 100;
         newPosition = Math.max(20, Math.min(newPosition, 80));
@@ -516,60 +515,63 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
               }}
             >
               <div className="relative flex h-full w-full">
-                {/* Test PDF Panel */}
+                {/* Left Panel: Contains Test and (optional) Solution */}
                 <div
-                  className="relative h-full"
+                  ref={leftPanelRef}
+                  className="relative flex h-full"
                   style={{ width: `${dividerPosition}%` }}
                 >
-                  <PDFDisplay url={test.url} />
-                </div>
-
-                <DraggableDivider onMouseDown={handleMouseDown} />
-
-                {/* Right side containing Scantron and possibly Solution */}
-                <div
-                  ref={rightPanelRef}
-                  className="relative flex h-full"
-                  style={{ width: `calc(100% - ${dividerPosition}%)` }}
-                >
-                  {/* Solution Panel - shown only in review mode */}
-                  {isReviewMode && showSolution && solution ? (
-                    <>
-                      <div
-                        className="relative h-full"
-                        style={{ width: `${solutionDividerPosition}%` }}
-                      >
-                        <PDFDisplay url={solution.url} />
-                      </div>
-                      <DraggableDivider onMouseDown={handleSolutionMouseDown} />
-                    </>
-                  ) : null}
-
-                  {/* Scantron Panel */}
-                  <div
+                  {/* Test PDF */}
+                   <div
                     className="relative h-full"
                     style={{
                       width:
                         isReviewMode && showSolution
-                          ? `calc(100% - ${solutionDividerPosition}%)`
+                          ? `${solutionDividerPosition}%`
                           : '100%',
                     }}
                   >
-                    <Scantron
-                      userAnswers={userAnswers}
-                      onAnswerSelect={handleAnswerSelect}
-                      reviewData={reviewData}
-                      markedQuestions={markedQuestions}
-                      onMarkQuestion={handleMarkQuestion}
-                      onUnmarkQuestion={handleUnmarkQuestion}
-                      checkedQuestions={checkedQuestions}
-                      onCheckQuestion={handleCheckQuestion}
-      isReviewMode={isReviewMode}
-      hideCheckWarning={hideCheckWarning}
-                      onSetHideCheckWarning={handleSetHideCheckWarning}
-                    />
+                    <PDFDisplay url={test.url} />
                   </div>
+
+                  {/* Solution PDF - slides in from the right of the test */}
+                  {isReviewMode && showSolution && solution && (
+                    <>
+                      <DraggableDivider onMouseDown={handleSolutionMouseDown} />
+                      <div
+                        className="relative h-full"
+                        style={{
+                          width: `calc(100% - ${solutionDividerPosition}%)`,
+                        }}
+                      >
+                        <PDFDisplay url={solution.url} />
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                <DraggableDivider onMouseDown={handleMouseDown} />
+                
+                {/* Right Panel: Scantron */}
+                 <div
+                  className="relative h-full"
+                  style={{ width: `calc(100% - ${dividerPosition}%)` }}
+                >
+                  <Scantron
+                    userAnswers={userAnswers}
+                    onAnswerSelect={handleAnswerSelect}
+                    reviewData={reviewData}
+                    markedQuestions={markedQuestions}
+                    onMarkQuestion={handleMarkQuestion}
+                    onUnmarkQuestion={handleUnmarkQuestion}
+                    checkedQuestions={checkedQuestions}
+                    onCheckQuestion={handleCheckQuestion}
+                    isReviewMode={isReviewMode}
+                    hideCheckWarning={hideCheckWarning}
+                    onSetHideCheckWarning={handleSetHideCheckWarning}
+                  />
+                </div>
+
               </div>
             </div>
 
@@ -600,3 +602,5 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
+
+    
