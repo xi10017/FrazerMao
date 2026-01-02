@@ -49,6 +49,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
@@ -645,5 +646,5 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-
+    
     
