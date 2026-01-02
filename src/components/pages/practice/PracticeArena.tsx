@@ -7,6 +7,8 @@ import {
   BookOpenCheck,
   PanelLeft,
   PanelRight,
+  Expand,
+  Shrink,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -86,7 +88,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
   const [checkedQuestions, setCheckedQuestions] = useState<{
-    [key: number]: boolean;
+    [key: number]: true;
   }>({});
   const [scoreReport, setScoreReport] = useState<ScoreReport | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
@@ -327,6 +329,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     (question: number) => {
       if (!solution) return;
       if (!reviewData) {
+        // Create review data on the fly if it doesn't exist
         const newReviewData = createReviewData(userAnswers, solution.answers);
         setReviewData(newReviewData);
       }
@@ -543,9 +546,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                       className="absolute top-0 left-0 h-full transition-all duration-500 ease-in-out"
                        style={{
                         width: showSolution ? `${solutionDividerPosition}%` : '100%',
-                        transform: showSolution
-                          ? 'translateX(0)'
-                          : 'translateX(0)',
                       }}
                     >
                       <div className="relative h-full w-full">
@@ -559,11 +559,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                                   className="h-8 w-8 bg-background/50 hover:bg-background/80"
                                   onClick={() => setIsScantronCollapsed(!isScantronCollapsed)}
                                 >
-                                  {isScantronCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelRight className="h-4 w-4" />}
+                                  {isScantronCollapsed ? <Shrink className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{isScantronCollapsed ? 'Show Scantron' : 'Hide Scantron'}</p>
+                                <p>{isScantronCollapsed ? 'Show Scantron' : 'Collapse Scantron'}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -575,10 +575,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                     {/* Solution PDF - slides in from the right of the test */}
                     {isReviewMode && solution && (
                        <div
-                        className="absolute top-0 h-full transition-transform duration-500 ease-in-out"
+                        className="absolute top-0 right-0 h-full flex transition-transform duration-500 ease-in-out"
                         style={{
                           width: `calc(100% - ${solutionDividerPosition}%)`,
-                          right: 0,
                           transform: showSolution ? 'translateX(0)' : 'translateX(100%)',
                           zIndex: 5,
                         }}
@@ -646,3 +645,5 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
+
+    
