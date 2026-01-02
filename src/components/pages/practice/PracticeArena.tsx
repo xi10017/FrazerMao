@@ -2,7 +2,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Calculator, BookOpenCheck } from 'lucide-react';
+import {
+  Calculator,
+  BookOpenCheck,
+  PanelLeft,
+  PanelRight,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
   FamatTest,
@@ -42,12 +47,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
 import { Ti84Calculator } from './Ti84Calculator';
 import { Timer } from './Timer';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const DraggableDivider: React.FC<{
   onMouseDown: (e: React.MouseEvent) => void;
@@ -113,6 +118,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [solutionDividerPosition, setSolutionDividerPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingSolution, setIsDraggingSolution] = useState(false);
+  const [isScantronCollapsed, setIsScantronCollapsed] = useState(false);
+
 
   const isStatsTest = test.division === 'Stats';
 
@@ -319,12 +326,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const handleCheckQuestion = useCallback(
     (question: number) => {
       if (!solution) return;
-      const review = createReviewData(userAnswers, solution.answers);
-      setReviewData(review);
+      if (!reviewData) {
+        const newReviewData = createReviewData(userAnswers, solution.answers);
+        setReviewData(newReviewData);
+      }
 
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
-    [userAnswers, solution, createReviewData]
+    [userAnswers, solution, createReviewData, reviewData]
   );
 
   const handleSetHideCheckWarning = (hide: boolean) => {
@@ -365,7 +374,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (isDragging && containerRef.current) {
+      if (isDragging && containerRef.current && !isScantronCollapsed) {
         const containerRect = containerRef.current.getBoundingClientRect();
         const newX = e.clientX - containerRect.left;
         let newPosition = (newX / containerRect.width) * 100;
@@ -373,7 +382,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         setDividerPosition(newPosition);
       }
     },
-    [isDragging]
+    [isDragging, isScantronCollapsed]
   );
 
   // --- Solution Divider Dragging Logic ---
@@ -505,7 +514,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             ref={containerRef}
             className={cn('relative flex h-full flex-1 overflow-hidden')}
           >
-            {(isDragging || isDraggingSolution) && <div className="absolute inset-0 z-20" />}
+            {(isDragging || isDraggingSolution) && (
+              <div className="absolute inset-0 z-20" />
+            )}
             {/* Main Content Area */}
             <div
               className="relative h-full transition-all duration-300"
@@ -519,59 +530,92 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                 <div
                   ref={leftPanelRef}
                   className="relative flex h-full"
-                  style={{ width: `${dividerPosition}%` }}
+                  style={{
+                    width: isScantronCollapsed
+                      ? '100%'
+                      : `${dividerPosition}%`,
+                  }}
                 >
-                  {/* Test PDF */}
-                   <div
-                    className="relative h-full"
-                    style={{
-                      width:
-                        isReviewMode && showSolution
-                          ? `${solutionDividerPosition}%`
-                          : '100%',
-                    }}
-                  >
-                    <PDFDisplay url={test.url} />
-                  </div>
+                  {/* Panel for Test and Solution */}
+                  <div className="relative h-full w-full overflow-hidden">
+                    {/* Test PDF */}
+                    <div
+                      className="absolute top-0 left-0 h-full transition-all duration-500 ease-in-out"
+                       style={{
+                        width: showSolution ? `${solutionDividerPosition}%` : '100%',
+                        transform: showSolution
+                          ? 'translateX(0)'
+                          : 'translateX(0)',
+                      }}
+                    >
+                      <div className="relative h-full w-full">
+                         <div className="absolute top-2 left-2 z-10">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 bg-background/50 hover:bg-background/80"
+                                  onClick={() => setIsScantronCollapsed(!isScantronCollapsed)}
+                                >
+                                  {isScantronCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelRight className="h-4 w-4" />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{isScantronCollapsed ? 'Show Scantron' : 'Hide Scantron'}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <PDFDisplay url={test.url} />
+                      </div>
+                    </div>
 
-                  {/* Solution PDF - slides in from the right of the test */}
-                  {isReviewMode && showSolution && solution && (
-                    <>
-                      <DraggableDivider onMouseDown={handleSolutionMouseDown} />
-                      <div
-                        className="relative h-full"
+                    {/* Solution PDF - slides in from the right of the test */}
+                    {isReviewMode && solution && (
+                       <div
+                        className="absolute top-0 h-full transition-transform duration-500 ease-in-out"
                         style={{
                           width: `calc(100% - ${solutionDividerPosition}%)`,
+                          right: 0,
+                          transform: showSolution ? 'translateX(0)' : 'translateX(100%)',
+                          zIndex: 5,
                         }}
                       >
-                        <PDFDisplay url={solution.url} />
+                        <DraggableDivider onMouseDown={handleSolutionMouseDown} />
+                        <div className="h-full w-full overflow-hidden">
+                            <PDFDisplay url={solution.url} />
+                        </div>
                       </div>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                <DraggableDivider onMouseDown={handleMouseDown} />
-                
-                {/* Right Panel: Scantron */}
-                 <div
-                  className="relative h-full"
-                  style={{ width: `calc(100% - ${dividerPosition}%)` }}
-                >
-                  <Scantron
-                    userAnswers={userAnswers}
-                    onAnswerSelect={handleAnswerSelect}
-                    reviewData={reviewData}
-                    markedQuestions={markedQuestions}
-                    onMarkQuestion={handleMarkQuestion}
-                    onUnmarkQuestion={handleUnmarkQuestion}
-                    checkedQuestions={checkedQuestions}
-                    onCheckQuestion={handleCheckQuestion}
-                    isReviewMode={isReviewMode}
-                    hideCheckWarning={hideCheckWarning}
-                    onSetHideCheckWarning={handleSetHideCheckWarning}
-                  />
-                </div>
-
+                {!isScantronCollapsed && (
+                  <>
+                    <DraggableDivider onMouseDown={handleMouseDown} />
+                    {/* Right Panel: Scantron */}
+                    <div
+                      className="relative h-full"
+                      style={{ width: `calc(100% - ${dividerPosition}%)` }}
+                    >
+                      <Scantron
+                        userAnswers={userAnswers}
+                        onAnswerSelect={handleAnswerSelect}
+                        reviewData={reviewData}
+                        markedQuestions={markedQuestions}
+                        onMarkQuestion={handleMarkQuestion}
+                        onUnmarkQuestion={handleUnmarkQuestion}
+                        checkedQuestions={checkedQuestions}
+                        onCheckQuestion={handleCheckQuestion}
+                        isReviewMode={isReviewMode}
+                        hideCheckWarning={hideCheckWarning}
+                        onSetHideCheckWarning={handleSetHideCheckWarning}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -602,5 +646,3 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-
-    
