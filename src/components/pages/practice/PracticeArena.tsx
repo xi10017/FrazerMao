@@ -5,8 +5,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Calculator,
   BookOpenCheck,
-  PanelLeft,
-  PanelRight,
   Expand,
   Shrink,
 } from 'lucide-react';
@@ -329,15 +327,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const handleCheckQuestion = useCallback(
     (question: number) => {
       if (!solution) return;
-      if (!reviewData) {
-        // Create review data on the fly if it doesn't exist
-        const newReviewData = createReviewData(userAnswers, solution.answers);
-        setReviewData(newReviewData);
-      }
-
+      // Always create a fresh `reviewData` from the latest `userAnswers`
+      // This solves the stale state issue.
+      setReviewData(createReviewData(userAnswers, solution.answers));
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
-    [userAnswers, solution, createReviewData, reviewData]
+    [userAnswers, solution, createReviewData] // Dependency on userAnswers ensures it's up-to-date
   );
 
   const handleSetHideCheckWarning = (hide: boolean) => {
@@ -542,7 +537,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                 >
                   {/* Panel for Test and Solution */}
                   <div className="relative h-full w-full overflow-hidden">
-                    {/* Test PDF */}
+                    {/* Test PDF - slides to the left */}
                     <div
                       className="absolute top-0 left-0 h-full transition-all duration-500 ease-in-out"
                        style={{
