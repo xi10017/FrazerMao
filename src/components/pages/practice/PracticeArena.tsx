@@ -327,12 +327,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const handleCheckQuestion = useCallback(
     (question: number) => {
       if (!solution) return;
-      // Always create a fresh `reviewData` from the latest `userAnswers`
-      // This solves the stale state issue.
-      setReviewData(createReviewData(userAnswers, solution.answers));
+      
+      setUserAnswers(currentAnswers => {
+        setReviewData(createReviewData(currentAnswers, solution.answers));
+        return currentAnswers;
+      });
+      
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
-    [userAnswers, solution, createReviewData] // Dependency on userAnswers ensures it's up-to-date
+    [solution, createReviewData]
   );
 
   const handleSetHideCheckWarning = (hide: boolean) => {
