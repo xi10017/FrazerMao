@@ -308,6 +308,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setUserAnswers(savedProgress || {});
       setMarkedQuestions(savedFlags || {});
       setCheckedQuestions(savedChecked || {});
+      
+      // If there are checked questions on load, generate review data immediately.
+      if (solution && savedProgress && Object.keys(savedChecked || {}).length > 0) {
+        const initialReviewData = createReviewData(savedProgress, solution.answers);
+        setReviewData(initialReviewData);
+      } else {
+        setReviewData(null);
+      }
+
       if (savedTimerState) {
         setTimerState(savedTimerState);
       } else {
@@ -317,7 +326,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         });
       }
 
-      setReviewData(null);
       setScoreReport(null);
       setCurrentSubmissionId(undefined);
       setIsReviewMode(false);
@@ -399,16 +407,17 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const handleCheckQuestion = useCallback(
     (question: number) => {
       if (!solution) return;
-
-      setUserAnswers(currentAnswers => {
-        // Use a functional update for setReviewData to ensure it gets the latest userAnswers
-        setReviewData(createReviewData(currentAnswers, solution.answers));
-        return currentAnswers;
+  
+      // Use a functional update for setReviewData to ensure it gets the latest userAnswers
+      setReviewData(currentReviewData => {
+        // Create the new, complete review data based on the most up-to-date answers
+        const newReviewData = createReviewData(userAnswers, solution.answers);
+        return newReviewData;
       });
-
+  
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
-    [solution, createReviewData]
+    [solution, createReviewData, userAnswers] // Add userAnswers to dependency array
   );
 
   const handleSetHideCheckWarning = (hide: boolean) => {
@@ -719,4 +728,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
 export default PracticeArena;
     
+    
+
     
