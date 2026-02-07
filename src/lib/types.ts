@@ -51,6 +51,7 @@ export type TestSubmission = {
   division: string;
   testName: string;
   completionDate: string;
+  isRetake?: boolean;
 };
 
 export interface FamatTestWithHistory extends FamatTest {
