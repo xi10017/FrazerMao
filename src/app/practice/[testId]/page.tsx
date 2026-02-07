@@ -23,18 +23,20 @@ export default function PracticePage({ params, searchParams }: Props) {
   }
 
   const solution = findSolutionForTest(test);
-  
+
   const fromHistoryParam = searchParams?.fromHistory;
   const isReviewFromHistory = fromHistoryParam === 'true';
+  const fromRetakeParam = searchParams?.retake;
+  const isRetakeMode = fromRetakeParam === 'true';
   const submissionId = searchParams?.submissionId as string | undefined;
 
   let initialAnswers: UserAnswers | undefined = undefined;
   const submissionParam = searchParams?.submission;
-  if(typeof submissionParam === 'string') {
+  if (typeof submissionParam === 'string') {
     try {
-        initialAnswers = JSON.parse(decodeURIComponent(submissionParam));
-    } catch(e) {
-        console.error("Failed to parse submission data from URL");
+      initialAnswers = JSON.parse(decodeURIComponent(submissionParam));
+    } catch (e) {
+      console.error('Failed to parse submission data from URL');
     }
   }
 
@@ -44,14 +46,17 @@ export default function PracticePage({ params, searchParams }: Props) {
       solution={solution}
       initialAnswers={initialAnswers}
       isReviewFromHistory={isReviewFromHistory}
+      isRetakeMode={isRetakeMode}
       submissionId={submissionId}
     />
   );
 }
 
 export function generateStaticParams() {
-    const tests = (famatTests as AnyFamatTest[]).filter(t => t.document_type === 'Test');
-    return tests.map((test) => ({
-      testId: getTestId(test),
-    }));
+  const tests = (famatTests as AnyFamatTest[]).filter(
+    (t) => t.document_type === 'Test'
+  );
+  return tests.map((test) => ({
+    testId: getTestId(test),
+  }));
 }
