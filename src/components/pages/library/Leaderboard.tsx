@@ -186,7 +186,8 @@ export const Leaderboard = () => {
       return overallData?.filter(entry => entry.showOnLeaderboard).slice(0, 100) || null;
   }, [overallData]);
 
-  const divisions = ['Stats', 'Mu', 'Pre-calculus', 'Algebra 2', 'Geometry'];
+  // Divisions are based on the actual data available in famat_tests.json
+  const divisions = ['Stats', 'Alpha'];
 
   return (
     <Card>
@@ -211,10 +212,10 @@ export const Leaderboard = () => {
           </TabsContent>
           <TabsContent value="by_division">
             <Tabs defaultValue={divisions[0]} className="mt-4">
-              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 md:grid-cols-5">
+              <TabsList className="grid w-full grid-cols-2">
                 {divisions.map((div) => (
                   <TabsTrigger key={div} value={div}>
-                    {div}
+                    {div === 'Alpha' ? 'Pre-calculus' : div}
                   </TabsTrigger>
                 ))}
               </TabsList>

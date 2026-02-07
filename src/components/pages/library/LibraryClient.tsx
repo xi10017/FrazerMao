@@ -139,13 +139,14 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     );
     const testTypes = [...new Set(tests.map((t) => t.test_type))].sort();
     const years = [...new Set(tests.map((t) => t.year))].sort((a, b) => b - a);
+    const currentYear = new Date().getFullYear();
     return {
       divisions,
       months,
       competitions: testTypes,
       years,
-      minYear: years[years.length - 1],
-      maxYear: years[0],
+      minYear: years.length > 0 ? years[years.length - 1] : currentYear,
+      maxYear: years.length > 0 ? years[0] : currentYear,
     };
   }, [tests]);
 
