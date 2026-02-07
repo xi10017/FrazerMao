@@ -61,7 +61,7 @@ export const TestList: React.FC<TestListProps> = ({ tests }) => {
                      <Button asChild>
                         <Link href={`/practice/${test.id}`}>
                           <RefreshCw className="mr-2 h-4 w-4" />
-                          Retake
+                          Take Again
                         </Link>
                       </Button>
                   ) : (
