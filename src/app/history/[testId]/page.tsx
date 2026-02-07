@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft } from 'lucide-react';
+import { ArrowRight, ChevronLeft, RefreshCw } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -103,6 +103,15 @@ function HistoryPage() {
     );
   };
 
+  const handleRetake = (submission: TestSubmission) => {
+    const submissionData = encodeURIComponent(
+      JSON.stringify(submission.answers)
+    );
+    router.push(
+      `/practice/${testId}?retake=true&submissionId=${submission.id}&submission=${submissionData}`
+    );
+  };
+
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
@@ -149,9 +158,17 @@ function HistoryPage() {
                       {sub.score.omitCount}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button onClick={() => handleReview(sub)}>
-                        Review <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleReview(sub)}
+                        >
+                          Review
+                        </Button>
+                        <Button onClick={() => handleRetake(sub)}>
+                          Retake <RefreshCw className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -75,6 +75,7 @@ interface PracticeArenaProps {
   initialAnswers?: UserAnswers;
   isReviewFromHistory?: boolean;
   submissionId?: string;
+  isRetakeMode?: boolean;
 }
 
 const PracticeArena: React.FC<PracticeArenaProps> = ({
@@ -83,6 +84,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   initialAnswers,
   isReviewFromHistory: isReviewFromHistoryProp,
   submissionId: submissionIdProp,
+  isRetakeMode: isRetakeModeProp,
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
@@ -110,6 +112,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [currentSubmissionId, setCurrentSubmissionId] =
     useState(submissionIdProp);
   const [isReviewMode, setIsReviewMode] = useState(isReviewFromHistoryProp);
+  const [isRetakeMode, setIsRetakeMode] = useState(isRetakeModeProp);
 
   const [hideCheckWarning, setHideCheckWarning] = useState(true);
 
@@ -202,6 +205,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setScoreReport(report);
       setIsScoreModalOpen(true);
       setIsReviewMode(true);
+      setIsRetakeMode(false);
       setCurrentSubmissionId(newSubmissionId);
       setCheckedQuestions({});
     }
@@ -218,10 +222,58 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   // Effect to initialize the arena for either review or practice mode
   useEffect(() => {
-    if (!user) return;
-
+    if (!user || !isClient) return;
+  
+    // RETAKE MODE LOGIC
+    if (isRetakeModeProp && solution && initialAnswers) {
+      const newInitialAnswers: UserAnswers = {};
+      const newCheckedQuestions: { [key: number]: true } = {};
+      const reviewDataForCorrectAnswers: ReviewData = {};
+  
+      const originalScore = gradeTest(initialAnswers, solution.answers);
+  
+      for (let i = 0; i < solution.answers.length; i++) {
+        const qNum = i + 1;
+        const originalAnswer = initialAnswers[qNum];
+        const correctAnswer = solution.answers[i];
+  
+        let isOriginalCorrect = false;
+        if (originalAnswer !== undefined && originalAnswer !== null) {
+          isOriginalCorrect = Array.isArray(correctAnswer)
+            ? correctAnswer.includes(originalAnswer)
+            : originalAnswer === correctAnswer;
+        }
+  
+        if (isOriginalCorrect) {
+          newInitialAnswers[qNum] = originalAnswer;
+          newCheckedQuestions[qNum] = true;
+          reviewDataForCorrectAnswers[qNum] = {
+            userAnswer: originalAnswer,
+            correctAnswer,
+            isCorrect: true,
+          };
+        }
+      }
+  
+      setUserAnswers(newInitialAnswers);
+      setCheckedQuestions(newCheckedQuestions);
+      setReviewData(reviewDataForCorrectAnswers);
+      setMarkedQuestions({});
+      setIsReviewMode(false);
+      setIsRetakeMode(true);
+      setCurrentSubmissionId(undefined);
+      setScoreReport(null);
+      setTimerState({
+        timeRemaining: TIMER_DURATION_SECONDS,
+        isRunning: false,
+      });
+      toast({
+        title: 'Retake Mode',
+        description: `Starting a retake. ${originalScore.correctCount} questions have been pre-filled as correct.`,
+      });
+    }
     // REVIEW MODE: Triggered by props from Next.js router
-    if (
+    else if (
       isReviewFromHistoryProp &&
       solution &&
       initialAnswers &&
@@ -237,6 +289,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setMarkedQuestions(savedMarks);
       setCurrentSubmissionId(submissionIdProp);
       setIsReviewMode(true);
+      setIsRetakeMode(false);
       setIsScoreModalOpen(false); // Don't show score modal on re-entry
     }
     // PRACTICE MODE: Default mode
@@ -260,17 +313,22 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setScoreReport(null);
       setCurrentSubmissionId(undefined);
       setIsReviewMode(false);
+      setIsRetakeMode(false);
       setCheckedQuestions({});
     }
   }, [
     user,
     test.id,
     isReviewFromHistoryProp,
+    isRetakeModeProp,
     submissionIdProp,
     initialAnswers,
     solution,
     createReviewData,
+    isClient,
+    toast,
   ]);
+
 
   // Effect to save progress (answers or marks) to localStorage
   useEffect(() => {
@@ -279,7 +337,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     if (isReviewMode && currentSubmissionId) {
       // In review mode, save any changes to review marks
       saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
-    } else {
+    } else if (!isReviewMode) { // Practice or Retake mode
       // In practice mode, save answers and flags
       saveInProgressAnswers(user.uid, test.id, userAnswers);
       saveInProgressFlags(user.uid, test.id, markedQuestions);
@@ -293,6 +351,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     currentSubmissionId,
     isClient,
   ]);
+
 
   // Effect to save timer state to localStorage, only when it changes
   useEffect(() => {
@@ -507,6 +566,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
           <h2 className="text-xl font-bold tracking-tight">
             {test.division}: {test.year} {test.month} {test.test_type}
+            {isRetakeMode && <span className="text-primary ml-2">(Retake)</span>}
           </h2>
           {headerActions}
         </header>
