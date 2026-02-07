@@ -37,6 +37,9 @@ import {
   getTimerState,
   saveTimerState,
   clearTimerState,
+  getInProgressChecked,
+  saveInProgressChecked,
+  clearInProgressChecked,
 } from '@/lib/user-data';
 import {
   AlertDialog,
@@ -195,6 +198,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       clearInProgressAnswers(user.uid, test.id);
       clearInProgressFlags(user.uid, test.id);
       clearTimerState(user.uid, test.id);
+      clearInProgressChecked(user.uid, test.id);
       toast({
         title: 'Success!',
         description: 'Your test results have been saved.',
@@ -225,27 +229,27 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   // Effect to initialize the arena for either review or practice mode
   useEffect(() => {
     if (!user || !isClient) return;
-  
+
     // RETAKE MODE LOGIC
     if (isRetakeModeProp && solution && initialAnswers) {
       const newInitialAnswers: UserAnswers = {};
       const newCheckedQuestions: { [key: number]: true } = {};
       const reviewDataForCorrectAnswers: ReviewData = {};
-  
+
       const originalScore = gradeTest(initialAnswers, solution.answers);
-  
+
       for (let i = 0; i < solution.answers.length; i++) {
         const qNum = i + 1;
         const originalAnswer = initialAnswers[qNum];
         const correctAnswer = solution.answers[i];
-  
+
         let isOriginalCorrect = false;
         if (originalAnswer !== undefined && originalAnswer !== null) {
           isOriginalCorrect = Array.isArray(correctAnswer)
             ? correctAnswer.includes(originalAnswer)
             : originalAnswer === correctAnswer;
         }
-  
+
         if (isOriginalCorrect) {
           newInitialAnswers[qNum] = originalAnswer;
           newCheckedQuestions[qNum] = true;
@@ -256,7 +260,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           };
         }
       }
-  
+
       setUserAnswers(newInitialAnswers);
       setCheckedQuestions(newCheckedQuestions);
       setReviewData(reviewDataForCorrectAnswers);
@@ -299,9 +303,11 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       const savedProgress = getInProgressAnswers(user.uid, test.id);
       const savedFlags = getInProgressFlags(user.uid, test.id);
       const savedTimerState = getTimerState(user.uid, test.id);
+      const savedChecked = getInProgressChecked(user.uid, test.id);
 
       setUserAnswers(savedProgress || {});
       setMarkedQuestions(savedFlags || {});
+      setCheckedQuestions(savedChecked || {});
       if (savedTimerState) {
         setTimerState(savedTimerState);
       } else {
@@ -316,7 +322,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setCurrentSubmissionId(undefined);
       setIsReviewMode(false);
       setIsRetakeMode(false);
-      setCheckedQuestions({});
     }
   }, [
     user,
@@ -353,6 +358,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     currentSubmissionId,
     isClient,
   ]);
+  
+  // Effect to save checked questions to localStorage
+  useEffect(() => {
+    if (!user || !isClient || isReviewMode) return;
+    saveInProgressChecked(user.uid, test.id, checkedQuestions);
+  }, [checkedQuestions, user, test.id, isClient, isReviewMode]);
 
 
   // Effect to save timer state to localStorage, only when it changes
@@ -388,12 +399,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const handleCheckQuestion = useCallback(
     (question: number) => {
       if (!solution) return;
-      
+
       setUserAnswers(currentAnswers => {
+        // Use a functional update for setReviewData to ensure it gets the latest userAnswers
         setReviewData(createReviewData(currentAnswers, solution.answers));
         return currentAnswers;
       });
-      
+
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
     [solution, createReviewData]
