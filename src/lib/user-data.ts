@@ -222,6 +222,7 @@ const IN_PROGRESS_PREFIX = 'in_progress_';
 const IN_PROGRESS_FLAGS_PREFIX = 'in_progress_flags_';
 const REVIEW_MARKS_PREFIX = 'review_marks_';
 const TIMER_STATE_PREFIX = 'timer_state_';
+const IN_PROGRESS_CHECKED_PREFIX = 'in_progress_checked_';
 
 // --- In-Progress Answers ---
 const getInProgressKey = (userId: string, testId: string) => `${IN_PROGRESS_PREFIX}${userId}_${testId}`;
@@ -234,6 +235,12 @@ const getInProgressFlagsKey = (userId: string, testId: string) => `${IN_PROGRESS
 export const getInProgressFlags = (userId: string, testId: string) => getFromLocalStorage<MarkedQuestions>(getInProgressFlagsKey(userId, testId), {});
 export const saveInProgressFlags = (userId: string, testId: string, flags: MarkedQuestions) => saveToLocalStorage(getInProgressFlagsKey(userId, testId), flags);
 export const clearInProgressFlags = (userId: string, testId: string) => clearFromLocalStorage(getInProgressFlagsKey(userId, testId));
+
+// --- In-Progress Checked Questions ---
+const getInProgressCheckedKey = (userId: string, testId: string) => `${IN_PROGRESS_CHECKED_PREFIX}${userId}_${testId}`;
+export const getInProgressChecked = (userId: string, testId: string) => getFromLocalStorage<{[key: number]: true}>(getInProgressCheckedKey(userId, testId), {});
+export const saveInProgressChecked = (userId: string, testId: string, checked: {[key: number]: true}) => saveToLocalStorage(getInProgressCheckedKey(userId, testId), checked);
+export const clearInProgressChecked = (userId: string, testId: string) => clearFromLocalStorage(getInProgressCheckedKey(userId, testId));
 
 // --- Review Markings ---
 const getReviewMarksKey = (userId: string, submissionId: string) => `${REVIEW_MARKS_PREFIX}${userId}_${submissionId}`;
@@ -260,6 +267,7 @@ export function clearAllLocalData(userId: string) {
         `${IN_PROGRESS_FLAGS_PREFIX}${userId}_`,
         `${REVIEW_MARKS_PREFIX}${userId}_`,
         `${TIMER_STATE_PREFIX}${userId}_`,
+        `${IN_PROGRESS_CHECKED_PREFIX}${userId}_`,
     ];
 
     Object.keys(window.localStorage).forEach((key) => {
