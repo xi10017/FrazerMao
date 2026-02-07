@@ -187,7 +187,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       test,
       userAnswers,
       report,
-      markedQuestions
+      markedQuestions,
+      isRetakeMode
     );
 
     if (newSubmissionId) {
@@ -218,6 +219,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     markedQuestions,
     toast,
     createReviewData,
+    isRetakeMode,
   ]);
 
   // Effect to initialize the arena for either review or practice mode

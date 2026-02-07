@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 function HistoryPage() {
   const params = useParams();
@@ -144,6 +145,11 @@ function HistoryPage() {
                   <TableRow key={sub.id}>
                     <TableCell className="font-medium">
                       {format(sub.submittedAt, 'PPP p')}
+                      {sub.isRetake && (
+                        <Badge variant="outline" className="ml-2">
+                          Retake
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-center text-lg font-bold text-primary">
                       {sub.score.totalScore}

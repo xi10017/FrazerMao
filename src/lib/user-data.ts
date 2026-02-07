@@ -114,7 +114,8 @@ export async function saveSubmission(
   test: FamatTest,
   userAnswers: UserAnswers,
   scoreReport: ScoreReport,
-  inProgressFlags: MarkedQuestions
+  inProgressFlags: MarkedQuestions,
+  isRetake?: boolean
 ): Promise<string | null> {
   if (typeof window === 'undefined' || !userId) return null;
 
@@ -128,6 +129,7 @@ export async function saveSubmission(
     division: test.division,
     testName: getTestName(test),
     completionDate: new Date().toISOString(),
+    isRetake: !!isRetake,
   };
 
   try {
