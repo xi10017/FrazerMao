@@ -15,7 +15,8 @@ const allTests: AnyFamatTest[] = famatTests as AnyFamatTest[];
  * Generates a unique, URL-friendly ID for a test.
  */
 export function getTestId(test: FamatTestBase): string {
-  return `${test.year}-${test.month}-${test.division}-${test.test_type}-${test.format}`
+  const monthPart = test.month ? `-${test.month}` : '';
+  return `${test.year}${monthPart}-${test.division}-${test.test_type}-${test.format}`
     .toLowerCase()
     .replace(/\s+/g, '-')
     .replace(/[()]/g, '');
@@ -26,7 +27,8 @@ export function getTestId(test: FamatTestBase): string {
  * e.g., "2022 Statistics January Regional Individual"
  */
 export function getTestName(test: FamatTestBase): string {
-  return `${test.year} ${test.division} ${test.month} ${test.test_type} ${test.format}`;
+  const monthPart = test.month ? ` ${test.month}` : '';
+  return `${test.year}${monthPart} ${test.division} ${test.test_type} ${test.format}`;
 }
 
 /**

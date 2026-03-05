@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { memo } from 'react';
@@ -7,9 +8,9 @@ interface GoogleDrivePDFViewerProps {
 }
 
 const GoogleDrivePDFViewerComponent: React.FC<GoogleDrivePDFViewerProps> = ({ url }) => {
-  // To embed a Google Drive file, we need to transform the URL.
-  // The standard sharing URL (e.g., /view?usp=sharing) needs to be changed to /preview.
-  const embeddableUrl = url.replace('/view?usp=sharing', '/preview').replace('/view?usp=drive_link', '/preview');
+  // To embed a Google Drive or Google Docs file, we transform the terminal segment to /preview.
+  // This handles /view, /edit, and various query parameters like ?usp=sharing or ?rtpof=true.
+  const embeddableUrl = url.replace(/\/(view|edit)(\?.*)?$/, '/preview');
 
   return (
     <div className="h-full w-full bg-muted">
@@ -18,7 +19,7 @@ const GoogleDrivePDFViewerComponent: React.FC<GoogleDrivePDFViewerProps> = ({ ur
         className="h-full w-full"
         frameBorder="0"
         allow="autoplay"
-        title={`Google Drive PDF viewer for ${url}`}
+        title={`Google Drive viewer for ${url}`}
       ></iframe>
     </div>
   );

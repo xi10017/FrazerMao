@@ -409,7 +409,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       if (!solution) return;
   
       // Use a functional update for setReviewData to ensure it gets the latest userAnswers
-      setReviewData(currentReviewData => {
+      setReviewData(() => {
         // Create the new, complete review data based on the most up-to-date answers
         const newReviewData = createReviewData(userAnswers, solution.answers);
         return newReviewData;
@@ -417,7 +417,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
-    [solution, createReviewData, userAnswers] // Add userAnswers to dependency array
+    [solution, createReviewData, userAnswers]
   );
 
   const handleSetHideCheckWarning = (hide: boolean) => {
@@ -588,7 +588,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-background">
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
           <h2 className="text-xl font-bold tracking-tight">
-            {test.division}: {test.year} {test.month} {test.test_type}
+            {test.division}: {test.year} {test.month && `${test.month} `}{test.test_type}
             {isRetakeMode && <span className="text-primary ml-2">(Retake)</span>}
           </h2>
           {headerActions}
@@ -727,7 +727,3 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 };
 
 export default PracticeArena;
-    
-    
-
-    

@@ -1,8 +1,7 @@
 
-
 export interface FamatTestBase {
   year: number;
-  month: string;
+  month: string | null;
   division: string;
   test_type: string;
   document_type: 'Test' | 'Solution';
