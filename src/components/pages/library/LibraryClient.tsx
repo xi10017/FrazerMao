@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -134,7 +135,8 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       'November',
       'December',
     ];
-    const months = [...new Set(tests.map((t) => t.month))].sort(
+    // Filter out null months for the filter sidebar
+    const months = [...new Set(tests.map((t) => t.month).filter(Boolean) as string[])].sort(
       (a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b)
     );
     const testTypes = [...new Set(tests.map((t) => t.test_type))].sort();
@@ -227,7 +229,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           selectedDivisions.length === 0 ||
           selectedDivisions.includes(test.division);
         const monthMatch =
-          selectedMonths.length === 0 || selectedMonths.includes(test.month);
+          selectedMonths.length === 0 || (test.month !== null && selectedMonths.includes(test.month));
         const competitionMatch =
           selectedCompetitions.length === 0 ||
           selectedCompetitions.includes(test.test_type);
