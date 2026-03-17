@@ -292,7 +292,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                       <div
                         className={cn(
                           'font-bold text-lg',
-                          score
+                          score !== undefined
                             ? 'text-primary'
                             : isInProgress
                             ? 'text-blue-500'
@@ -307,7 +307,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                       </div>
                       <div className="font-bold">{test.division}</div>
                       <div>{test.year}</div>
-                      <div>{test.month.substring(0, 3)}</div>
+                      <div>{test.month ? test.month.substring(0, 3) : ''}</div>
                       <div className="text-muted-foreground">
                         {getShortTestType(test.test_type)}
                       </div>
