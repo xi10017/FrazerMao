@@ -26,6 +26,36 @@ function generateInviteCode(): string {
   return code;
 }
 
+async function getUserGroupStats(
+  db: Firestore,
+  userId: string
+): Promise<{ testsCompleted: number; showOnLeaderboard: boolean }> {
+  const [completionsSnap, profileSnap] = await Promise.all([
+    getDocs(collection(db, 'users', userId, 'testCompletions')),
+    getDoc(doc(db, 'users', userId)),
+  ]);
+
+  return {
+    testsCompleted: completionsSnap.size,
+    showOnLeaderboard: profileSnap.exists()
+      ? profileSnap.data()?.showOnLeaderboard ?? true
+      : true,
+  };
+}
+
+function buildMemberData(
+  user: User,
+  stats: { testsCompleted: number; showOnLeaderboard: boolean }
+): GroupMember {
+  return {
+    userId: user.uid,
+    displayName: user.displayName || 'Anonymous User',
+    photoURL: user.photoURL,
+    testsCompleted: stats.testsCompleted,
+    showOnLeaderboard: stats.showOnLeaderboard,
+  };
+}
+
 export async function createStudyGroup(
   db: Firestore,
   user: User,
@@ -47,13 +77,8 @@ export async function createStudyGroup(
 
   await setDoc(groupRef, groupData);
 
-  const memberData: GroupMember = {
-    userId: user.uid,
-    displayName: user.displayName || 'Anonymous User',
-    photoURL: user.photoURL,
-    testsCompleted: 0,
-    showOnLeaderboard: true,
-  };
+  const stats = await getUserGroupStats(db, user.uid);
+  const memberData = buildMemberData(user, stats);
 
   await setDoc(doc(db, 'study_groups', groupRef.id, 'members', user.uid), memberData);
   await setDoc(doc(db, 'users', user.uid, 'groupMemberships', groupRef.id), {
@@ -89,13 +114,9 @@ export async function joinStudyGroup(
   const existingMember = await getDoc(memberRef);
   if (existingMember.exists()) return group;
 
-  await setDoc(memberRef, {
-    userId: user.uid,
-    displayName: user.displayName || 'Anonymous User',
-    photoURL: user.photoURL,
-    testsCompleted: 0,
-    showOnLeaderboard: true,
-  } satisfies GroupMember);
+  const stats = await getUserGroupStats(db, user.uid);
+
+  await setDoc(memberRef, buildMemberData(user, stats));
 
   await setDoc(doc(db, 'users', user.uid, 'groupMemberships', group.id), {
     groupId: group.id,
