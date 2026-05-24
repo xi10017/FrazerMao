@@ -76,6 +76,7 @@ export type UserProfile = {
   email: string;
   photoURL: string | null;
   showOnLeaderboard: boolean;
+  bookmarkedTestIds?: string[];
 };
 
 // A question number mapped to the note string. The presence of the key means it's marked.

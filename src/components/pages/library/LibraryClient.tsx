@@ -11,18 +11,22 @@ import type {
 } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import {
   getSubmissionsForUser,
   getInProgressAnswers,
   getReviewMarks,
   getInProgressFlags,
   getTimerState,
+  toggleBookmark,
 } from '@/lib/user-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
 import { Leaderboard } from './Leaderboard';
 import { LandingPage } from '@/components/pages/landing/LandingPage';
+import { doc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface LibraryClientProps {
   tests: FamatTest[];
@@ -31,6 +35,7 @@ interface LibraryClientProps {
 const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [allMarks, setAllMarks] = useState<Record<string, MarkedQuestions>>({});
@@ -40,6 +45,18 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [inProgressFlags, setInProgressFlags] = useState<
     Record<string, MarkedQuestions>
   >({});
+  const [bookmarkedTestIds, setBookmarkedTestIds] = useState<string[]>([]);
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  useEffect(() => {
+    setBookmarkedTestIds(userProfile?.bookmarkedTestIds ?? []);
+  }, [userProfile?.bookmarkedTestIds]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -245,6 +262,27 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     selectedCompetitions,
   ]);
 
+  const handleToggleBookmark = async (testId: string, isBookmarked: boolean) => {
+    if (!user || !firestore) return;
+    try {
+      const updated = await toggleBookmark(firestore, user.uid, testId, isBookmarked);
+      setBookmarkedTestIds(updated);
+      toast({
+        title: isBookmarked ? 'Removed from saved' : 'Saved for later',
+        description: isBookmarked
+          ? 'Test removed from your saved list.'
+          : 'Test added to your saved list.',
+      });
+    } catch (error) {
+      console.error('Failed to toggle bookmark:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Could not update saved tests',
+        description: 'Please try again.',
+      });
+    }
+  };
+
   if (isLoading || isUserLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
@@ -283,7 +321,11 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
             <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           </TabsList>
           <TabsContent value="library" className="mt-4">
-            <TestList tests={filteredTests} />
+            <TestList
+              tests={filteredTests}
+              bookmarkedTestIds={bookmarkedTestIds}
+              onToggleBookmark={handleToggleBookmark}
+            />
           </TabsContent>
           <TabsContent value="progress" className="mt-4">
             <ProgressGrid tests={filteredTests} />

@@ -279,3 +279,31 @@ export function clearAllLocalData(userId: string) {
     console.error('Failed to clear all user data from localStorage:', error);
   }
 }
+
+/**
+ * Toggles a test in the user's bookmark list (stored on their profile).
+ */
+export async function toggleBookmark(
+  db: Firestore,
+  userId: string,
+  testId: string,
+  currentlyBookmarked: boolean
+): Promise<string[]> {
+  const auth = getAuth();
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    throw new Error('Cannot modify bookmarks for another user');
+  }
+
+  const userRef = doc(db, 'users', userId);
+  const snap = await getDoc(userRef);
+  const existing: string[] = snap.exists()
+    ? snap.data()?.bookmarkedTestIds ?? []
+    : [];
+
+  const updated = currentlyBookmarked
+    ? existing.filter((id) => id !== testId)
+    : [...existing, testId];
+
+  await setDoc(userRef, { bookmarkedTestIds: updated }, { merge: true });
+  return updated;
+}
