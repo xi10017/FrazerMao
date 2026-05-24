@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   useUser,
   useFirestore,
@@ -37,6 +37,11 @@ export const StudyGroups = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [pendingGroup, setPendingGroup] = useState<{
+    id: string;
+    groupName: string;
+    inviteCode: string;
+  } | null>(null);
 
   const membershipsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -57,7 +62,45 @@ export const StudyGroups = () => {
   const { data: members, isLoading: isMembersLoading } =
     useCollection<GroupMember>(membersQuery);
 
-  const selectedMembership = memberships?.find((m) => m.id === selectedGroupId);
+  const displayMemberships = useMemo(() => {
+    const fromFirestore = memberships ?? [];
+    if (pendingGroup && !fromFirestore.some((m) => m.id === pendingGroup.id)) {
+      return [
+        {
+          id: pendingGroup.id,
+          groupId: pendingGroup.id,
+          groupName: pendingGroup.groupName,
+          inviteCode: pendingGroup.inviteCode,
+          joinedAt: new Date(),
+        },
+        ...fromFirestore,
+      ];
+    }
+    return fromFirestore;
+  }, [memberships, pendingGroup]);
+
+  useEffect(() => {
+    if (
+      pendingGroup &&
+      memberships?.some((membership) => membership.id === pendingGroup.id)
+    ) {
+      setPendingGroup(null);
+    }
+  }, [memberships, pendingGroup]);
+
+  useEffect(() => {
+    if (!selectedGroupId && displayMemberships.length > 0) {
+      setSelectedGroupId(displayMemberships[0].id);
+    }
+  }, [displayMemberships, selectedGroupId]);
+
+  const selectedMembership = displayMemberships.find(
+    (m) => m.id === selectedGroupId
+  );
+
+  const visibleMembers = useMemo(() => {
+    return (members ?? []).filter((m) => m.showOnLeaderboard !== false);
+  }, [members]);
 
   const handleCreateGroup = async () => {
     if (!user || !firestore) return;
@@ -65,6 +108,11 @@ export const StudyGroups = () => {
     try {
       const group = await createStudyGroup(firestore, user, newGroupName);
       setNewGroupName('');
+      setPendingGroup({
+        id: group.id,
+        groupName: group.name,
+        inviteCode: group.inviteCode,
+      });
       setSelectedGroupId(group.id);
       toast({
         title: 'Group created',
@@ -87,6 +135,11 @@ export const StudyGroups = () => {
     try {
       const group = await joinStudyGroup(firestore, user, inviteCodeInput);
       setInviteCodeInput('');
+      setPendingGroup({
+        id: group.id,
+        groupName: group.name,
+        inviteCode: group.inviteCode,
+      });
       setSelectedGroupId(group.id);
       toast({ title: 'Joined group', description: group.name });
     } catch (error) {
@@ -156,10 +209,10 @@ export const StudyGroups = () => {
         </div>
       </div>
 
-      {memberships && memberships.length > 0 ? (
+      {displayMemberships.length > 0 ? (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            {memberships.map((membership) => (
+            {displayMemberships.map((membership) => (
               <Button
                 key={membership.id}
                 variant={selectedGroupId === membership.id ? 'default' : 'outline'}
@@ -201,13 +254,12 @@ export const StudyGroups = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(members ?? [])
-                      .filter((m) => m.showOnLeaderboard && m.testsCompleted > 0)
-                      .map((member, index) => (
+                    {visibleMembers.length > 0 ? (
+                      visibleMembers.map((member, index) => (
                         <TableRow key={member.userId}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <p className="flex items-center gap-2">
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src={member.photoURL ?? undefined} />
                                 <AvatarFallback>
@@ -215,13 +267,24 @@ export const StudyGroups = () => {
                                 </AvatarFallback>
                               </Avatar>
                               <span>{member.displayName}</span>
-                            </div>
+                            </p>
                           </TableCell>
                           <TableCell className="text-right font-semibold">
                             {member.testsCompleted}
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          className="text-center text-muted-foreground py-8"
+                        >
+                          No members visible yet. Turn on &quot;Show on
+                          Leaderboards&quot; in Settings to appear here.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               )}
