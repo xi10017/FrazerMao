@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { clearAllLocalData } from '@/lib/user-data';
+import { clearAllLocalData, deleteAllUserCloudData } from '@/lib/user-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,6 +66,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [confirmationText, setConfirmationText] = useState('');
+  const [cloudConfirmationText, setCloudConfirmationText] = useState('');
+  const [isDeletingCloud, setIsDeletingCloud] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -89,8 +91,36 @@ export default function SettingsPage() {
       description:
         'Your in-progress test data has been deleted from this device.',
     });
-    setConfirmationText(''); // Reset for next time
+    setConfirmationText('');
     router.refresh();
+  };
+
+  const handleDeleteCloudData = async () => {
+    if (!user || !firestore) return;
+
+    setIsDeletingCloud(true);
+    try {
+      const result = await deleteAllUserCloudData(firestore, user);
+      clearAllLocalData(user.uid);
+      setCloudConfirmationText('');
+      toast({
+        title: 'Cloud history deleted',
+        description: `Removed ${result.deletedSubmissions} submission(s) and ${result.deletedLeaderboardEntries} leaderboard entry/entries. Your account is still active.`,
+      });
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to delete cloud data:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Deletion failed',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Could not delete your cloud data. Please try again.',
+      });
+    } finally {
+      setIsDeletingCloud(false);
+    }
   };
 
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
@@ -127,6 +157,8 @@ export default function SettingsPage() {
   };
 
   const isConfirmationMatch = confirmationText === 'delete my data';
+  const isCloudConfirmationMatch =
+    cloudConfirmationText === 'delete my cloud history';
 
   if (isUserLoading || (user && isProfileLoading)) {
     return (
@@ -230,28 +262,27 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle>Data Management</CardTitle>
             <CardDescription>
-              Manage your application data. This action is permanent.
+              Manage your application data. These actions are permanent.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <AlertDialog onOpenChange={() => setConfirmationText('')}>
               <AlertDialogTrigger asChild>
                 <Button variant="outline">
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear All Local Data
+                  Clear Local Data (This Device)
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>Clear local data?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all of your saved in-progress
-                    work from this device. Submitted test history is stored in the
-                    database and is not affected. To confirm, please type{' '}
+                    This deletes in-progress work saved on this device only.
+                    Submitted test history in the cloud is not affected. Type{' '}
                     <code className="font-mono bg-muted p-1 rounded-md text-foreground">
                       delete my data
                     </code>{' '}
-                    in the box below.
+                    to confirm.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="my-4">
@@ -271,9 +302,54 @@ export default function SettingsPage() {
                   <AlertDialogAction
                     onClick={handleClearData}
                     disabled={!isConfirmationMatch}
-                    variant="destructive"
                   >
-                    Yes, delete my data
+                    Clear local data
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog onOpenChange={() => setCloudConfirmationText('')}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Cloud History
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete all cloud history?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently deletes your submitted test results and
+                    removes you from leaderboards. It only affects your account (
+                    {user.email}). Your sign-in account stays active. Type{' '}
+                    <code className="font-mono bg-muted p-1 rounded-md text-foreground">
+                      delete my cloud history
+                    </code>{' '}
+                    to confirm.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="my-4">
+                  <Label htmlFor="cloud-confirmation" className="sr-only">
+                    Cloud deletion confirmation
+                  </Label>
+                  <Input
+                    id="cloud-confirmation"
+                    value={cloudConfirmationText}
+                    onChange={(e) => setCloudConfirmationText(e.target.value)}
+                    placeholder="delete my cloud history"
+                    autoComplete="off"
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeletingCloud}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteCloudData}
+                    disabled={!isCloudConfirmationMatch || isDeletingCloud}
+                  >
+                    {isDeletingCloud ? 'Deleting…' : 'Delete cloud history'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

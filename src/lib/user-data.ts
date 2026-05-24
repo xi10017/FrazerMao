@@ -20,6 +20,8 @@ import {
   doc,
   getDoc,
   setDoc,
+  writeBatch,
+  deleteDoc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -306,4 +308,85 @@ export async function toggleBookmark(
 
   await setDoc(userRef, { bookmarkedTestIds: updated }, { merge: true });
   return updated;
+}
+
+const BATCH_LIMIT = 450;
+
+/**
+ * Permanently deletes ALL cloud data belonging to the signed-in user only.
+ * Does not touch any other user's documents.
+ */
+export async function deleteAllUserCloudData(
+  db: Firestore,
+  user: User
+): Promise<{ deletedSubmissions: number; deletedLeaderboardEntries: number }> {
+  const auth = getAuth();
+  if (!auth.currentUser || auth.currentUser.uid !== user.uid) {
+    throw new Error('You must be signed in to delete your own data.');
+  }
+
+  const userId = user.uid;
+  let deletedSubmissions = 0;
+  let deletedLeaderboardEntries = 0;
+
+  const completionsRef = collection(db, 'users', userId, 'testCompletions');
+  const completionsSnap = await getDocs(completionsRef);
+
+  let batch = writeBatch(db);
+  let batchCount = 0;
+
+  for (const completionDoc of completionsSnap.docs) {
+    batch.delete(completionDoc.ref);
+    batchCount++;
+    deletedSubmissions++;
+
+    if (batchCount >= BATCH_LIMIT) {
+      await batch.commit();
+      batch = writeBatch(db);
+      batchCount = 0;
+    }
+  }
+
+  if (batchCount > 0) {
+    await batch.commit();
+    batch = writeBatch(db);
+    batchCount = 0;
+  }
+
+  const overallRef = doc(db, 'leaderboard_overall', userId);
+  const overallSnap = await getDoc(overallRef);
+  if (overallSnap.exists()) {
+    batch.delete(overallRef);
+    deletedLeaderboardEntries++;
+    batchCount++;
+  }
+
+  const divisionSnap = await getDocs(collection(db, 'leaderboard_by_division'));
+  for (const divisionDoc of divisionSnap.docs) {
+    const data = divisionDoc.data();
+    if (data.userId === userId) {
+      batch.delete(divisionDoc.ref);
+      deletedLeaderboardEntries++;
+      batchCount++;
+
+      if (batchCount >= BATCH_LIMIT) {
+        await batch.commit();
+        batch = writeBatch(db);
+        batchCount = 0;
+      }
+    }
+  }
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+
+  const userRef = doc(db, 'users', userId);
+  await setDoc(
+    userRef,
+    { bookmarkedTestIds: [] },
+    { merge: true }
+  );
+
+  return { deletedSubmissions, deletedLeaderboardEntries };
 }
