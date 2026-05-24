@@ -9,8 +9,9 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export default function PracticePage({ params, searchParams }: Props) {
-  const { testId } = params;
+export default async function PracticePage({ params, searchParams }: Props) {
+  const { testId } = await params;
+  const sParams = await searchParams;
   const allTests = famatTests as AnyFamatTest[];
 
   const test = allTests
@@ -24,14 +25,14 @@ export default function PracticePage({ params, searchParams }: Props) {
 
   const solution = findSolutionForTest(test);
 
-  const fromHistoryParam = searchParams?.fromHistory;
+  const fromHistoryParam = sParams?.fromHistory;
   const isReviewFromHistory = fromHistoryParam === 'true';
-  const fromRetakeParam = searchParams?.retake;
+  const fromRetakeParam = sParams?.retake;
   const isRetakeMode = fromRetakeParam === 'true';
-  const submissionId = searchParams?.submissionId as string | undefined;
+  const submissionId = sParams?.submissionId as string | undefined;
 
   let initialAnswers: UserAnswers | undefined = undefined;
-  const submissionParam = searchParams?.submission;
+  const submissionParam = sParams?.submission;
   if (typeof submissionParam === 'string') {
     try {
       initialAnswers = JSON.parse(decodeURIComponent(submissionParam));

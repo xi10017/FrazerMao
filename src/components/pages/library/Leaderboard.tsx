@@ -36,10 +36,12 @@ import { getInitials } from '@/lib/utils';
 
 const LeaderboardTable = ({
   entries,
+  hiddenCount,
   isLoading,
   title,
 }: {
   entries: LeaderboardEntry[] | null;
+  hiddenCount?: number;
   isLoading: boolean;
   title: string;
 }) => {
@@ -76,59 +78,71 @@ const LeaderboardTable = ({
 
   if (!entries || entries.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-10">
-        No one is sharing their score on the leaderboard yet.
+      <div className="text-center text-muted-foreground py-10 flex flex-col gap-2">
+        <span>No one is sharing their score on the leaderboard yet.</span>
+        {hiddenCount !== undefined && hiddenCount > 0 && (
+          <span className="text-sm">
+            ({hiddenCount} {hiddenCount === 1 ? 'user has' : 'users have'} their results hidden)
+          </span>
+        )}
       </div>
     );
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[50px]">Rank</TableHead>
-          <TableHead>Player</TableHead>
-          <TableHead className="text-right">Tests Completed</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {entries.map((entry, index) => {
-          const rank = index + 1;
-          return (
-            <TableRow key={entry.userId + (entry.division || '')}>
-              <TableCell>
-                <div className="flex items-center justify-center">
-                  <span
-                    className={`text-xl font-bold ${getRankColor(rank)}`}
-                  >
-                    {rank <= 3 ? <Trophy className="h-5 w-5" /> : rank}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={entry.photoURL ?? undefined} />
-                    <AvatarFallback>{getInitials(entry.displayName)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">
-                      {entry.displayName || 'Anonymous User'}
-                    </div>
-                     <div className="text-sm text-muted-foreground">
-                      {title !== 'Overall' ? `${title} Division` : 'Overall'}
+    <div className="flex flex-col">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[50px]">Rank</TableHead>
+            <TableHead>Player</TableHead>
+            <TableHead className="text-right">Tests Completed</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((entry, index) => {
+            const rank = index + 1;
+            return (
+              <TableRow key={entry.userId + (entry.division || '')}>
+                <TableCell>
+                  <div className="flex items-center justify-center">
+                    <span
+                      className={`text-xl font-bold ${getRankColor(rank)}`}
+                    >
+                      {rank <= 3 ? <Trophy className="h-5 w-5" /> : rank}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={entry.photoURL ?? undefined} />
+                      <AvatarFallback>{getInitials(entry.displayName)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">
+                        {entry.displayName || 'Anonymous User'}
+                      </div>
+                       <div className="text-sm text-muted-foreground">
+                        {title !== 'Overall' ? `${title} Division` : 'Overall'}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell className="text-right text-lg font-bold text-primary">
-                {entry.testsCompleted}
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+                </TableCell>
+                <TableCell className="text-right text-lg font-bold text-primary">
+                  {entry.testsCompleted}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+      {hiddenCount !== undefined && hiddenCount > 0 && (
+        <div className="text-center text-sm text-muted-foreground mt-4 py-3 border-t">
+          {hiddenCount} {hiddenCount === 1 ? 'user has' : 'users have'} their results hidden.
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -152,13 +166,19 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
   const filteredData = useMemo(() => {
       if (!leaderboardData) return null;
       return leaderboardData
-        .filter(entry => entry.showOnLeaderboard && entry.division === division)
+        .filter(entry => entry.showOnLeaderboard && entry.division === division && entry.testsCompleted > 0)
         .slice(0, 25);
+  }, [leaderboardData, division]);
+
+  const hiddenCount = useMemo(() => {
+      if (!leaderboardData) return 0;
+      return leaderboardData.filter(entry => entry.division === division && (!entry.showOnLeaderboard || entry.testsCompleted === 0)).length;
   }, [leaderboardData, division]);
 
   return (
     <LeaderboardTable
       entries={filteredData}
+      hiddenCount={hiddenCount}
       isLoading={isLeaderboardLoading}
       title={division}
     />
@@ -183,7 +203,12 @@ export const Leaderboard = () => {
 
   const filteredOverallData = useMemo(() => {
       // Filter on the client-side for privacy
-      return overallData?.filter(entry => entry.showOnLeaderboard).slice(0, 100) || null;
+      return overallData?.filter(entry => entry.showOnLeaderboard && entry.testsCompleted > 0).slice(0, 100) || null;
+  }, [overallData]);
+
+  const overallHiddenCount = useMemo(() => {
+      if (!overallData) return 0;
+      return overallData.filter(entry => !entry.showOnLeaderboard || entry.testsCompleted === 0).length;
   }, [overallData]);
 
   // Divisions are based on the actual data available in famat_tests.json
@@ -206,6 +231,7 @@ export const Leaderboard = () => {
           <TabsContent value="overall">
             <LeaderboardTable
               entries={filteredOverallData}
+              hiddenCount={overallHiddenCount}
               isLoading={isOverallLoading}
               title="Overall"
             />

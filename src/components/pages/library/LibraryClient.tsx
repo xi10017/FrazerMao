@@ -152,7 +152,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     };
   }, [tests]);
 
-  const [startYear, setStartYear] = useState(uniqueValues.minYear);
+  const [startYear, setStartYear] = useState(2013);
   const [endYear, setEndYear] = useState(uniqueValues.maxYear);
   const [selectedDivisions, setSelectedDivisions] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
@@ -203,7 +203,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   ]);
 
   const handleResetFilters = () => {
-    setStartYear(uniqueValues.minYear);
+    setStartYear(2013);
     setEndYear(uniqueValues.maxYear);
     setSelectedDivisions([]);
     setSelectedMonths([]);
