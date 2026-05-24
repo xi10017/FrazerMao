@@ -93,6 +93,9 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
           <ShareResultButton
             testName={testName}
             totalScore={scoreReport.totalScore}
+            correctCount={scoreReport.correctCount}
+            incorrectCount={scoreReport.incorrectCount}
+            omitCount={scoreReport.omitCount}
             className="w-full sm:w-auto"
           />
           <Button

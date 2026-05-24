@@ -6,13 +6,31 @@ import {
   useFirestore,
   useCollection,
   useMemoFirebase,
+  useDoc,
 } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 import type { GroupMember, GroupMembership } from '@/lib/types';
-import { createStudyGroup, joinStudyGroup, syncUserGroupMemberStats } from '@/lib/study-groups';
+import {
+  createStudyGroup,
+  joinStudyGroup,
+  leaveStudyGroup,
+  deleteStudyGroup,
+  syncUserGroupMemberStats,
+} from '@/lib/study-groups';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -25,7 +43,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { getInitials } from '@/lib/utils';
-import { Users, Copy } from 'lucide-react';
+import { Users, Copy, LogOut, Trash2 } from 'lucide-react';
 
 export const StudyGroups = () => {
   const { user } = useUser();
@@ -37,6 +55,8 @@ export const StudyGroups = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [pendingGroup, setPendingGroup] = useState<{
     id: string;
     groupName: string;
@@ -105,6 +125,14 @@ export const StudyGroups = () => {
     (m) => m.id === selectedGroupId
   );
 
+  const groupRef = useMemoFirebase(() => {
+    if (!firestore || !selectedGroupId) return null;
+    return doc(firestore, 'study_groups', selectedGroupId);
+  }, [firestore, selectedGroupId]);
+
+  const { data: groupDoc } = useDoc<{ createdBy: string }>(groupRef);
+  const isCreator = !!user && groupDoc?.createdBy === user.uid;
+
   const visibleMembers = useMemo(() => {
     return (members ?? []).filter((m) => m.showOnLeaderboard !== false);
   }, [members]);
@@ -172,6 +200,42 @@ export const StudyGroups = () => {
     }
   };
 
+  const handleLeaveGroup = async () => {
+    if (!user || !firestore || !selectedGroupId) return;
+    setIsLeaving(true);
+    try {
+      await leaveStudyGroup(firestore, user, selectedGroupId);
+      setSelectedGroupId(null);
+      toast({ title: 'Left group' });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not leave group',
+        description: error instanceof Error ? error.message : 'Try again.',
+      });
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!user || !firestore || !selectedGroupId) return;
+    setIsDeleting(true);
+    try {
+      await deleteStudyGroup(firestore, user, selectedGroupId);
+      setSelectedGroupId(null);
+      toast({ title: 'Group deleted' });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not delete group',
+        description: error instanceof Error ? error.message : 'Try again.',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isMembershipsLoading) {
     return <Skeleton className="h-48 w-full" />;
   }
@@ -234,19 +298,73 @@ export const StudyGroups = () => {
 
           {selectedGroupId && selectedMembership && (
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span>Invite code:</span>
-                <code className="rounded bg-muted px-2 py-1 font-mono">
-                  {selectedMembership.inviteCode}
-                </code>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyInviteCode(selectedMembership.inviteCode)}
-                >
-                  <Copy className="mr-1 h-3 w-3" />
-                  Copy
-                </Button>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span>Invite code:</span>
+                  <code className="rounded bg-muted px-2 py-1 font-mono">
+                    {selectedMembership.inviteCode}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyInviteCode(selectedMembership.inviteCode)}
+                  >
+                    <Copy className="mr-1 h-3 w-3" />
+                    Copy
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={isLeaving}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Leave group
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Leave this group?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          You will be removed from {selectedMembership.groupName}.
+                          {isCreator &&
+                            ' If you are the only member, the group will be deleted. Otherwise ownership transfers to another member.'}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleLeaveGroup}>
+                          Leave group
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  {isCreator && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" disabled={isDeleting}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete group
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this group?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This permanently deletes {selectedMembership.groupName}.
+                            Other members may still see a stale link until they leave it
+                            manually.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteGroup}>
+                            Delete group
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </div>
 
               {isMembersLoading ? (

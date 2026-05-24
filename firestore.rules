@@ -69,6 +69,24 @@ service cloud.firestore {
       match /testCompletions/{testCompletionId} {
         allow read, write: if isOwner(userId);
       }
+
+      /**
+       * @description
+       *   In-progress practice state (answers, timer, flags) for cross-device resume.
+       * @path /users/{userId}/inProgress/{testId}
+       */
+      match /inProgress/{testId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      /**
+       * @description
+       *   In-progress retake state, separate from a fresh practice attempt.
+       * @path /users/{userId}/retakeInProgress/{testId}
+       */
+      match /retakeInProgress/{testId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     /**

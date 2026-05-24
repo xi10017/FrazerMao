@@ -6,6 +6,7 @@ import type {
   UserAnswers,
   ScoreReport,
   FamatTestBase,
+  TestSubmission,
 } from './types';
 import famatTests from '@/data/famat_tests.json';
 
@@ -90,4 +91,125 @@ export function gradeTest(
   const totalScore = (correctCount * 5) + (omitCount * 1);
 
   return { totalScore, correctCount, incorrectCount, omitCount };
+}
+
+/**
+ * Build the answer sheet for retake submit. Only explicitly answered questions
+ * count; null/undefined/missing entries are omitted (not carried from source).
+ */
+export function buildRetakeSubmitAnswers(
+  currentAnswers: UserAnswers,
+  explicitlyOmitted?: Iterable<number>
+): UserAnswers {
+  const result: UserAnswers = {};
+  for (const [key, value] of Object.entries(currentAnswers)) {
+    const q = Number(key);
+    if (value !== null && value !== undefined) {
+      result[q] = value;
+    }
+  }
+  if (explicitlyOmitted) {
+    for (const q of explicitlyOmitted) {
+      delete result[q];
+    }
+  }
+  return result;
+}
+
+/** Legacy: merge source attempt with a stored delta (pre-full-save retakes). */
+export function mergeLegacyRetakeDelta(
+  originalAnswers: UserAnswers,
+  deltaAnswers: UserAnswers
+): UserAnswers {
+  const result = { ...originalAnswers };
+  for (const [key, value] of Object.entries(deltaAnswers)) {
+    const q = Number(key);
+    if (value === null || value === undefined) {
+      delete result[q];
+    } else {
+      result[q] = value;
+    }
+  }
+  return result;
+}
+
+/** @deprecated Use buildRetakeSubmitAnswers for new retake submits. */
+export function mergeRetakeAnswers(
+  originalAnswers: UserAnswers,
+  currentAnswers: UserAnswers
+): UserAnswers {
+  return mergeLegacyRetakeDelta(originalAnswers, currentAnswers);
+}
+
+function scoresMatch(a: ScoreReport, b: ScoreReport): boolean {
+  return (
+    a.totalScore === b.totalScore &&
+    a.correctCount === b.correctCount &&
+    a.incorrectCount === b.incorrectCount &&
+    a.omitCount === b.omitCount
+  );
+}
+
+/**
+ * Full merged answers for display/review. New retakes store the complete attempt;
+ * legacy retakes stored only a delta and must be merged with the source attempt.
+ */
+export function resolveRetakeDisplayAnswers(
+  retake: TestSubmission,
+  allSubmissions: TestSubmission[],
+  answerKey: (string | string[])[]
+): UserAnswers {
+  if (!retake.isRetake) return retake.answers;
+
+  const directGrade = gradeTest(retake.answers, answerKey);
+  if (scoresMatch(directGrade, retake.score)) {
+    return retake.answers;
+  }
+
+  let base: UserAnswers | undefined;
+  if (retake.retakeSourceSubmissionId) {
+    base = allSubmissions.find(
+      (s) => s.id === retake.retakeSourceSubmissionId
+    )?.answers;
+  }
+  if (!base) {
+    const idx = allSubmissions.findIndex((s) => s.id === retake.id);
+    if (idx >= 0 && idx + 1 < allSubmissions.length) {
+      base = allSubmissions[idx + 1].answers;
+    }
+  }
+  if (!base) return retake.answers;
+  return mergeLegacyRetakeDelta(base, retake.answers);
+}
+
+/** Score for a submission row; retakes use stored score when answers are complete. */
+export function resolveRetakeDisplayScore(
+  submission: TestSubmission,
+  allSubmissions: TestSubmission[],
+  answerKey: (string | string[])[] | undefined
+): ScoreReport {
+  if (!submission.isRetake || !answerKey) return submission.score;
+
+  const answers = resolveRetakeDisplayAnswers(
+    submission,
+    allSubmissions,
+    answerKey
+  );
+  const resolved = gradeTest(answers, answerKey);
+  if (scoresMatch(resolved, submission.score)) {
+    return submission.score;
+  }
+  return resolved;
+}
+
+export function buildRetakePracticeUrl(
+  testId: string,
+  submission: Pick<TestSubmission, 'id' | 'answers'>,
+  options?: { continueSession?: boolean }
+): string {
+  if (options?.continueSession) {
+    return `/practice/${testId}?retake=true&continue=true`;
+  }
+  const submissionData = encodeURIComponent(JSON.stringify(submission.answers));
+  return `/practice/${testId}?retake=true&submissionId=${submission.id}&submission=${submissionData}`;
 }

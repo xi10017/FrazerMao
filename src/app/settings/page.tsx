@@ -26,16 +26,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { clearAllLocalData, deleteAllUserCloudData } from '@/lib/user-data';
+import { clearAllLocalData, deleteAllUserCloudData, updateLeaderboardVisibility } from '@/lib/user-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { updateUserLeaderboardEntries } from '@/lib/leaderboard';
 import { getInitials } from '@/lib/utils';
 
 
@@ -68,6 +65,7 @@ export default function SettingsPage() {
   const [confirmationText, setConfirmationText] = useState('');
   const [cloudConfirmationText, setCloudConfirmationText] = useState('');
   const [isDeletingCloud, setIsDeletingCloud] = useState(false);
+  const [isLeaderboardSaving, setIsLeaderboardSaving] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -124,36 +122,34 @@ export default function SettingsPage() {
   };
 
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
-    if (!userProfileRef || !user || !firestore) return;
+    if (!user || !firestore || !userProfile || isLeaderboardSaving) return;
 
-    const updatedProfileData = { showOnLeaderboard: checked };
-
-    // 1. Update the user's profile document.
-    setDoc(userProfileRef, updatedProfileData, { merge: true })
-      .then(async () => {
-        // 2. After the profile is updated, update all leaderboard entries.
-        // This ensures the `showOnLeaderboard` flag is consistent everywhere.
-        await updateUserLeaderboardEntries(firestore, user, checked);
-
+    setIsLeaderboardSaving(true);
+    try {
+      const result = await updateLeaderboardVisibility(
+        firestore,
+        user,
+        checked,
+        userProfile.showOnLeaderboard ?? true
+      );
+      if (result.saved) {
         toast({
           title: 'Privacy settings updated!',
           description: `You will now be ${
             checked ? 'shown on' : 'hidden from'
           } leaderboards.`,
         });
-      })
-      .catch((error) => {
-        console.error(
-          'Error updating user profile for leaderboard visibility:',
-          error
-        );
-        const permissionError = new FirestorePermissionError({
-          path: userProfileRef.path,
-          operation: 'update',
-          requestResourceData: updatedProfileData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      }
+    } catch (error) {
+      console.error('Error updating leaderboard visibility:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Could not update privacy settings',
+        description: 'Please try again.',
       });
+    } finally {
+      setIsLeaderboardSaving(false);
+    }
   };
 
   const isConfirmationMatch = confirmationText === 'delete my data';
@@ -251,6 +247,7 @@ export default function SettingsPage() {
                 <Switch
                   id="leaderboard-switch"
                   checked={userProfile.showOnLeaderboard ?? true}
+                  disabled={isLeaderboardSaving}
                   onCheckedChange={handleLeaderboardVisibilityChange}
                 />
               )}

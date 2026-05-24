@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
+    "dev:clean": "rm -rf .next && npm run dev",
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",

@@ -4,14 +4,12 @@ import {
   useCollection,
   useFirestore,
   useMemoFirebase,
-  useDoc,
 } from '@/firebase';
 import {
   collection,
   query,
   orderBy,
   limit,
-  doc,
 } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -32,53 +30,20 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LeaderboardEntry } from '@/lib/types';
-import type { AggregateStats } from '@/lib/aggregate-stats';
-import { formatAverageScore } from '@/lib/aggregate-stats';
 import { Trophy } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { StudyGroups } from './StudyGroups';
-
-const AggregateStatsBanner = ({ statsId, label }: { statsId: string; label: string }) => {
-  const firestore = useFirestore();
-  const statsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'aggregate_stats', statsId);
-  }, [firestore, statsId]);
-
-  const { data: stats, isLoading } = useDoc<AggregateStats>(statsRef);
-  const average = formatAverageScore(stats ?? null);
-
-  if (isLoading) {
-    return <Skeleton className="h-16 w-full" />;
-  }
-
-  if (!average || !stats) {
-    return null;
-  }
-
-  return (
-    <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-      <p className="font-medium">{label} community average</p>
-      <p className="text-muted-foreground">
-        {average}/150 across {stats.submissionCount} submitted attempt
-        {stats.submissionCount === 1 ? '' : 's'} (aggregate only — no individual scores)
-      </p>
-    </div>
-  );
-};
 
 const LeaderboardTable = ({
   entries,
   hiddenCount,
   isLoading,
   title,
-  statsId,
 }: {
   entries: LeaderboardEntry[] | null;
   hiddenCount?: number;
   isLoading: boolean;
   title: string;
-  statsId?: string;
 }) => {
   const getRankColor = (rank: number) => {
     switch (rank) {
@@ -125,10 +90,7 @@ const LeaderboardTable = ({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {statsId && (
-        <AggregateStatsBanner statsId={statsId} label={title} />
-      )}
+    <div className="flex flex-col">
       <Table>
         <TableHeader>
           <TableRow>
@@ -219,7 +181,6 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
       hiddenCount={hiddenCount}
       isLoading={isLeaderboardLoading}
       title={division}
-      statsId={division.toLowerCase()}
     />
   );
 };
@@ -269,7 +230,6 @@ export const Leaderboard = () => {
             <TabsTrigger value="groups">Groups</TabsTrigger>
           </TabsList>
           <TabsContent value="overall" className="space-y-4 mt-4">
-            <AggregateStatsBanner statsId="overall" label="Overall" />
             <LeaderboardTable
               entries={filteredOverallData}
               hiddenCount={overallHiddenCount}

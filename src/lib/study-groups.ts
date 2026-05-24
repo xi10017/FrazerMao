@@ -11,6 +11,7 @@ import {
   limit,
   writeBatch,
   increment,
+  deleteDoc,
   Timestamp,
   type Firestore,
 } from 'firebase/firestore';
@@ -175,6 +176,53 @@ export async function syncUserGroupMemberStats(
     stats.testsCompleted,
     stats.showOnLeaderboard
   );
+}
+
+export async function leaveStudyGroup(
+  db: Firestore,
+  user: User,
+  groupId: string
+): Promise<void> {
+  await deleteDoc(doc(db, 'study_groups', groupId, 'members', user.uid));
+  await deleteDoc(doc(db, 'users', user.uid, 'groupMemberships', groupId));
+
+  const groupRef = doc(db, 'study_groups', groupId);
+  const membersSnap = await getDocs(
+    collection(db, 'study_groups', groupId, 'members')
+  );
+
+  if (membersSnap.empty) {
+    await deleteDoc(groupRef);
+    return;
+  }
+
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) return;
+
+  const updates: Record<string, unknown> = { memberCount: membersSnap.size };
+  if (groupSnap.data().createdBy === user.uid) {
+    updates.createdBy = membersSnap.docs[0].id;
+  }
+
+  await setDoc(groupRef, updates, { merge: true });
+}
+
+/** Only the group creator can delete the group for everyone. */
+export async function deleteStudyGroup(
+  db: Firestore,
+  user: User,
+  groupId: string
+): Promise<void> {
+  const groupRef = doc(db, 'study_groups', groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) throw new Error('Group not found');
+  if (groupSnap.data().createdBy !== user.uid) {
+    throw new Error('Only the group creator can delete this group');
+  }
+
+  await deleteDoc(doc(db, 'study_groups', groupId, 'members', user.uid));
+  await deleteDoc(doc(db, 'users', user.uid, 'groupMemberships', groupId));
+  await deleteDoc(groupRef);
 }
 
 export async function removeUserFromAllGroups(

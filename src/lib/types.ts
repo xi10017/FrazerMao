@@ -51,6 +51,8 @@ export type TestSubmission = {
   testName: string;
   completionDate: string;
   isRetake?: boolean;
+  /** Original attempt this retake was based on (stored on submit). */
+  retakeSourceSubmissionId?: string;
 };
 
 export interface FamatTestWithHistory extends FamatTest {
@@ -59,6 +61,8 @@ export interface FamatTestWithHistory extends FamatTest {
   markedForReview: MarkedQuestions;
   inProgressFlags?: MarkedQuestions;
   timerState?: TimerState;
+  retakeInProgress?: UserAnswers;
+  retakeTimerState?: TimerState;
 }
 
 export type LeaderboardEntry = {
@@ -67,7 +71,7 @@ export type LeaderboardEntry = {
   testsCompleted: number;
   displayName: string;
   photoURL: string | null;
-  showOnLeaderboard: boolean; // Field is now used for filtering reads
+  showOnLeaderboard: boolean;
 };
 
 export type UserProfile = {
@@ -77,6 +81,8 @@ export type UserProfile = {
   photoURL: string | null;
   showOnLeaderboard: boolean;
   bookmarkedTestIds?: string[];
+  weeklyTestGoal?: number;
+  streakGoal?: number;
 };
 
 export type StudyGroup = {
@@ -103,11 +109,25 @@ export type GroupMembership = {
   joinedAt: Date;
 };
 
-// A question number mapped to the note string. The presence of the key means it's marked.
 export type MarkedQuestions = { [questionNumber: number]: string };
-
 
 export type TimerState = {
   timeRemaining: number;
   isRunning: boolean;
+};
+
+export type InProgressChecked = { [key: number]: true };
+
+/** In-progress session synced between localStorage and Firestore. */
+export type InProgressTestState = {
+  answers: UserAnswers;
+  flags: MarkedQuestions;
+  checked: InProgressChecked;
+  timerState: TimerState | null;
+  updatedAt: Date;
+  sessionMode?: 'practice' | 'retake';
+  sourceSubmissionId?: string;
+  sourceAnswers?: UserAnswers;
+  /** Questions explicitly cleared during a retake (survives Firestore null stripping). */
+  retakeOmittedQuestions?: number[];
 };
