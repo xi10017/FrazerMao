@@ -4,11 +4,18 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { buildShareText } from '@/lib/study-groups';
+import {
+  generateShareResultImage,
+  shareResultImage,
+} from '@/lib/share-result-image';
 import { useToast } from '@/hooks/use-toast';
 
 interface ShareResultButtonProps {
   testName?: string;
   totalScore: number;
+  correctCount: number;
+  incorrectCount: number;
+  omitCount: number;
   variant?: 'default' | 'outline' | 'ghost' | 'secondary';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
@@ -17,6 +24,9 @@ interface ShareResultButtonProps {
 export const ShareResultButton: React.FC<ShareResultButtonProps> = ({
   testName,
   totalScore,
+  correctCount,
+  incorrectCount,
+  omitCount,
   variant = 'outline',
   size = 'default',
   className,
@@ -29,18 +39,19 @@ export const ShareResultButton: React.FC<ShareResultButtonProps> = ({
     const text = buildShareText(testName, totalScore);
 
     try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: 'My test result', text });
-      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(text);
+      const blob = await generateShareResultImage({
+        testName,
+        totalScore,
+        correctCount,
+        incorrectCount,
+        omitCount,
+      });
+      const result = await shareResultImage(blob, text);
+
+      if (result === 'downloaded') {
         toast({
-          title: 'Copied to clipboard',
-          description: 'Share your result anywhere you like.',
-        });
-      } else {
-        toast({
-          title: 'Share text',
-          description: text,
+          title: 'Image saved',
+          description: 'Your result card was downloaded as a PNG.',
         });
       }
     } catch (error) {

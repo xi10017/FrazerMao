@@ -12,29 +12,21 @@ export type AggregateStats = {
   totalScoreSum: number;
 };
 
-function statsDocId(division?: string): string {
-  if (!division || division === 'Overall') return 'overall';
-  return division.toLowerCase().replace(/\s+/g, '_');
-}
+/** Only show community average when enough submissions exist. */
+export const MIN_AGGREGATE_SAMPLE = 5;
 
 export async function incrementAggregateStats(
   db: Firestore,
-  division: string,
+  testId: string,
   score: number
 ): Promise<void> {
-  const ids = new Set([statsDocId(), statsDocId(division)]);
-
-  await Promise.all(
-    [...ids].map((id) =>
-      setDoc(
-        doc(db, 'aggregate_stats', id),
-        {
-          submissionCount: increment(1),
-          totalScoreSum: increment(score),
-        },
-        { merge: true }
-      )
-    )
+  await setDoc(
+    doc(db, 'aggregate_stats', testId),
+    {
+      submissionCount: increment(1),
+      totalScoreSum: increment(score),
+    },
+    { merge: true }
   );
 }
 
@@ -42,4 +34,8 @@ export function formatAverageScore(stats: AggregateStats | null): string | null 
   if (!stats || stats.submissionCount === 0) return null;
   const average = stats.totalScoreSum / stats.submissionCount;
   return average.toFixed(1);
+}
+
+export function shouldShowAggregate(stats: AggregateStats | null): boolean {
+  return !!stats && stats.submissionCount >= MIN_AGGREGATE_SAMPLE;
 }

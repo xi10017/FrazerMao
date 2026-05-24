@@ -29,6 +29,10 @@ export default async function PracticePage({ params, searchParams }: Props) {
   const isReviewFromHistory = fromHistoryParam === 'true';
   const fromRetakeParam = sParams?.retake;
   const isRetakeMode = fromRetakeParam === 'true';
+  const continueRetakeParam = sParams?.continue;
+  const continueRetake = continueRetakeParam === 'true';
+  const freshParam = sParams?.fresh;
+  const startFresh = freshParam === 'true';
   const submissionId = sParams?.submissionId as string | undefined;
 
   let initialAnswers: UserAnswers | undefined = undefined;
@@ -48,6 +52,8 @@ export default async function PracticePage({ params, searchParams }: Props) {
       initialAnswers={initialAnswers}
       isReviewFromHistory={isReviewFromHistory}
       isRetakeMode={isRetakeMode}
+      continueRetake={continueRetake}
+      startFresh={startFresh}
       submissionId={submissionId}
     />
   );

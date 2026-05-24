@@ -6,8 +6,16 @@ import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
 import type { FamatTest, TestSubmission, AnyFamatTest } from '@/lib/types';
 import famatTests from '@/data/famat_tests.json';
-import { getTestId, getTestName } from '@/lib/test-logic';
-import { getSubmissionsForUser } from '@/lib/user-data';
+import {
+  getTestId,
+  getTestName,
+  findSolutionForTest,
+  buildRetakePracticeUrl,
+  resolveRetakeDisplayAnswers,
+  resolveRetakeDisplayScore,
+} from '@/lib/test-logic';
+import { getSubmissionsForTest, readRetakeInProgressForTest } from '@/lib/user-data';
+import { CancelRetakeButton } from '@/components/CancelRetakeButton';
 import {
   Card,
   CardContent,
@@ -16,7 +24,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, RefreshCw } from 'lucide-react';
+import { ArrowRight, ChevronLeft, Play, RefreshCw } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -29,6 +37,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { ShareResultButton } from '@/components/ShareResultButton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Lock } from 'lucide-react';
 
 function HistoryPage() {
   const params = useParams();
@@ -39,6 +54,10 @@ function HistoryPage() {
   const firestore = useFirestore();
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasRetakeInProgress, setHasRetakeInProgress] = useState(false);
+  const [activeRetakeSubmissionId, setActiveRetakeSubmissionId] = useState<
+    string | null
+  >(null);
 
   const test = useMemo(() => {
     return (famatTests as AnyFamatTest[])
@@ -47,21 +66,38 @@ function HistoryPage() {
       .find((t) => t.id === testId) as FamatTest | undefined;
   }, [testId]);
 
+  const solution = useMemo(
+    () => (test ? findSolutionForTest(test) : undefined),
+    [test]
+  );
+
+  const getDisplayScore = (sub: TestSubmission) =>
+    resolveRetakeDisplayScore(sub, submissions, solution?.answers);
+
   useEffect(() => {
     const fetchSubmissions = async () => {
       if (user && testId && firestore) {
         setIsLoading(true);
-        const allSubmissions = await getSubmissionsForUser(
+        const testSubmissions = await getSubmissionsForTest(
           firestore,
-          user.uid
+          user.uid,
+          testId
         );
-        const testSubmissions = allSubmissions
-          .filter((sub) => sub.testId === testId)
-          .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
         setSubmissions(testSubmissions);
+        const retakeInProgress = await readRetakeInProgressForTest(
+          firestore,
+          user.uid,
+          testId
+        );
+        setHasRetakeInProgress(retakeInProgress != null);
+        setActiveRetakeSubmissionId(
+          retakeInProgress?.sourceSubmissionId ?? null
+        );
         setIsLoading(false);
       } else if (!isUserLoading) {
         setSubmissions([]);
+        setHasRetakeInProgress(false);
+        setActiveRetakeSubmissionId(null);
         setIsLoading(false);
       }
     };
@@ -96,21 +132,29 @@ function HistoryPage() {
   }
 
   const handleReview = (submission: TestSubmission) => {
-    // Pass submission ID and answers to practice page
-    const submissionData = encodeURIComponent(
-      JSON.stringify(submission.answers)
-    );
+    const displayAnswers =
+      submission.isRetake && solution
+        ? resolveRetakeDisplayAnswers(
+            submission,
+            submissions,
+            solution.answers
+          )
+        : submission.answers;
+    const submissionData = encodeURIComponent(JSON.stringify(displayAnswers));
     router.push(
       `/practice/${testId}?fromHistory=true&submissionId=${submission.id}&submission=${submissionData}`
     );
   };
 
   const handleRetake = (submission: TestSubmission) => {
-    const submissionData = encodeURIComponent(
-      JSON.stringify(submission.answers)
-    );
+    router.push(buildRetakePracticeUrl(testId, submission));
+  };
+
+  const handleContinueRetake = () => {
     router.push(
-      `/practice/${testId}?retake=true&submissionId=${submission.id}&submission=${submissionData}`
+      buildRetakePracticeUrl(testId, { id: '', answers: {} }, {
+        continueSession: true,
+      })
     );
   };
 
@@ -121,12 +165,23 @@ function HistoryPage() {
         Back to Library
       </Button>
 
-      <Card>
+      <Card className="mb-4">
         <CardHeader>
           <CardTitle className="text-2xl">
             History for: <span className="text-primary">{test.division}</span>
           </CardTitle>
           <CardDescription>{getTestName(test)}</CardDescription>
+          {hasRetakeInProgress && (
+            <div className="mt-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Retake in progress</p>
+                <p className="text-xs text-muted-foreground">
+                  Other retakes are locked until you finish or cancel the active
+                  attempt in the table below.
+                </p>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {submissions && submissions.length > 0 ? (
@@ -142,8 +197,20 @@ function HistoryPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {submissions.map((sub) => (
-                  <TableRow key={sub.id}>
+                {submissions.map((sub, index) => {
+                  const displayScore = getDisplayScore(sub);
+                  const isActiveRetakeRow =
+                    hasRetakeInProgress &&
+                    (activeRetakeSubmissionId
+                      ? sub.id === activeRetakeSubmissionId
+                      : index === 0);
+                  return (
+                  <TableRow
+                    key={sub.id}
+                    className={
+                      isActiveRetakeRow ? 'bg-primary/5' : undefined
+                    }
+                  >
                     <TableCell className="font-medium">
                       {format(sub.submittedAt, 'PPP p')}
                       {sub.isRetake && (
@@ -151,24 +218,30 @@ function HistoryPage() {
                           Retake
                         </Badge>
                       )}
+                      {isActiveRetakeRow && (
+                        <Badge className="ml-2">In progress</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-center text-lg font-bold text-primary">
-                      {sub.score.totalScore}
+                      {displayScore.totalScore}
                     </TableCell>
                     <TableCell className="text-center font-medium text-green-600 dark:text-green-400">
-                      {sub.score.correctCount}
+                      {displayScore.correctCount}
                     </TableCell>
                     <TableCell className="text-center font-medium text-red-600 dark:text-red-400">
-                      {sub.score.incorrectCount}
+                      {displayScore.incorrectCount}
                     </TableCell>
                     <TableCell className="text-center font-medium text-yellow-600 dark:text-yellow-400">
-                      {sub.score.omitCount}
+                      {displayScore.omitCount}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <ShareResultButton
                           testName={getTestName(test)}
-                          totalScore={sub.score.totalScore}
+                          totalScore={displayScore.totalScore}
+                          correctCount={displayScore.correctCount}
+                          incorrectCount={displayScore.incorrectCount}
+                          omitCount={displayScore.omitCount}
                           size="sm"
                         />
                         <Button
@@ -177,13 +250,53 @@ function HistoryPage() {
                         >
                           Review
                         </Button>
-                        <Button onClick={() => handleRetake(sub)}>
-                          Retake <RefreshCw className="ml-2 h-4 w-4" />
-                        </Button>
+                        {hasRetakeInProgress ? (
+                          isActiveRetakeRow ? (
+                            <>
+                              <Button onClick={handleContinueRetake}>
+                                <Play className="mr-2 h-4 w-4" />
+                                Continue
+                              </Button>
+                              <CancelRetakeButton
+                                testId={testId}
+                                size="sm"
+                                label="Cancel"
+                                onCancelled={() => {
+                                  setHasRetakeInProgress(false);
+                                  setActiveRetakeSubmissionId(null);
+                                }}
+                              />
+                            </>
+                          ) : (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                    <Button disabled variant="secondary">
+                                      <Lock className="mr-2 h-4 w-4" />
+                                      Retake locked
+                                    </Button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>
+                                    Finish or cancel your current retake before
+                                    starting another from this attempt.
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )
+                        ) : (
+                          <Button onClick={() => handleRetake(sub)}>
+                            Retake <RefreshCw className="ml-2 h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (

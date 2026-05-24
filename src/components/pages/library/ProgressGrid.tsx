@@ -7,8 +7,13 @@ import type {
   ReviewData,
   MarkedQuestions,
   UserAnswers,
+  TestSubmission,
 } from '@/lib/types';
-import { findSolutionForTest } from '@/lib/test-logic';
+import {
+  findSolutionForTest,
+  resolveRetakeDisplayAnswers,
+  resolveRetakeDisplayScore,
+} from '@/lib/test-logic';
 import {
   Card,
   CardContent,
@@ -76,6 +81,27 @@ const createReviewDataFromAttempt = (
   }
   return reviewData;
 };
+
+function getDisplayAttempt(
+  submissions: TestSubmission[],
+  solution: ReturnType<typeof findSolutionForTest>
+): TestSubmission | undefined {
+  if (submissions.length === 0 || !solution) return undefined;
+
+  const latest = submissions[0];
+  if (!latest.isRetake) return latest;
+
+  const answers = resolveRetakeDisplayAnswers(
+    latest,
+    submissions,
+    solution.answers
+  );
+  return {
+    ...latest,
+    answers,
+    score: resolveRetakeDisplayScore(latest, submissions, solution.answers),
+  };
+}
 
 const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const getCellInfo = () => {
@@ -188,18 +214,20 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
       const testMap = new Map<number, CellData>();
 
       const hasHistory = test.history.length > 0;
-      const isInProgress = test.inProgress && Object.keys(test.inProgress).length > 0;
+      const isInProgress = test.inProgress !== undefined;
 
       let reviewData: ReviewData | null = null;
       let markedQuestions: MarkedQuestions = {};
       let status: ResultStatus = 'not_taken';
 
       if (hasHistory) {
-        const lastAttempt = test.history[0]; // Assumes history is pre-sorted
-        reviewData = createReviewDataFromAttempt(
-          lastAttempt.answers,
-          solution
-        );
+        const lastAttempt = getDisplayAttempt(test.history, solution);
+        if (lastAttempt) {
+          reviewData = createReviewDataFromAttempt(
+            lastAttempt.answers,
+            solution
+          );
+        }
         markedQuestions = test.markedForReview || {};
       } else if (isInProgress) {
         status = 'in_progress';
@@ -260,8 +288,9 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
       <CardHeader>
         <CardTitle>Progress Grid</CardTitle>
         <CardDescription>
-          Performance on your last attempt for each test. In-progress tests are
-          blue. A flag indicates a question you've marked for review.
+          Your most recent attempt for each test (retakes include prior
+          answers you did not change). In-progress tests are blue. A flag
+          indicates a question you&apos;ve marked for review.
         </CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
@@ -272,10 +301,12 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                 Q#
               </TableHead>
               {tests.map((test) => {
-                const lastAttempt = test.history?.[0];
-                const score = lastAttempt?.score.totalScore;
-                const isInProgress =
-                  test.inProgress && Object.keys(test.inProgress).length > 0;
+                const solution = findSolutionForTest(test);
+                const displayAttempt = test.history?.length
+                  ? getDisplayAttempt(test.history, solution)
+                  : undefined;
+                const score = displayAttempt?.score.totalScore;
+                const isInProgress = test.inProgress !== undefined;
                 return (
                   <TableHead
                     key={test.id}

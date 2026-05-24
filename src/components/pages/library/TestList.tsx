@@ -15,12 +15,14 @@ interface TestListProps {
   tests: FamatTestWithHistory[];
   bookmarkedTestIds: string[];
   onToggleBookmark: (testId: string, isBookmarked: boolean) => void;
+  isBookmarkSaving?: boolean;
 }
 
 export const TestList: React.FC<TestListProps> = ({
   tests,
   bookmarkedTestIds,
   onToggleBookmark,
+  isBookmarkSaving = false,
 }) => {
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
@@ -53,12 +55,9 @@ export const TestList: React.FC<TestListProps> = ({
           {displayedTests.map((test) => {
             const hasHistory = test.history && test.history.length > 0;
             const mostRecentScore = hasHistory
-              ? test.history.sort(
-                  (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
-                )[0].score.totalScore
+              ? test.history[0].score.totalScore
               : null;
-            const isInProgress =
-              test.inProgress && Object.keys(test.inProgress).length > 0;
+            const isInProgress = test.inProgress !== undefined;
             const isBookmarked = bookmarkedTestIds.includes(test.id);
 
             return (
@@ -79,6 +78,7 @@ export const TestList: React.FC<TestListProps> = ({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 shrink-0"
+                        disabled={isBookmarkSaving}
                         aria-label={
                           isBookmarked ? 'Remove bookmark' : 'Save for later'
                         }
@@ -114,7 +114,7 @@ export const TestList: React.FC<TestListProps> = ({
                     </Button>
                   ) : hasHistory ? (
                     <Button asChild>
-                      <Link href={`/practice/${test.id}`}>
+                      <Link href={`/practice/${test.id}?fresh=true`}>
                         <RefreshCw className="mr-2 h-4 w-4" />
                         Take Again
                       </Link>

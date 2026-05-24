@@ -17,29 +17,30 @@ import type {
   ReviewData,
   MarkedQuestions,
   TimerState,
+  InProgressTestState,
 } from '@/lib/types';
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
-import { gradeTest, getTestName } from '@/lib/test-logic';
+import { gradeTest, getTestName, buildRetakeSubmitAnswers } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import {
   saveSubmission,
-  getInProgressAnswers,
-  saveInProgressAnswers,
-  clearInProgressAnswers,
   getReviewMarks,
   saveReviewMarks,
-  getInProgressFlags,
+  saveInProgressAnswers,
   saveInProgressFlags,
-  clearInProgressFlags,
-  getTimerState,
-  saveTimerState,
-  clearTimerState,
-  getInProgressChecked,
   saveInProgressChecked,
-  clearInProgressChecked,
+  saveTimerState,
+  clearPracticeInProgressForTest,
+  clearRetakeInProgressForTest,
+  syncInProgressIfNeeded,
+  syncRetakeInProgressIfNeeded,
+  saveCloudInProgress,
+  saveCloudRetakeInProgress,
+  persistInProgressLocally,
+  persistRetakeInProgressLocally,
 } from '@/lib/user-data';
 import {
   AlertDialog,
@@ -52,6 +53,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { CancelRetakeButton } from '@/components/CancelRetakeButton';
 import { cn } from '@/lib/utils';
 import { PDFDisplay } from './PDFDisplay';
 import { Ti84Calculator } from './Ti84Calculator';
@@ -79,6 +81,8 @@ interface PracticeArenaProps {
   isReviewFromHistory?: boolean;
   submissionId?: string;
   isRetakeMode?: boolean;
+  continueRetake?: boolean;
+  startFresh?: boolean;
 }
 
 const PracticeArena: React.FC<PracticeArenaProps> = ({
@@ -88,6 +92,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   isReviewFromHistory: isReviewFromHistoryProp,
   submissionId: submissionIdProp,
   isRetakeMode: isRetakeModeProp,
+  continueRetake: continueRetakeProp,
+  startFresh: startFreshProp,
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
@@ -126,6 +132,18 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingSolution, setIsDraggingSolution] = useState(false);
   const [isScantronCollapsed, setIsScantronCollapsed] = useState(false);
+  const [isProgressLoading, setIsProgressLoading] = useState(true);
+
+  const latestProgressRef = useRef({
+    answers: {} as UserAnswers,
+    flags: {} as MarkedQuestions,
+    checked: {} as { [key: number]: true },
+    timerState: { timeRemaining: TIMER_DURATION_SECONDS, isRunning: false } as TimerState,
+  });
+  const retakeSourceAnswersRef = useRef<UserAnswers | null>(null);
+  const retakeSourceSubmissionIdRef = useRef<string | undefined>(undefined);
+  const retakeOmittedQuestionsRef = useRef<Set<number>>(new Set());
+  const retakeInitializedRef = useRef(false);
 
 
   const isStatsTest = test.division === 'Stats';
@@ -135,6 +153,56 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     const storedPreference = localStorage.getItem(HIDE_CHECK_WARNING_KEY);
     setHideCheckWarning(storedPreference === 'true');
   }, []);
+
+  useEffect(() => {
+    retakeInitializedRef.current = false;
+    retakeSourceAnswersRef.current = null;
+    retakeSourceSubmissionIdRef.current = undefined;
+    retakeOmittedQuestionsRef.current = new Set();
+  }, [test.id]);
+
+  const buildReviewDataForRetake = useCallback(
+    (
+      answers: UserAnswers,
+      checked: { [key: number]: true },
+      correctAnswers: (string | string[])[]
+    ): ReviewData => {
+      const data: ReviewData = {};
+      for (const key of Object.keys(checked)) {
+        const qNum = Number(key);
+        const userAnswer = answers[qNum];
+        const correctAnswer = correctAnswers[qNum - 1];
+        data[qNum] = {
+          userAnswer,
+          correctAnswer,
+          isCorrect: true,
+        };
+      }
+      return data;
+    },
+    []
+  );
+
+  const buildInProgressPayload = useCallback((): InProgressTestState => {
+    const { answers, flags, checked, timerState: ts } =
+      latestProgressRef.current;
+    const payload: InProgressTestState = {
+      answers,
+      flags,
+      checked,
+      timerState: ts,
+      updatedAt: new Date(),
+    };
+    if (isRetakeMode && retakeSourceAnswersRef.current) {
+      payload.sessionMode = 'retake';
+      payload.sourceSubmissionId = retakeSourceSubmissionIdRef.current;
+      payload.sourceAnswers = retakeSourceAnswersRef.current;
+      payload.retakeOmittedQuestions = [
+        ...retakeOmittedQuestionsRef.current,
+      ];
+    }
+    return payload;
+  }, [isRetakeMode]);
 
   const createReviewData = useCallback(
     (
@@ -183,29 +251,42 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       return;
     }
 
-    const report = gradeTest(userAnswers, solution.answers);
+    const answersToSubmit = isRetakeMode
+      ? buildRetakeSubmitAnswers(
+          userAnswers,
+          retakeOmittedQuestionsRef.current
+        )
+      : userAnswers;
+
+    const report = gradeTest(answersToSubmit, solution.answers);
     const newSubmissionId = await saveSubmission(
       firestore,
       user.uid,
       test,
-      userAnswers,
+      answersToSubmit,
       report,
       markedQuestions,
-      isRetakeMode
+      isRetakeMode,
+      isRetakeMode ? retakeSourceSubmissionIdRef.current : undefined
     );
 
     if (newSubmissionId) {
-      clearInProgressAnswers(user.uid, test.id);
-      clearInProgressFlags(user.uid, test.id);
-      clearTimerState(user.uid, test.id);
-      clearInProgressChecked(user.uid, test.id);
+      if (isRetakeMode) {
+        await clearRetakeInProgressForTest(firestore, user.uid, test.id);
+      } else {
+        await clearPracticeInProgressForTest(firestore, user.uid, test.id);
+      }
+      retakeSourceAnswersRef.current = null;
+      retakeSourceSubmissionIdRef.current = undefined;
+      retakeOmittedQuestionsRef.current = new Set();
+      retakeInitializedRef.current = false;
       toast({
         title: 'Success!',
         description: 'Your test results have been saved.',
       });
 
       // Transition to review mode
-      const newReviewData = createReviewData(userAnswers, solution.answers);
+      const newReviewData = createReviewData(answersToSubmit, solution.answers);
       setReviewData(newReviewData);
       setScoreReport(report);
       setIsScoreModalOpen(true);
@@ -230,12 +311,128 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   useEffect(() => {
     if (!user || !isClient) return;
 
-    // RETAKE MODE LOGIC
-    if (isRetakeModeProp && solution && initialAnswers) {
+    let cancelled = false;
+
+    const applyRetakeSession = (
+      merged: InProgressTestState,
+      correctAnswers: (string | string[])[]
+    ) => {
+      retakeSourceAnswersRef.current = merged.sourceAnswers ?? null;
+      retakeSourceSubmissionIdRef.current = merged.sourceSubmissionId;
+      retakeOmittedQuestionsRef.current = new Set(
+        merged.retakeOmittedQuestions ?? []
+      );
+      setUserAnswers(merged.answers);
+      setMarkedQuestions(merged.flags);
+      setCheckedQuestions(merged.checked);
+      setReviewData(
+        buildReviewDataForRetake(
+          merged.answers,
+          merged.checked,
+          correctAnswers
+        )
+      );
+      setTimerState(
+        merged.timerState ?? {
+          timeRemaining: TIMER_DURATION_SECONDS,
+          isRunning: false,
+        }
+      );
+      setScoreReport(null);
+      setCurrentSubmissionId(undefined);
+      setIsReviewMode(false);
+      setIsRetakeMode(true);
+    };
+
+    const initPracticeMode = async () => {
+      setIsProgressLoading(true);
+
+      if (startFreshProp && user && firestore) {
+        await clearPracticeInProgressForTest(firestore, user.uid, test.id);
+      }
+
+      const merged =
+        !startFreshProp && firestore
+          ? await syncInProgressIfNeeded(firestore, user.uid, test.id)
+          : null;
+
+      if (cancelled) return;
+
+      const savedProgress = merged?.answers ?? {};
+      const savedFlags = merged?.flags ?? {};
+      const savedTimerState = merged?.timerState ?? null;
+      const savedChecked = merged?.checked ?? {};
+
+      setUserAnswers(savedProgress);
+      setMarkedQuestions(savedFlags);
+      setCheckedQuestions(savedChecked);
+
+      if (solution && Object.keys(savedChecked).length > 0) {
+        const initialReviewData = createReviewData(
+          savedProgress,
+          solution.answers
+        );
+        setReviewData(initialReviewData);
+      } else {
+        setReviewData(null);
+      }
+
+      if (savedTimerState) {
+        setTimerState(savedTimerState);
+      } else {
+        setTimerState({
+          timeRemaining: TIMER_DURATION_SECONDS,
+          isRunning: false,
+        });
+      }
+
+      setScoreReport(null);
+      setCurrentSubmissionId(undefined);
+      setIsReviewMode(false);
+      setIsRetakeMode(false);
+      setIsProgressLoading(false);
+    };
+
+    const initContinueRetake = async () => {
+      if (!solution) {
+        setIsProgressLoading(false);
+        return;
+      }
+      setIsProgressLoading(true);
+      const merged = firestore
+        ? await syncRetakeInProgressIfNeeded(firestore, user.uid, test.id)
+        : null;
+
+      if (cancelled) return;
+
+      if (merged?.sourceAnswers) {
+        applyRetakeSession(merged, solution.answers);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'No retake in progress',
+          description: 'Start a new retake from this test’s history.',
+        });
+        router.push(`/history/${test.id}`);
+      }
+      setIsProgressLoading(false);
+    };
+
+    const initFreshRetake = async () => {
+      if (!solution || !initialAnswers) return;
+      if (retakeInitializedRef.current) return;
+      retakeInitializedRef.current = true;
+      retakeSourceAnswersRef.current = initialAnswers;
+      retakeSourceSubmissionIdRef.current = submissionIdProp;
+      retakeOmittedQuestionsRef.current = new Set();
+
+      if (user && firestore) {
+        await clearRetakeInProgressForTest(firestore, user.uid, test.id);
+      }
+
       const newInitialAnswers: UserAnswers = {};
       const newCheckedQuestions: { [key: number]: true } = {};
       const reviewDataForCorrectAnswers: ReviewData = {};
-
       const originalScore = gradeTest(initialAnswers, solution.answers);
 
       for (let i = 0; i < solution.answers.length; i++) {
@@ -277,6 +474,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         title: 'Retake Mode',
         description: `Starting a retake. ${originalScore.correctCount} questions have been pre-filled as correct.`,
       });
+      setIsProgressLoading(false);
+    };
+
+    if (isRetakeModeProp && continueRetakeProp) {
+      if (retakeInitializedRef.current) return;
+      retakeInitializedRef.current = true;
+      void initContinueRetake();
+    } else if (isRetakeModeProp && solution && initialAnswers) {
+      void initFreshRetake();
     }
     // REVIEW MODE: Triggered by props from Next.js router
     else if (
@@ -297,51 +503,32 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       setIsReviewMode(true);
       setIsRetakeMode(false);
       setIsScoreModalOpen(false); // Don't show score modal on re-entry
+      setIsProgressLoading(false);
     }
     // PRACTICE MODE: Default mode
     else {
-      const savedProgress = getInProgressAnswers(user.uid, test.id);
-      const savedFlags = getInProgressFlags(user.uid, test.id);
-      const savedTimerState = getTimerState(user.uid, test.id);
-      const savedChecked = getInProgressChecked(user.uid, test.id);
-
-      setUserAnswers(savedProgress || {});
-      setMarkedQuestions(savedFlags || {});
-      setCheckedQuestions(savedChecked || {});
-      
-      // If there are checked questions on load, generate review data immediately.
-      if (solution && savedProgress && Object.keys(savedChecked || {}).length > 0) {
-        const initialReviewData = createReviewData(savedProgress, solution.answers);
-        setReviewData(initialReviewData);
-      } else {
-        setReviewData(null);
-      }
-
-      if (savedTimerState) {
-        setTimerState(savedTimerState);
-      } else {
-        setTimerState({
-          timeRemaining: TIMER_DURATION_SECONDS,
-          isRunning: false,
-        });
-      }
-
-      setScoreReport(null);
-      setCurrentSubmissionId(undefined);
-      setIsReviewMode(false);
-      setIsRetakeMode(false);
+      void initPracticeMode();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     user,
+    firestore,
     test.id,
     isReviewFromHistoryProp,
     isRetakeModeProp,
+    continueRetakeProp,
+    startFreshProp,
     submissionIdProp,
     initialAnswers,
     solution,
     createReviewData,
+    buildReviewDataForRetake,
     isClient,
     toast,
+    router,
   ]);
 
 
@@ -350,41 +537,122 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     if (!user || !isClient) return;
 
     if (isReviewMode && currentSubmissionId) {
-      // In review mode, save any changes to review marks
       saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
-    } else if (!isReviewMode) { // Practice or Retake mode
-      // In practice mode, save answers and flags
-      saveInProgressAnswers(user.uid, test.id, userAnswers);
-      saveInProgressFlags(user.uid, test.id, markedQuestions);
+    } else if (!isReviewMode) {
+      if (isRetakeMode && retakeSourceAnswersRef.current) {
+        persistRetakeInProgressLocally(user.uid, test.id, {
+          answers: userAnswers,
+          flags: markedQuestions,
+          checked: checkedQuestions,
+          timerState,
+          updatedAt: new Date(),
+          sessionMode: 'retake',
+          sourceSubmissionId: retakeSourceSubmissionIdRef.current,
+          sourceAnswers: retakeSourceAnswersRef.current,
+          retakeOmittedQuestions: [...retakeOmittedQuestionsRef.current],
+        });
+      } else if (!isRetakeMode) {
+        saveInProgressAnswers(user.uid, test.id, userAnswers);
+        saveInProgressFlags(user.uid, test.id, markedQuestions);
+      }
     }
   }, [
     userAnswers,
     markedQuestions,
+    checkedQuestions,
+    timerState,
     user,
     test.id,
     isReviewMode,
+    isRetakeMode,
     currentSubmissionId,
     isClient,
   ]);
+
+  useEffect(() => {
+    latestProgressRef.current = {
+      answers: userAnswers,
+      flags: markedQuestions,
+      checked: checkedQuestions,
+      timerState,
+    };
+  }, [userAnswers, markedQuestions, checkedQuestions, timerState]);
+
+  const flushInProgress = useCallback(() => {
+    if (!user || !isClient || isReviewMode) return;
+    const payload = buildInProgressPayload();
+    if (isRetakeMode && retakeSourceAnswersRef.current) {
+      persistRetakeInProgressLocally(user.uid, test.id, payload);
+      if (firestore) {
+        void saveCloudRetakeInProgress(firestore, user.uid, test.id, payload);
+      }
+    } else {
+      persistInProgressLocally(user.uid, test.id, payload);
+      if (firestore) {
+        void saveCloudInProgress(firestore, user.uid, test.id, payload);
+      }
+    }
+  }, [
+    user,
+    firestore,
+    test.id,
+    isReviewMode,
+    isRetakeMode,
+    isClient,
+    buildInProgressPayload,
+  ]);
+
+  // Cloud sync only when leaving the test (tab close, navigate away, etc.)
+  useEffect(() => {
+    const onPageHide = () => flushInProgress();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushInProgress();
+    };
+
+    window.addEventListener('pagehide', onPageHide);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', onPageHide);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [flushInProgress]);
   
   // Effect to save checked questions to localStorage
   useEffect(() => {
-    if (!user || !isClient || isReviewMode) return;
+    if (!user || !isClient || isReviewMode || isRetakeMode) return;
     saveInProgressChecked(user.uid, test.id, checkedQuestions);
-  }, [checkedQuestions, user, test.id, isClient, isReviewMode]);
+  }, [checkedQuestions, user, test.id, isClient, isReviewMode, isRetakeMode]);
 
-
-  // Effect to save timer state to localStorage, only when it changes
+  // Timer: save on start/pause and every 15s while running (not every second)
   useEffect(() => {
-    if (!user || !isClient || isReviewMode) return;
-    saveTimerState(user.uid, test.id, timerState);
-  }, [timerState, user, test.id, isClient, isReviewMode]);
+    if (!user || !isClient || isReviewMode || isRetakeMode) return;
+    saveTimerState(user.uid, test.id, latestProgressRef.current.timerState);
+  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode]);
+
+  useEffect(() => {
+    if (!user || !isClient || isReviewMode || isRetakeMode || !timerState.isRunning) return;
+    const intervalId = setInterval(() => {
+      saveTimerState(user.uid, test.id, latestProgressRef.current.timerState);
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, [timerState.isRunning, user, test.id, isClient, isReviewMode]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
+    if (isRetakeMode) {
+      if (answer === null) {
+        retakeOmittedQuestionsRef.current.add(question);
+      } else {
+        retakeOmittedQuestionsRef.current.delete(question);
+      }
+    }
     setUserAnswers((prev) => {
       const newAnswers = { ...prev };
       if (answer === null) {
-        delete newAnswers[question];
+        if (isRetakeMode) {
+          newAnswers[question] = null;
+        } else {
+          delete newAnswers[question];
+        }
       } else {
         newAnswers[question] = answer;
       }
@@ -407,17 +675,20 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const handleCheckQuestion = useCallback(
     (question: number) => {
       if (!solution) return;
-  
-      // Use a functional update for setReviewData to ensure it gets the latest userAnswers
+
       setReviewData(() => {
-        // Create the new, complete review data based on the most up-to-date answers
-        const newReviewData = createReviewData(userAnswers, solution.answers);
-        return newReviewData;
+        const answersForReview = isRetakeMode
+          ? buildRetakeSubmitAnswers(
+              userAnswers,
+              retakeOmittedQuestionsRef.current
+            )
+          : userAnswers;
+        return createReviewData(answersForReview, solution.answers);
       });
-  
+
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
-    [solution, createReviewData, userAnswers]
+    [solution, createReviewData, userAnswers, isRetakeMode]
   );
 
   const handleSetHideCheckWarning = (hide: boolean) => {
@@ -426,7 +697,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   };
 
   const handleBackToLibrary = () => {
+    flushInProgress();
     router.push(`/`);
+  };
+
+  const handleRetakeCancelled = () => {
+    router.push(`/history/${test.id}`);
   };
 
   const handleToggleCalculator = () => {
@@ -576,12 +852,27 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                 </Button>
               )}
               <Button onClick={handleBackToLibrary}>Back to Library</Button>
+              {isRetakeMode && !isReviewMode && (
+                <CancelRetakeButton
+                  testId={test.id}
+                  size="sm"
+                  onCancelled={handleRetakeCancelled}
+                />
+              )}
             </>
           )}
         </>
       )}
     </div>
   );
+
+  if (isProgressLoading) {
+    return (
+      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+        <p className="text-muted-foreground">Loading your progress…</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -721,6 +1012,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           onClose={() => setIsScoreModalOpen(false)}
           scoreReport={scoreReport}
           testName={getTestName(test)}
+          testId={test.id}
         />
       )}
     </>

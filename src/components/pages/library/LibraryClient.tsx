@@ -8,25 +8,37 @@ import type {
   TestSubmission,
   MarkedQuestions,
   UserAnswers,
+  InProgressTestState,
 } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import {
   getSubmissionsForUser,
-  getInProgressAnswers,
   getReviewMarks,
-  getInProgressFlags,
-  getTimerState,
+  getAllCloudInProgress,
+  getAllCloudRetakeInProgress,
+  getLocalInProgressBundle,
+  getLocalInProgressTestIds,
+  getLocalRetakeInProgressTestIds,
+  pickNewerInProgress,
+  persistInProgressLocally,
+  readRetakeInProgressForTest,
+  saveCloudInProgress,
   toggleBookmark,
 } from '@/lib/user-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
 import { Leaderboard } from './Leaderboard';
 import { LandingPage } from '@/components/pages/landing/LandingPage';
-import { doc } from 'firebase/firestore';
+import { LibraryHomeSections } from './LibraryHomeSections';
+import { doc, setDoc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DEFAULT_WEEKLY_GOAL,
+  DEFAULT_STREAK_GOAL,
+} from '@/lib/study-stats';
 
 interface LibraryClientProps {
   tests: FamatTest[];
@@ -45,7 +57,17 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [inProgressFlags, setInProgressFlags] = useState<
     Record<string, MarkedQuestions>
   >({});
+  const [inProgressTimers, setInProgressTimers] = useState<
+    Record<string, InProgressTestState['timerState']>
+  >({});
+  const [retakeInProgress, setRetakeInProgress] = useState<
+    Record<string, UserAnswers>
+  >({});
+  const [retakeTimers, setRetakeTimers] = useState<
+    Record<string, InProgressTestState['timerState']>
+  >({});
   const [bookmarkedTestIds, setBookmarkedTestIds] = useState<string[]>([]);
+  const [isBookmarkSaving, setIsBookmarkSaving] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -74,20 +96,79 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         }
         setAllMarks(marks);
 
+        const cloudInProgress = await getAllCloudInProgress(
+          firestore,
+          user.uid
+        );
+
+        const activeTestIds = new Set([
+          ...Object.keys(cloudInProgress),
+          ...getLocalInProgressTestIds(user.uid),
+        ]);
+
         const inProgressAnswers: Record<string, UserAnswers> = {};
         const inProgFlags: Record<string, MarkedQuestions> = {};
-        tests.forEach((test) => {
-          const savedAnswers = getInProgressAnswers(user.uid, test.id);
-          if (savedAnswers) {
-            inProgressAnswers[test.id] = savedAnswers;
+        const inProgTimers: Record<string, InProgressTestState['timerState']> =
+          {};
+
+        for (const testId of activeTestIds) {
+          const local = getLocalInProgressBundle(user.uid, testId);
+          const cloud = cloudInProgress[testId] ?? null;
+          const winner = pickNewerInProgress(local, cloud);
+          if (!winner) continue;
+
+          const localMs = local?.updatedAt.getTime() ?? -1;
+          const cloudMs = cloud?.updatedAt.getTime() ?? -1;
+          const winnerMs = winner.updatedAt.getTime();
+
+          if (!local || localMs < winnerMs) {
+            persistInProgressLocally(user.uid, testId, winner);
           }
-          const savedFlags = getInProgressFlags(user.uid, test.id);
-          if (savedFlags) {
-            inProgFlags[test.id] = savedFlags;
+
+          if (!cloud || cloudMs < winnerMs) {
+            void saveCloudInProgress(firestore, user.uid, testId, winner);
           }
-        });
+
+          inProgressAnswers[testId] = winner.answers;
+          inProgFlags[testId] = winner.flags;
+          if (winner.timerState) {
+            inProgTimers[testId] = winner.timerState;
+          }
+        }
+
         setInProgress(inProgressAnswers);
         setInProgressFlags(inProgFlags);
+        setInProgressTimers(inProgTimers);
+
+        const cloudRetakes = await getAllCloudRetakeInProgress(
+          firestore,
+          user.uid
+        );
+        const retakeTestIds = new Set([
+          ...Object.keys(cloudRetakes),
+          ...getLocalRetakeInProgressTestIds(user.uid),
+        ]);
+        const retakeAnswers: Record<string, UserAnswers> = {};
+        const retakeTimerMap: Record<
+          string,
+          InProgressTestState['timerState']
+        > = {};
+
+        for (const testId of retakeTestIds) {
+          const bundle = await readRetakeInProgressForTest(
+            firestore,
+            user.uid,
+            testId
+          );
+          if (!bundle) continue;
+          retakeAnswers[testId] = bundle.answers;
+          if (bundle.timerState) {
+            retakeTimerMap[testId] = bundle.timerState;
+          }
+        }
+
+        setRetakeInProgress(retakeAnswers);
+        setRetakeTimers(retakeTimerMap);
 
         setIsLoading(false);
       } else if (!isUserLoading) {
@@ -95,6 +176,9 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setAllMarks({});
         setInProgress({});
         setInProgressFlags({});
+        setInProgressTimers({});
+        setRetakeInProgress({});
+        setRetakeTimers({});
         setIsLoading(false);
       }
     };
@@ -123,18 +207,29 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
       const inProgressAnswers = inProgress[test.id];
       const inProgFlags = inProgressFlags[test.id];
-      const timerState = user ? getTimerState(user.uid, test.id) : null;
 
       return {
         ...test,
         history: testSubmissions,
-        inProgress: inProgressAnswers,
+        inProgress: test.id in inProgress ? inProgressAnswers : undefined,
         markedForReview: markedForReview,
         inProgressFlags: inProgFlags,
-        timerState: timerState || undefined,
+        timerState: inProgressTimers[test.id] ?? undefined,
+        retakeInProgress:
+          test.id in retakeInProgress ? retakeInProgress[test.id] : undefined,
+        retakeTimerState: retakeTimers[test.id] ?? undefined,
       };
     });
-  }, [tests, submissions, allMarks, inProgress, inProgressFlags, user]);
+  }, [
+    tests,
+    submissions,
+    allMarks,
+    inProgress,
+    inProgressFlags,
+    inProgressTimers,
+    retakeInProgress,
+    retakeTimers,
+  ]);
 
   const uniqueValues = useMemo(() => {
     const divisions = [...new Set(tests.map((t) => t.division))].sort();
@@ -197,20 +292,24 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     }
   }, []);
 
-  // Save filters to localStorage whenever they change
+  // Debounce filter saves so dragging year sliders doesn't spam localStorage
   useEffect(() => {
-    try {
-      const filtersToSave = {
-        startYear,
-        endYear,
-        selectedDivisions,
-        selectedMonths,
-        selectedCompetitions,
-      };
-      localStorage.setItem('testFilters', JSON.stringify(filtersToSave));
-    } catch (error) {
-      console.error('Failed to save filters to localStorage:', error);
-    }
+    const timeoutId = setTimeout(() => {
+      try {
+        const filtersToSave = {
+          startYear,
+          endYear,
+          selectedDivisions,
+          selectedMonths,
+          selectedCompetitions,
+        };
+        localStorage.setItem('testFilters', JSON.stringify(filtersToSave));
+      } catch (error) {
+        console.error('Failed to save filters to localStorage:', error);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
   }, [
     startYear,
     endYear,
@@ -262,17 +361,39 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     selectedCompetitions,
   ]);
 
+  const handleRetakeCancelled = (testId: string) => {
+    setRetakeInProgress((prev) => {
+      const next = { ...prev };
+      delete next[testId];
+      return next;
+    });
+    setRetakeTimers((prev) => {
+      const next = { ...prev };
+      delete next[testId];
+      return next;
+    });
+  };
+
   const handleToggleBookmark = async (testId: string, isBookmarked: boolean) => {
-    if (!user || !firestore) return;
+    if (!user || !firestore || isBookmarkSaving) return;
+    setIsBookmarkSaving(true);
     try {
-      const updated = await toggleBookmark(firestore, user.uid, testId, isBookmarked);
-      setBookmarkedTestIds(updated);
-      toast({
-        title: isBookmarked ? 'Removed from saved' : 'Saved for later',
-        description: isBookmarked
-          ? 'Test removed from your saved list.'
-          : 'Test added to your saved list.',
-      });
+      const result = await toggleBookmark(
+        firestore,
+        user.uid,
+        testId,
+        isBookmarked,
+        bookmarkedTestIds
+      );
+      if (result.saved) {
+        setBookmarkedTestIds(result.ids);
+        toast({
+          title: isBookmarked ? 'Removed from saved' : 'Saved for later',
+          description: isBookmarked
+            ? 'Test removed from your saved list.'
+            : 'Test added to your saved list.',
+        });
+      }
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
       toast({
@@ -280,8 +401,23 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         title: 'Could not update saved tests',
         description: 'Please try again.',
       });
+    } finally {
+      setIsBookmarkSaving(false);
     }
   };
+
+  const handleSaveGoals = async (weeklyGoal: number, streakGoal: number) => {
+    if (!userProfileRef || !user) return;
+    await setDoc(
+      userProfileRef,
+      { weeklyTestGoal: weeklyGoal, streakGoal },
+      { merge: true }
+    );
+    toast({ title: 'Goals updated' });
+  };
+
+  const weeklyGoal = userProfile?.weeklyTestGoal ?? DEFAULT_WEEKLY_GOAL;
+  const streakGoal = userProfile?.streakGoal ?? DEFAULT_STREAK_GOAL;
 
   if (isLoading || isUserLoading) {
     return (
@@ -321,10 +457,19 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
             <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           </TabsList>
           <TabsContent value="library" className="mt-4">
+            <LibraryHomeSections
+              tests={testsWithHistory}
+              submissions={submissions}
+              weeklyGoal={weeklyGoal}
+              streakGoal={streakGoal}
+              onSaveGoals={handleSaveGoals}
+              onRetakeCancelled={handleRetakeCancelled}
+            />
             <TestList
               tests={filteredTests}
               bookmarkedTestIds={bookmarkedTestIds}
               onToggleBookmark={handleToggleBookmark}
+              isBookmarkSaving={isBookmarkSaving}
             />
           </TabsContent>
           <TabsContent value="progress" className="mt-4">
