@@ -163,6 +163,20 @@ export async function updateGroupMemberStats(
   await batch.commit();
 }
 
+/** Refreshes the current user's stats in every group they belong to. */
+export async function syncUserGroupMemberStats(
+  db: Firestore,
+  user: User
+): Promise<void> {
+  const stats = await getUserGroupStats(db, user.uid);
+  await updateGroupMemberStats(
+    db,
+    user,
+    stats.testsCompleted,
+    stats.showOnLeaderboard
+  );
+}
+
 export async function removeUserFromAllGroups(
   db: Firestore,
   userId: string
