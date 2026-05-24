@@ -9,7 +9,7 @@ import {
 } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import type { GroupMember, GroupMembership } from '@/lib/types';
-import { createStudyGroup, joinStudyGroup } from '@/lib/study-groups';
+import { createStudyGroup, joinStudyGroup, syncUserGroupMemberStats } from '@/lib/study-groups';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,6 +78,13 @@ export const StudyGroups = () => {
     }
     return fromFirestore;
   }, [memberships, pendingGroup]);
+
+  useEffect(() => {
+    if (!user || !firestore) return;
+    syncUserGroupMemberStats(firestore, user).catch((error) => {
+      console.error('Failed to sync group member stats:', error);
+    });
+  }, [user, firestore]);
 
   useEffect(() => {
     if (
