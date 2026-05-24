@@ -21,12 +21,13 @@ import {
   getDoc,
   setDoc,
   writeBatch,
-  deleteDoc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { getAuth, type User } from 'firebase/auth';
 import { updateUserLeaderboardEntries } from './leaderboard';
+import { removeUserFromAllGroups } from './study-groups';
+import { incrementAggregateStats } from './aggregate-stats';
 
 // =================================================================
 // FIRESTORE INTERACTIONS (Submissions & Leaderboards)
@@ -150,6 +151,7 @@ export async function saveSubmission(
         : true;
 
       await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
+      await incrementAggregateStats(db, test.division, scoreReport.totalScore);
     }
 
     return docRef.id; // Return the new document ID
@@ -380,6 +382,8 @@ export async function deleteAllUserCloudData(
   if (batchCount > 0) {
     await batch.commit();
   }
+
+  await removeUserFromAllGroups(db, userId);
 
   const userRef = doc(db, 'users', userId);
   await setDoc(

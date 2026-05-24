@@ -28,6 +28,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { ShareResultButton } from '@/components/ShareResultButton';
 
 function HistoryPage() {
   const params = useParams();
@@ -165,6 +166,11 @@ function HistoryPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <ShareResultButton
+                          testName={getTestName(test)}
+                          totalScore={sub.score.totalScore}
+                          size="sm"
+                        />
                         <Button
                           variant="outline"
                           onClick={() => handleReview(sub)}

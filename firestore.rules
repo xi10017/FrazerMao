@@ -95,5 +95,36 @@ service cloud.firestore {
       // Allow create/update if the document's userId belongs to the user making the request
       allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
     }
+
+    /**
+     * Anonymous aggregate score statistics (no individual scores).
+     */
+    match /aggregate_stats/{statsId} {
+      allow get: if true;
+      allow list: if true;
+      allow write: if isSignedIn();
+    }
+
+    /**
+     * Study groups for private chapter/friend leaderboards.
+     */
+    match /study_groups/{groupId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+
+      match /members/{memberId} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && request.auth.uid == memberId;
+        allow update, delete: if isSignedIn() && request.auth.uid == memberId;
+      }
+    }
+
+    /**
+     * A user's group memberships (for listing joined groups).
+     */
+    match /users/{userId}/groupMemberships/{groupId} {
+      allow read, write: if isOwner(userId);
+    }
   }
 }
