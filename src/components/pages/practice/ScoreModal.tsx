@@ -12,11 +12,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, MinusCircle, BookOpen } from 'lucide-react';
+import { ShareResultButton } from '@/components/ShareResultButton';
 
 interface ScoreModalProps {
   isOpen: boolean;
   onClose: () => void;
   scoreReport: ScoreReport;
+  testName?: string;
 }
 
 const StatCard = ({
@@ -43,6 +45,7 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
   isOpen,
   onClose,
   scoreReport,
+  testName,
 }) => {
   if (!isOpen) return null;
 
@@ -86,7 +89,12 @@ export const ScoreModal: React.FC<ScoreModalProps> = ({
           />
         </div>
 
-        <DialogFooter className="mt-6 sm:justify-center">
+        <DialogFooter className="mt-6 flex-col gap-2 sm:flex-row sm:justify-center">
+          <ShareResultButton
+            testName={testName}
+            totalScore={scoreReport.totalScore}
+            className="w-full sm:w-auto"
+          />
           <Button
             type="button"
             size="lg"

@@ -79,6 +79,30 @@ export type UserProfile = {
   bookmarkedTestIds?: string[];
 };
 
+export type StudyGroup = {
+  id: string;
+  name: string;
+  inviteCode: string;
+  createdBy: string;
+  memberCount: number;
+  createdAt: Date;
+};
+
+export type GroupMember = {
+  userId: string;
+  displayName: string;
+  photoURL: string | null;
+  testsCompleted: number;
+  showOnLeaderboard: boolean;
+};
+
+export type GroupMembership = {
+  groupId: string;
+  groupName: string;
+  inviteCode: string;
+  joinedAt: Date;
+};
+
 // A question number mapped to the note string. The presence of the key means it's marked.
 export type MarkedQuestions = { [questionNumber: number]: string };
 

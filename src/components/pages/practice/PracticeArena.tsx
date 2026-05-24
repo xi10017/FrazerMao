@@ -21,7 +21,7 @@ import type {
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
-import { gradeTest } from '@/lib/test-logic';
+import { gradeTest, getTestName } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import {
@@ -720,6 +720,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           isOpen={isScoreModalOpen}
           onClose={() => setIsScoreModalOpen(false)}
           scoreReport={scoreReport}
+          testName={getTestName(test)}
         />
       )}
     </>

@@ -10,6 +10,7 @@ import {
   Firestore,
 } from 'firebase/firestore';
 import type { LeaderboardEntry } from './types';
+import { updateGroupMemberStats } from './study-groups';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import type { User } from 'firebase/auth';
@@ -79,6 +80,8 @@ export async function updateUserLeaderboardEntries(
 
     // 4. Commit all changes at once.
     await batch.commit();
+
+    await updateGroupMemberStats(db, user, overallTotal, showOnLeaderboard);
 
   } catch (error) {
     console.error('Error updating leaderboard entries:', error);
