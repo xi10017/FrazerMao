@@ -14,8 +14,9 @@ import {
   resolveRetakeDisplayAnswers,
   resolveRetakeDisplayScore,
 } from '@/lib/test-logic';
-import { getSubmissionsForTest, readRetakeInProgressForTest } from '@/lib/user-data';
+import { getSubmissionsForTest, readRetakeInProgressForTest, readPracticeInProgressForTest } from '@/lib/user-data';
 import { CancelRetakeButton } from '@/components/CancelRetakeButton';
+import { CancelPracticeButton } from '@/components/CancelPracticeButton';
 import {
   Card,
   CardContent,
@@ -55,6 +56,7 @@ function HistoryPage() {
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasRetakeInProgress, setHasRetakeInProgress] = useState(false);
+  const [hasPracticeInProgress, setHasPracticeInProgress] = useState(false);
   const [activeRetakeSubmissionId, setActiveRetakeSubmissionId] = useState<
     string | null
   >(null);
@@ -84,12 +86,12 @@ function HistoryPage() {
           testId
         );
         setSubmissions(testSubmissions);
-        const retakeInProgress = await readRetakeInProgressForTest(
-          firestore,
-          user.uid,
-          testId
-        );
+        const [retakeInProgress, practiceInProgress] = await Promise.all([
+          readRetakeInProgressForTest(firestore, user.uid, testId),
+          readPracticeInProgressForTest(firestore, user.uid, testId),
+        ]);
         setHasRetakeInProgress(retakeInProgress != null);
+        setHasPracticeInProgress(practiceInProgress != null);
         setActiveRetakeSubmissionId(
           retakeInProgress?.sourceSubmissionId ?? null
         );
@@ -97,6 +99,7 @@ function HistoryPage() {
       } else if (!isUserLoading) {
         setSubmissions([]);
         setHasRetakeInProgress(false);
+        setHasPracticeInProgress(false);
         setActiveRetakeSubmissionId(null);
         setIsLoading(false);
       }
@@ -171,15 +174,63 @@ function HistoryPage() {
             History for: <span className="text-primary">{test.division}</span>
           </CardTitle>
           <CardDescription>{getTestName(test)}</CardDescription>
-          {hasRetakeInProgress && (
+          {(hasRetakeInProgress || hasPracticeInProgress) ? (
             <div className="mt-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Retake in progress</p>
-                <p className="text-xs text-muted-foreground">
-                  Other retakes are locked until you finish or cancel the active
-                  attempt in the table below.
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    {hasRetakeInProgress
+                      ? 'Retake in progress'
+                      : 'Practice in progress'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {hasRetakeInProgress
+                      ? 'Finish or cancel the active retake before starting a new practice or retaking another attempt.'
+                      : 'Finish or cancel your current practice before retaking an attempt.'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button asChild size="sm">
+                    <Link
+                      href={
+                        hasRetakeInProgress
+                          ? `/practice/${test.id}?retake=true&continue=true`
+                          : `/practice/${test.id}`
+                      }
+                    >
+                      <Play className="mr-2 h-4 w-4" />
+                      Continue
+                    </Link>
+                  </Button>
+                  {hasRetakeInProgress ? (
+                    <CancelRetakeButton
+                      testId={testId}
+                      size="sm"
+                      label="Cancel"
+                      onCancelled={() => {
+                        setHasRetakeInProgress(false);
+                        setActiveRetakeSubmissionId(null);
+                      }}
+                    />
+                  ) : (
+                    <CancelPracticeButton
+                      testId={testId}
+                      size="sm"
+                      label="Cancel"
+                      onCancelled={() => setHasPracticeInProgress(false)}
+                    />
+                  )}
+                </div>
               </div>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <Button asChild>
+                <Link href={`/practice/${test.id}?fresh=true`}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Start New Practice
+                </Link>
+              </Button>
             </div>
           )}
         </CardHeader>
@@ -274,19 +325,36 @@ function HistoryPage() {
                                   <span tabIndex={0}>
                                     <Button disabled variant="secondary">
                                       <Lock className="mr-2 h-4 w-4" />
-                                      Retake locked
+                                      Locked
                                     </Button>
                                   </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>
-                                    Finish or cancel your current retake before
-                                    starting another from this attempt.
+                                    Finish or cancel your current retake first.
                                   </p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                           )
+                        ) : hasPracticeInProgress ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span tabIndex={0}>
+                                  <Button disabled variant="secondary">
+                                    <Lock className="mr-2 h-4 w-4" />
+                                    Locked
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>
+                                  Finish your current practice session first.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         ) : (
                           <Button onClick={() => handleRetake(sub)}>
                             Retake <RefreshCw className="ml-2 h-4 w-4" />

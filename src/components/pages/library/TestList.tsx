@@ -58,6 +58,7 @@ export const TestList: React.FC<TestListProps> = ({
               ? test.history[0].score.totalScore
               : null;
             const isInProgress = test.inProgress !== undefined;
+            const hasRetakeInProgress = test.retakeInProgress !== undefined;
             const isBookmarked = bookmarkedTestIds.includes(test.id);
 
             return (
@@ -105,7 +106,14 @@ export const TestList: React.FC<TestListProps> = ({
                     </Button>
                   )}
 
-                  {isInProgress ? (
+                  {hasRetakeInProgress ? (
+                    <Button asChild className={!hasHistory ? 'col-span-2' : ''}>
+                      <Link href={`/practice/${test.id}?retake=true&continue=true`}>
+                        <Play className="mr-2 h-4 w-4" />
+                        Continue
+                      </Link>
+                    </Button>
+                  ) : isInProgress ? (
                     <Button asChild className={!hasHistory ? 'col-span-2' : ''}>
                       <Link href={`/practice/${test.id}`}>
                         <Play className="mr-2 h-4 w-4" />
