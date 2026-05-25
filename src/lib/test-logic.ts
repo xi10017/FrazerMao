@@ -7,6 +7,7 @@ import type {
   ScoreReport,
   FamatTestBase,
   TestSubmission,
+  FamatTestWithHistory,
 } from './types';
 import famatTests from '@/data/famat_tests.json';
 
@@ -200,6 +201,61 @@ export function resolveRetakeDisplayScore(
     return submission.score;
   }
   return resolved;
+}
+
+export type LatestDisplayAttempt = {
+  answers: UserAnswers;
+  score: ScoreReport;
+  /** Unsubmitted session (practice or retake in progress). */
+  isLiveSession: boolean;
+  isRetake?: boolean;
+};
+
+/**
+ * Most recent attempt for progress grid / summaries: active retake session,
+ * else latest submitted attempt (including retakes), else practice in progress.
+ */
+export function getLatestDisplayAttempt(
+  test: Pick<
+    FamatTestWithHistory,
+    | 'history'
+    | 'inProgress'
+    | 'retakeInProgress'
+    | 'retakeSourceAnswers'
+    | 'retakeOmittedQuestions'
+  >,
+  solution: FamatSolution
+): LatestDisplayAttempt | null {
+  const history = [...test.history].sort(
+    (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
+  );
+  if (history.length > 0) {
+    const latest = history[0];
+    const answers = latest.isRetake
+      ? resolveRetakeDisplayAnswers(latest, history, solution.answers)
+      : latest.answers;
+    const score = latest.isRetake
+      ? resolveRetakeDisplayScore(latest, history, solution.answers)
+      : latest.score;
+    return {
+      answers,
+      score,
+      isLiveSession: false,
+      isRetake: latest.isRetake,
+    };
+  }
+
+  if (test.inProgress !== undefined) {
+    const answers = test.inProgress;
+    return {
+      answers,
+      score: gradeTest(answers, solution.answers),
+      isLiveSession: true,
+      isRetake: false,
+    };
+  }
+
+  return null;
 }
 
 export function buildRetakePracticeUrl(

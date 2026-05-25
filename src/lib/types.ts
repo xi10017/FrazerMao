@@ -63,6 +63,9 @@ export interface FamatTestWithHistory extends FamatTest {
   timerState?: TimerState;
   retakeInProgress?: UserAnswers;
   retakeTimerState?: TimerState;
+  retakeSourceAnswers?: UserAnswers;
+  retakeOmittedQuestions?: number[];
+  retakeInProgressFlags?: MarkedQuestions;
 }
 
 export type LeaderboardEntry = {

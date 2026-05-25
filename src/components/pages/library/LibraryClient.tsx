@@ -61,7 +61,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     Record<string, InProgressTestState['timerState']>
   >({});
   const [retakeInProgress, setRetakeInProgress] = useState<
-    Record<string, UserAnswers>
+    Record<string, InProgressTestState>
   >({});
   const [retakeTimers, setRetakeTimers] = useState<
     Record<string, InProgressTestState['timerState']>
@@ -148,11 +148,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           ...Object.keys(cloudRetakes),
           ...getLocalRetakeInProgressTestIds(user.uid),
         ]);
-        const retakeAnswers: Record<string, UserAnswers> = {};
-        const retakeTimerMap: Record<
-          string,
-          InProgressTestState['timerState']
-        > = {};
+        const retakeBundles: Record<string, InProgressTestState> = {};
 
         for (const testId of retakeTestIds) {
           const bundle = await readRetakeInProgressForTest(
@@ -161,14 +157,17 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
             testId
           );
           if (!bundle) continue;
-          retakeAnswers[testId] = bundle.answers;
-          if (bundle.timerState) {
-            retakeTimerMap[testId] = bundle.timerState;
-          }
+          retakeBundles[testId] = bundle;
         }
 
-        setRetakeInProgress(retakeAnswers);
-        setRetakeTimers(retakeTimerMap);
+        setRetakeInProgress(retakeBundles);
+        setRetakeTimers(
+          Object.fromEntries(
+            Object.entries(retakeBundles)
+              .filter(([, b]) => b.timerState)
+              .map(([id, b]) => [id, b.timerState!])
+          )
+        );
 
         setIsLoading(false);
       } else if (!isUserLoading) {
@@ -207,6 +206,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
       const inProgressAnswers = inProgress[test.id];
       const inProgFlags = inProgressFlags[test.id];
+      const retakeBundle = retakeInProgress[test.id];
 
       return {
         ...test,
@@ -215,8 +215,10 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         markedForReview: markedForReview,
         inProgressFlags: inProgFlags,
         timerState: inProgressTimers[test.id] ?? undefined,
-        retakeInProgress:
-          test.id in retakeInProgress ? retakeInProgress[test.id] : undefined,
+        retakeInProgress: retakeBundle?.answers,
+        retakeSourceAnswers: retakeBundle?.sourceAnswers,
+        retakeOmittedQuestions: retakeBundle?.retakeOmittedQuestions,
+        retakeInProgressFlags: retakeBundle?.flags,
         retakeTimerState: retakeTimers[test.id] ?? undefined,
       };
     });

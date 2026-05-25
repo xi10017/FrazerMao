@@ -7,6 +7,8 @@ import {
   BookOpenCheck,
   Expand,
   Shrink,
+  RefreshCw,
+  Lock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type {
@@ -22,7 +24,7 @@ import type {
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
-import { gradeTest, getTestName, buildRetakeSubmitAnswers } from '@/lib/test-logic';
+import { gradeTest, getTestName, buildRetakeSubmitAnswers, buildRetakePracticeUrl } from '@/lib/test-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import {
@@ -41,6 +43,8 @@ import {
   saveCloudRetakeInProgress,
   persistInProgressLocally,
   persistRetakeInProgressLocally,
+  readRetakeInProgressForTest,
+  readPracticeInProgressForTest,
 } from '@/lib/user-data';
 import {
   AlertDialog,
@@ -133,6 +137,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [isDraggingSolution, setIsDraggingSolution] = useState(false);
   const [isScantronCollapsed, setIsScantronCollapsed] = useState(false);
   const [isProgressLoading, setIsProgressLoading] = useState(true);
+  const [retakeLocked, setRetakeLocked] = useState(false);
 
   const latestProgressRef = useRef({
     answers: {} as UserAnswers,
@@ -153,6 +158,19 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     const storedPreference = localStorage.getItem(HIDE_CHECK_WARNING_KEY);
     setHideCheckWarning(storedPreference === 'true');
   }, []);
+
+  useEffect(() => {
+    if (!isReviewMode || !user || !firestore) return;
+    let cancelled = false;
+    (async () => {
+      const [retake, practice] = await Promise.all([
+        readRetakeInProgressForTest(firestore, user.uid, test.id),
+        readPracticeInProgressForTest(firestore, user.uid, test.id),
+      ]);
+      if (!cancelled) setRetakeLocked(retake != null || practice != null);
+    })();
+    return () => { cancelled = true; };
+  }, [isReviewMode, user, firestore, test.id]);
 
   useEffect(() => {
     retakeInitializedRef.current = false;
@@ -878,10 +896,38 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     <>
       <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-background">
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
-          <h2 className="text-xl font-bold tracking-tight">
-            {test.division}: {test.year} {test.month && `${test.month} `}{test.test_type}
-            {isRetakeMode && <span className="text-primary ml-2">(Retake)</span>}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold tracking-tight">
+              {test.division}: {test.year} {test.month && `${test.month} `}{test.test_type}
+              {isRetakeMode && <span className="text-primary ml-2">(Retake)</span>}
+            </h2>
+            {isReviewMode && currentSubmissionId && (
+              retakeLocked ? (
+                <div className="flex items-center gap-2 rounded-md border border-muted bg-muted/50 px-3 py-1.5">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Finish your current session to retake
+                  </span>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    router.push(
+                      buildRetakePracticeUrl(test.id, {
+                        id: currentSubmissionId,
+                        answers: userAnswers,
+                      })
+                    )
+                  }
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Retake
+                </Button>
+              )
+            )}
+          </div>
           {headerActions}
         </header>
 

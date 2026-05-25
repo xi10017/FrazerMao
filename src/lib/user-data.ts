@@ -819,6 +819,17 @@ export async function syncRetakeInProgressIfNeeded(
   return winner;
 }
 
+/** Read-only check for practice in-progress (no side-effect writes). */
+export async function readPracticeInProgressForTest(
+  db: Firestore,
+  userId: string,
+  testId: string
+): Promise<InProgressTestState | null> {
+  const local = getLocalInProgressBundle(userId, testId);
+  const cloud = await getCloudInProgress(db, userId, testId);
+  return pickNewerInProgress(local, cloud);
+}
+
 export async function readRetakeInProgressForTest(
   db: Firestore,
   userId: string,

@@ -7,12 +7,10 @@ import type {
   ReviewData,
   MarkedQuestions,
   UserAnswers,
-  TestSubmission,
 } from '@/lib/types';
 import {
   findSolutionForTest,
-  resolveRetakeDisplayAnswers,
-  resolveRetakeDisplayScore,
+  getLatestDisplayAttempt,
 } from '@/lib/test-logic';
 import {
   Card,
@@ -81,27 +79,6 @@ const createReviewDataFromAttempt = (
   }
   return reviewData;
 };
-
-function getDisplayAttempt(
-  submissions: TestSubmission[],
-  solution: ReturnType<typeof findSolutionForTest>
-): TestSubmission | undefined {
-  if (submissions.length === 0 || !solution) return undefined;
-
-  const latest = submissions[0];
-  if (!latest.isRetake) return latest;
-
-  const answers = resolveRetakeDisplayAnswers(
-    latest,
-    submissions,
-    solution.answers
-  );
-  return {
-    ...latest,
-    answers,
-    score: resolveRetakeDisplayScore(latest, submissions, solution.answers),
-  };
-}
 
 const ResultCell: React.FC<{ data: CellData | null }> = ({ data }) => {
   const getCellInfo = () => {
@@ -213,25 +190,23 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
       const solution = findSolutionForTest(test);
       const testMap = new Map<number, CellData>();
 
-      const hasHistory = test.history.length > 0;
-      const isInProgress = test.inProgress !== undefined;
+      const latest = solution ? getLatestDisplayAttempt(test, solution) : null;
 
       let reviewData: ReviewData | null = null;
       let markedQuestions: MarkedQuestions = {};
       let status: ResultStatus = 'not_taken';
 
-      if (hasHistory) {
-        const lastAttempt = getDisplayAttempt(test.history, solution);
-        if (lastAttempt) {
-          reviewData = createReviewDataFromAttempt(
-            lastAttempt.answers,
-            solution
-          );
+      if (latest) {
+        if (latest.isLiveSession) {
+          status = 'in_progress';
+          markedQuestions =
+            latest.isRetake && test.retakeInProgressFlags
+              ? test.retakeInProgressFlags
+              : test.inProgressFlags || {};
+        } else {
+          markedQuestions = test.markedForReview || {};
         }
-        markedQuestions = test.markedForReview || {};
-      } else if (isInProgress) {
-        status = 'in_progress';
-        markedQuestions = test.inProgressFlags || {};
+        reviewData = createReviewDataFromAttempt(latest.answers, solution);
       }
 
       questionNumbers.forEach((qNum) => {
@@ -288,9 +263,9 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
       <CardHeader>
         <CardTitle>Progress Grid</CardTitle>
         <CardDescription>
-          Your most recent attempt for each test (retakes include prior
-          answers you did not change). In-progress tests are blue. A flag
-          indicates a question you&apos;ve marked for review.
+          Your most recent attempt for each test (including retakes), or your
+          current session if one is in progress. In-progress columns are blue. A
+          flag marks a question noted for review.
         </CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
@@ -302,39 +277,36 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
               </TableHead>
               {tests.map((test) => {
                 const solution = findSolutionForTest(test);
-                const displayAttempt = test.history?.length
-                  ? getDisplayAttempt(test.history, solution)
-                  : undefined;
-                const score = displayAttempt?.score.totalScore;
-                const isInProgress = test.inProgress !== undefined;
+                const latest = solution
+                  ? getLatestDisplayAttempt(test, solution)
+                  : null;
+                const score = latest?.score.totalScore;
+                const isLive = latest?.isLiveSession ?? false;
+                const linkHref = isLive
+                  ? latest?.isRetake
+                    ? `/practice/${test.id}?retake=true&continue=true`
+                    : `/practice/${test.id}`
+                  : `/history/${test.id}`;
                 return (
                   <TableHead
                     key={test.id}
                     className="w-14 min-w-14 text-center text-xs p-1 h-auto"
                   >
                     <Link
-                      href={
-                        isInProgress
-                          ? `/practice/${test.id}`
-                          : `/history/${test.id}`
-                      }
+                      href={linkHref}
                       className="flex flex-col hover:underline"
                     >
                       <div
                         className={cn(
                           'font-bold text-lg',
-                          score !== undefined
+                          score !== undefined && !isLive
                             ? 'text-primary'
-                            : isInProgress
+                            : isLive
                             ? 'text-blue-500'
                             : 'text-muted-foreground'
                         )}
                       >
-                        {score !== undefined
-                          ? score
-                          : isInProgress
-                          ? '...'
-                          : 'N/A'}
+                        {score !== undefined ? score : 'N/A'}
                       </div>
                       <div className="font-bold">{test.division}</div>
                       <div>{test.year}</div>
@@ -342,6 +314,9 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                       <div className="text-muted-foreground">
                         {getShortTestType(test.test_type)}
                       </div>
+                      {latest?.isRetake && !isLive && (
+                        <div className="text-[10px] text-primary">Retake</div>
+                      )}
                     </Link>
                   </TableHead>
                 );
