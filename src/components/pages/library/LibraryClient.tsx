@@ -20,11 +20,13 @@ import {
   getAllCloudRetakeInProgress,
   getLocalInProgressBundle,
   getLocalInProgressTestIds,
+  getLocalRetakeInProgressBundle,
   getLocalRetakeInProgressTestIds,
   pickNewerInProgress,
   persistInProgressLocally,
-  readRetakeInProgressForTest,
+  persistRetakeInProgressLocally,
   saveCloudInProgress,
+  saveCloudRetakeInProgress,
   toggleBookmark,
 } from '@/lib/user-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -151,13 +153,24 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         const retakeBundles: Record<string, InProgressTestState> = {};
 
         for (const testId of retakeTestIds) {
-          const bundle = await readRetakeInProgressForTest(
-            firestore,
-            user.uid,
-            testId
-          );
-          if (!bundle) continue;
-          retakeBundles[testId] = bundle;
+          const local = getLocalRetakeInProgressBundle(user.uid, testId);
+          const cloud = cloudRetakes[testId] ?? null;
+          const winner = pickNewerInProgress(local, cloud);
+          if (!winner) continue;
+
+          const localMs = local?.updatedAt.getTime() ?? -1;
+          const cloudMs = cloud?.updatedAt.getTime() ?? -1;
+          const winnerMs = winner.updatedAt.getTime();
+
+          if (!local || localMs < winnerMs) {
+            persistRetakeInProgressLocally(user.uid, testId, winner);
+          }
+
+          if (!cloud || cloudMs < winnerMs) {
+            void saveCloudRetakeInProgress(firestore, user.uid, testId, winner);
+          }
+
+          retakeBundles[testId] = winner;
         }
 
         setRetakeInProgress(retakeBundles);
