@@ -52,6 +52,12 @@ export const CancelRetakeButton: React.FC<CancelRetakeButtonProps> = ({
         description: 'Your in-progress retake has been discarded.',
       });
       onCancelled?.();
+    } catch {
+      toast({
+        title: 'Failed to cancel',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsCancelling(false);
     }
