@@ -34,6 +34,7 @@ import {
 import { Flame, Play, TrendingUp, CalendarDays, History, Settings2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { CancelRetakeButton } from '@/components/CancelRetakeButton';
+import { CancelPracticeButton } from '@/components/CancelPracticeButton';
 
 interface LibraryHomeSectionsProps {
   tests: FamatTestWithHistory[];
@@ -285,12 +286,20 @@ export const LibraryHomeSections: React.FC<LibraryHomeSectionsProps> = ({
                             )}
                           </div>
                         </div>
-                        <Button asChild size="sm" className="shrink-0">
-                          <Link href={`/practice/${test.id}`}>
-                            <Play className="mr-2 h-4 w-4" />
-                            Continue
-                          </Link>
-                        </Button>
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <Button asChild size="sm">
+                            <Link href={`/practice/${test.id}`}>
+                              <Play className="mr-2 h-4 w-4" />
+                              Continue
+                            </Link>
+                          </Button>
+                          <CancelPracticeButton
+                            testId={test.id}
+                            size="sm"
+                            label="Cancel"
+                            onCancelled={() => onRetakeCancelled?.(test.id)}
+                          />
+                        </div>
                       </div>
                     );
                   })}
