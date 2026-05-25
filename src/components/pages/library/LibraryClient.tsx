@@ -376,7 +376,22 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     selectedCompetitions,
   ]);
 
-  const handleRetakeCancelled = (testId: string) => {
+  const handleSessionCancelled = (testId: string) => {
+    setInProgress((prev) => {
+      const next = { ...prev };
+      delete next[testId];
+      return next;
+    });
+    setInProgressFlags((prev) => {
+      const next = { ...prev };
+      delete next[testId];
+      return next;
+    });
+    setInProgressTimers((prev) => {
+      const next = { ...prev };
+      delete next[testId];
+      return next;
+    });
     setRetakeInProgress((prev) => {
       const next = { ...prev };
       delete next[testId];
@@ -478,7 +493,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
               weeklyGoal={weeklyGoal}
               streakGoal={streakGoal}
               onSaveGoals={handleSaveGoals}
-              onRetakeCancelled={handleRetakeCancelled}
+              onRetakeCancelled={handleSessionCancelled}
             />
             <TestList
               tests={filteredTests}
