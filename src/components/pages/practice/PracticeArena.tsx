@@ -653,7 +653,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       saveTimerState(user.uid, test.id, latestProgressRef.current.timerState);
     }, 15000);
     return () => clearInterval(intervalId);
-  }, [timerState.isRunning, user, test.id, isClient, isReviewMode]);
+  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     if (isRetakeMode) {

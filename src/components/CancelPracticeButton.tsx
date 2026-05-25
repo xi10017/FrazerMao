@@ -52,6 +52,12 @@ export const CancelPracticeButton: React.FC<CancelPracticeButtonProps> = ({
         description: 'Your in-progress practice has been discarded.',
       });
       onCancelled?.();
+    } catch {
+      toast({
+        title: 'Failed to cancel',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsCancelling(false);
     }

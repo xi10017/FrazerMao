@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore } from '@/firebase';
@@ -77,6 +77,7 @@ function HistoryPage() {
     resolveRetakeDisplayScore(sub, submissions, solution?.answers);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchSubmissions = async () => {
       if (user && testId && firestore) {
         setIsLoading(true);
@@ -85,11 +86,13 @@ function HistoryPage() {
           user.uid,
           testId
         );
+        if (cancelled) return;
         setSubmissions(testSubmissions);
         const [retakeInProgress, practiceInProgress] = await Promise.all([
           readRetakeInProgressForTest(firestore, user.uid, testId),
           readPracticeInProgressForTest(firestore, user.uid, testId),
         ]);
+        if (cancelled) return;
         setHasRetakeInProgress(retakeInProgress != null);
         setHasPracticeInProgress(practiceInProgress != null);
         setActiveRetakeSubmissionId(
@@ -105,6 +108,7 @@ function HistoryPage() {
       }
     };
     fetchSubmissions();
+    return () => { cancelled = true; };
   }, [user, testId, firestore, isUserLoading]);
 
   if (isLoading || isUserLoading) {

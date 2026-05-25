@@ -212,18 +212,11 @@ export type LatestDisplayAttempt = {
 };
 
 /**
- * Most recent attempt for progress grid / summaries: active retake session,
- * else latest submitted attempt (including retakes), else practice in progress.
+ * Most recent attempt for progress grid / summaries: latest submitted attempt
+ * (including retakes), else practice in progress if no history exists.
  */
 export function getLatestDisplayAttempt(
-  test: Pick<
-    FamatTestWithHistory,
-    | 'history'
-    | 'inProgress'
-    | 'retakeInProgress'
-    | 'retakeSourceAnswers'
-    | 'retakeOmittedQuestions'
-  >,
+  test: Pick<FamatTestWithHistory, 'history' | 'inProgress'>,
   solution: FamatSolution
 ): LatestDisplayAttempt | null {
   const history = [...test.history].sort(
