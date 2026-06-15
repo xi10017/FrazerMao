@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, LogIn, Settings } from 'lucide-react';
+import { BookOpen, LogIn, Settings, ShieldCheck } from 'lucide-react';
 import { useUser, useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,7 @@ import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { createUserProfile } from '@/lib/user-data';
 import { getInitials } from '@/lib/utils';
+import { isAdminUid } from '@/lib/admin';
 
 
 function UserAuth() {
@@ -66,6 +67,7 @@ function UserAuth() {
   }
 
   if (user) {
+    const showAdminLink = isAdminUid(user.uid);
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -97,6 +99,14 @@ function UserAuth() {
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
+          {showAdminLink && (
+            <DropdownMenuItem asChild>
+              <Link href="/admin/answer-keys">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Answer key reports</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogIn className="mr-2 h-4 w-4" />

@@ -1,0 +1,245 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
+<style>
+    th, td {
+        padding: 6px !important;
+    }
+</style>
+<title>FAMAT Test Bank</title>
+<h1 style="text-align: center;">
+    <u>FAMAT Test Bank</u>
+</h1>
+<h3 style="text-align: center;">Last Updated: August 11th, 2023 @ 11:05pm EST</h3>
+<div style="display: flex; justify-content: center; margin-top: 10px;">
+    <a href="docs/" target="_blank">All Documents</a>
+</div>
+<div style="display: flex; justify-content: center; margin-top: 10px;">
+    <form class="filled border" style="padding: 4px">
+        <fieldset>
+            <legend>
+                <b>
+                    <u>Search Options</u>
+                </b>
+            </legend>
+            <label>
+                Year:
+                <input name='year' type='number' min='0' max='2022'>
+            </label>
+            <br>
+            <label>
+                Category:
+                
+                <select name="category">
+                    <option selected disabled></option>
+                    <option value='?'>?</option>
+                    <option value='? - March'>? - March</option>
+                    <option value='Invitationals - ?'>Invitationals - ?</option>
+                    <option value='Invitationals - April'>Invitationals - April</option>
+                    <option value='Invitationals - February'>Invitationals - February</option>
+                    <option value='Invitationals - January'>Invitationals - January</option>
+                    <option value='Invitationals - March'>Invitationals - March</option>
+                    <option value='Mail-in'>Mail-in</option>
+                    <option value='Nationals'>Nationals</option>
+                    <option value='Regionals - April'>Regionals - April</option>
+                    <option value='Regionals - February'>Regionals - February</option>
+                    <option value='Regionals - January'>Regionals - January</option>
+                    <option value='Regionals - March'>Regionals - March</option>
+                    <option value='States'>States</option>
+                    <option value='Washington State'>Washington State</option>
+                </select>
+            </label>
+            <br>
+            <label>
+                Level:
+                
+                <select name="level">
+                    <option selected disabled></option>
+                    <option value='?'>?</option>
+                    <option value='Algebra I'>Algebra I</option>
+                    <option value='Algebra II'>Algebra II</option>
+                    <option value='Calculus/Mu'>Calculus/Mu</option>
+                    <option value='Dostal'>Dostal</option>
+                    <option value='Geometry'>Geometry</option>
+                    <option value='Hiller'>Hiller</option>
+                    <option value='Nunn'>Nunn</option>
+                    <option value='Open'>Open</option>
+                    <option value='Precalculus/Alpha'>Precalculus/Alpha</option>
+                    <option value='Statistics'>Statistics</option>
+                    <option value='Theta'>Theta</option>
+                </select>
+            </label>
+            <br>
+            <label>
+                Style:
+                
+                <select name="style">
+                    <option selected disabled></option>
+                    <option value='(Individual)'>(Individual)</option>
+                    <option value='(Team)'>(Team)</option>
+                    <option value='2D Geometry'>2D Geometry</option>
+                    <option value='3D Geometry'>3D Geometry</option>
+                    <option value='?'>?</option>
+                    <option value='Advanced Calculus'>Advanced Calculus</option>
+                    <option value='Algebra'>Algebra</option>
+                    <option value='Analytic Geometry'>Analytic Geometry</option>
+                    <option value='Applications'>Applications</option>
+                    <option value='Area and Volume'>Area and Volume</option>
+                    <option value='Arithmetic'>Arithmetic</option>
+                    <option value='BC Calculus'>BC Calculus</option>
+                    <option value='Business'>Business</option>
+                    <option value='Calculator Programming'>Calculator Programming</option>
+                    <option value='Ciphering'>Ciphering</option>
+                    <option value='Circles'>Circles</option>
+                    <option value='Circles and Polygons'>Circles and Polygons</option>
+                    <option value='Circumference, Perimeter, Area, and Volume'>Circumference, Perimeter, Area, and Volume</option>
+                    <option value='Codes and Ciphers'>Codes and Ciphers</option>
+                    <option value='Combinatorics'>Combinatorics</option>
+                    <option value='Complex Numbers'>Complex Numbers</option>
+                    <option value='Computer Programming'>Computer Programming</option>
+                    <option value='Computer Topic (Multiple Choice)'>Computer Topic (Multiple Choice)</option>
+                    <option value='Conics'>Conics</option>
+                    <option value='Conics and Coordinate Geometry'>Conics and Coordinate Geometry</option>
+                    <option value='Coordinate Geometry'>Coordinate Geometry</option>
+                    <option value='Differential Calculus'>Differential Calculus</option>
+                    <option value='Differential Equations'>Differential Equations</option>
+                    <option value='Discrete Math'>Discrete Math</option>
+                    <option value='Dostal'>Dostal</option>
+                    <option value='Engineering'>Engineering</option>
+                    <option value='Equations and Inequalities'>Equations and Inequalities</option>
+                    <option value='Euclidean Individual'>Euclidean Individual</option>
+                    <option value='Finite Differences'>Finite Differences</option>
+                    <option value='Functions'>Functions</option>
+                    <option value='Gemini'>Gemini</option>
+                    <option value='Geometry'>Geometry</option>
+                    <option value='Graphing'>Graphing</option>
+                    <option value='Harry Potter'>Harry Potter</option>
+                    <option value='Hiller'>Hiller</option>
+                    <option value='History of Calculus'>History of Calculus</option>
+                    <option value='History Of Math'>History Of Math</option>
+                    <option value='Hustle'>Hustle</option>
+                    <option value='Integration'>Integration</option>
+                    <option value='Interschool Tests'>Interschool Tests</option>
+                    <option value='Limits and Derivatives'>Limits and Derivatives</option>
+                    <option value='Linear Algebra'>Linear Algebra</option>
+                    <option value='Lines and Angles'>Lines and Angles</option>
+                    <option value='Logic and Reasoning'>Logic and Reasoning</option>
+                    <option value='Logs and Exponents'>Logs and Exponents</option>
+                    <option value='Matrices'>Matrices</option>
+                    <option value='Matrices and Determinants'>Matrices and Determinants</option>
+                    <option value='Matrices and Vectors'>Matrices and Vectors</option>
+                    <option value='Mental Math'>Mental Math</option>
+                    <option value='Multivariable Calculus'>Multivariable Calculus</option>
+                    <option value='Mystery Test'>Mystery Test</option>
+                    <option value='Nerd Culture'>Nerd Culture</option>
+                    <option value='Number e'>Number e</option>
+                    <option value='Number Theory'>Number Theory</option>
+                    <option value='Numeration Systems'>Numeration Systems</option>
+                    <option value='Nunn'>Nunn</option>
+                    <option value='Open Individual'>Open Individual</option>
+                    <option value='Other Bowls'>Other Bowls</option>
+                    <option value='Physics'>Physics</option>
+                    <option value='Polar Coordinate System'>Polar Coordinate System</option>
+                    <option value='Polynomial and Rational Functions'>Polynomial and Rational Functions</option>
+                    <option value='Probability'>Probability</option>
+                    <option value='Probability and Stats'>Probability and Stats</option>
+                    <option value='Proofs'>Proofs</option>
+                    <option value='Proofs and Logic'>Proofs and Logic</option>
+                    <option value='Quadrilaterals'>Quadrilaterals</option>
+                    <option value='Quizzle'>Quizzle</option>
+                    <option value='Radicals'>Radicals</option>
+                    <option value='Ratio, Proportion, and Variation'>Ratio, Proportion, and Variation</option>
+                    <option value='Region Bowl'>Region Bowl</option>
+                    <option value='Related Rates'>Related Rates</option>
+                    <option value='Relays'>Relays</option>
+                    <option value='Sequences and Series'>Sequences and Series</option>
+                    <option value='Short Cuts'>Short Cuts</option>
+                    <option value='Simplifing, Factoring, and Expanding'>Simplifing, Factoring, and Expanding</option>
+                    <option value='Speed Math'>Speed Math</option>
+                    <option value='State Bowl (Nationals)'>State Bowl (Nationals)</option>
+                    <option value='Statistics'>Statistics</option>
+                    <option value='System of Equations'>System of Equations</option>
+                    <option value='The Number e'>The Number e</option>
+                    <option value='Theory and Theorems'>Theory and Theorems</option>
+                    <option value='Triangles'>Triangles</option>
+                    <option value='Trigonometry'>Trigonometry</option>
+                    <option value='Trigonometry and Analytic Geometry'>Trigonometry and Analytic Geometry</option>
+                    <option value='Vector Calculus'>Vector Calculus</option>
+                    <option value='Word Problems'>Word Problems</option>
+                    <option value='WWDD'>WWDD</option>
+                </select>
+            </label>
+            <br>
+            <label>
+                Host:
+                
+                <select name="host">
+                    <option selected disabled></option>
+                    <option value=''></option>
+                    <option value='-'>-</option>
+                    <option value='American Heritage Boca Delray'>American Heritage Boca Delray</option>
+                    <option value='American Heritage Palm Beach'>American Heritage Palm Beach</option>
+                    <option value='Berkeley Prep'>Berkeley Prep</option>
+                    <option value='Bloomingdale'>Bloomingdale</option>
+                    <option value='Braddock'>Braddock</option>
+                    <option value='Buchholz'>Buchholz</option>
+                    <option value='Chiles'>Chiles</option>
+                    <option value='Coral Gables'>Coral Gables</option>
+                    <option value='Coral Glades'>Coral Glades</option>
+                    <option value='Coral Springs'>Coral Springs</option>
+                    <option value='Cypress Bay'>Cypress Bay</option>
+                    <option value='Cypress Lake'>Cypress Lake</option>
+                    <option value='Deerfield Beach'>Deerfield Beach</option>
+                    <option value='Doral'>Doral</option>
+                    <option value='Dunbar'>Dunbar</option>
+                    <option value='Eastside'>Eastside</option>
+                    <option value='FAMAT'>FAMAT</option>
+                    <option value='Ferguson High'>Ferguson High</option>
+                    <option value='Florida Blue Key'>Florida Blue Key</option>
+                    <option value='Ft. Myers'>Ft. Myers</option>
+                    <option value='Gaither & Leto'>Gaither & Leto</option>
+                    <option value='Hillsborough'>Hillsborough</option>
+                    <option value='King'>King</option>
+                    <option value='Lawton Chiles'>Lawton Chiles</option>
+                    <option value='Leto'>Leto</option>
+                    <option value='Lincoln Park Academy'>Lincoln Park Academy</option>
+                    <option value='MAO'>MAO</option>
+                    <option value='Miami Palmetto'>Miami Palmetto</option>
+                    <option value='Miami Springs'>Miami Springs</option>
+                    <option value='Miami Sunset & Miami Killian'>Miami Sunset & Miami Killian</option>
+                    <option value='Middleton'>Middleton</option>
+                    <option value='Palm Harbor'>Palm Harbor</option>
+                    <option value='Plant City'>Plant City</option>
+                    <option value='Riverdale'>Riverdale</option>
+                    <option value='Seminole'>Seminole</option>
+                    <option value='Sickles'>Sickles</option>
+                    <option value='Stoneman Douglas'>Stoneman Douglas</option>
+                    <option value='Student Delegates'>Student Delegates</option>
+                    <option value='Tampa Bay Technical'>Tampa Bay Technical</option>
+                    <option value='Vero Beach'>Vero Beach</option>
+                </select>
+            </label>
+            <br>
+            <div style="text-align: right">
+                <input name="submit" type="submit" value="Search">
+            </div>
+        </fieldset>
+    </form>
+</div>
+<div style="display: flex; justify-content: center;">
+    <script>
+        function downloadAll() {
+            const tids = JSON.parse("[]");
+            // if (tids.length > 50) {
+            //     alert(`Too many documents to download (${tids.length} > 50).`)
+            //     return;
+            // }
+
+            tids.forEach(tid => {
+                window.open(`scripts/download.php?tid=${tid}`, '_blank');
+            }
+            );
+        }
+    </script>
+    <button hidden onclick="downloadAll()">Download Queried Documents
+    </button>
+</div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"ea757bb32b9d4fdbbe97915108442eac","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>

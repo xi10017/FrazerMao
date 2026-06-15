@@ -6,7 +6,7 @@ import type { UserAnswers, ReviewData, MarkedQuestions } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { Flag, Eye, EyeOff } from 'lucide-react';
+import { Flag, Eye, EyeOff, MessageSquareWarning } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +31,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ReportAnswerKeyDialog } from '@/components/ReportAnswerKeyDialog';
 
 interface ScantronProps {
   userAnswers: UserAnswers;
@@ -44,6 +45,14 @@ interface ScantronProps {
   isReviewMode: boolean | undefined;
   hideCheckWarning: boolean;
   onSetHideCheckWarning: (hide: boolean) => void;
+  reportContext?: {
+    testId: string;
+    testName: string;
+  };
+  pendingReportQuestions?: Set<number>;
+  onReportSubmitted?: (questionNumber: number) => void;
+  onReportCancelled?: (questionNumber: number) => void;
+  onOpenReport?: (questionNumber: number) => void;
 }
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D', 'E'];
@@ -261,6 +270,35 @@ const ReviewModeDisplay = memo<{
   );
 });
 
+const ReportAnswerKeyButton: React.FC<{
+  qNum: number;
+  hasPendingReport: boolean;
+  onOpen: () => void;
+}> = ({ qNum, hasPendingReport, onOpen }) => {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={hasPendingReport ? 'secondary' : 'ghost'}
+            size="icon"
+            onClick={onOpen}
+          >
+            <MessageSquareWarning className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>
+            {hasPendingReport
+              ? 'View pending dispute'
+              : 'Report answer key issue'}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
 const MarkForReviewPopover: React.FC<{
   qNum: number;
   note: string;
@@ -360,6 +398,9 @@ const ScantronRow: React.FC<
   onCheckQuestion,
   hideCheckWarning,
   onSetHideCheckWarning,
+  reportContext,
+  pendingReportQuestions,
+  onOpenReport,
 }) => {
   const originalReview = reviewData ? reviewData[qNum] : null;
 
@@ -377,8 +418,9 @@ const ScantronRow: React.FC<
   }, [isReviewMode, originalReview]);
 
   const wasOmitted = originalReview && !originalReview.userAnswer;
-  const canReattemptInReview =
-    isReviewMode && (!originalReview?.isCorrect || wasOmitted);
+  const canReattemptInReview = Boolean(
+    isReviewMode && (!originalReview?.isCorrect || wasOmitted)
+  );
 
   let currentAnswer = isReviewMode ? reviewAttempt : userAnswer;
 
@@ -461,6 +503,13 @@ const ScantronRow: React.FC<
       </div>
 
       <div className="flex items-center gap-2">
+        {isReviewMode && reportContext && originalReview && (
+          <ReportAnswerKeyButton
+            qNum={qNum}
+            hasPendingReport={pendingReportQuestions?.has(qNum) ?? false}
+            onOpen={() => onOpenReport?.(qNum)}
+          />
+        )}
         <MarkForReviewPopover
           qNum={qNum}
           note={note}
@@ -520,7 +569,19 @@ export const Scantron: React.FC<ScantronProps> = ({
   isReviewMode = false,
   hideCheckWarning,
   onSetHideCheckWarning,
+  reportContext,
+  pendingReportQuestions,
+  onReportSubmitted,
+  onReportCancelled,
 }) => {
+  const [activeReportQ, setActiveReportQ] = useState<number | null>(null);
+
+  const activeReview =
+    activeReportQ != null && reviewData ? reviewData[activeReportQ] : null;
+  const activeIsPending =
+    activeReportQ != null &&
+    (pendingReportQuestions?.has(activeReportQ) ?? false);
+
   const questionNumbers = Array.from(
     { length: TOTAL_QUESTIONS },
     (_, i) => i + 1
@@ -543,13 +604,40 @@ export const Scantron: React.FC<ScantronProps> = ({
               onUnmarkQuestion={onUnmarkQuestion}
               isReviewMode={isReviewMode}
               onCheckQuestion={onCheckQuestion}
-              checkedQuestions={checkedQuestions}
               hideCheckWarning={hideCheckWarning}
               onSetHideCheckWarning={onSetHideCheckWarning}
+              reportContext={reportContext}
+              pendingReportQuestions={pendingReportQuestions}
+              onOpenReport={setActiveReportQ}
             />
           ))}
         </div>
       </ScrollArea>
+
+      {reportContext && activeReportQ != null && activeReview && (
+        <ReportAnswerKeyDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setActiveReportQ(null);
+          }}
+          testId={reportContext.testId}
+          testName={reportContext.testName}
+          questionNumber={activeReportQ}
+          currentAnswer={activeReview.correctAnswer}
+          userAnswer={activeReview.userAnswer}
+          isPendingReport={activeIsPending}
+          onSubmitted={() => {
+            const qNum = activeReportQ;
+            onReportSubmitted?.(qNum);
+            setActiveReportQ(null);
+          }}
+          onCancelled={() => {
+            const qNum = activeReportQ;
+            onReportCancelled?.(qNum);
+            setActiveReportQ(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -30,7 +30,24 @@ export function getTestId(test: FamatTestBase): string {
  */
 export function getTestName(test: FamatTestBase): string {
   const monthPart = test.month ? ` ${test.month}` : '';
-  return `${test.year}${monthPart} ${test.division} ${test.test_type} ${test.format}`;
+  return `${test.year}${monthPart} ${getDivisionLabel(test.division)} ${test.test_type} ${test.format}`;
+}
+
+export const DIVISIONS = ['Stats', 'Alpha', 'Mu', 'Theta', 'Alg2', 'Geo', 'Alg1'] as const;
+
+export function getDivisionLabel(division: string): string {
+  if (division === 'Alg1') return 'Algebra I';
+  if (division === 'Alg2') return 'Algebra II';
+  if (division === 'Geo') return 'Geometry';
+  return division;
+}
+
+/** Compact division label for narrow grid columns. */
+export function getDivisionShortLabel(division: string): string {
+  if (division === 'Alg1') return 'Alg1';
+  if (division === 'Alg2') return 'Alg2';
+  if (division === 'Geo') return 'Geo';
+  return division;
 }
 
 /**
@@ -50,24 +67,71 @@ export function findSolutionForTest(
   ) as FamatSolution | undefined;
 }
 
+const solutionByTestId = new Map<string, FamatSolution>();
+for (const item of allTests) {
+  if (item.document_type !== 'Test') continue;
+  const solution = findSolutionForTest(item as FamatTest);
+  if (solution) {
+    solutionByTestId.set(getTestId(item), solution);
+  }
+}
+
+/** O(1) solution lookup by practice test id. */
+export function findSolutionByTestId(
+  testId: string
+): FamatSolution | undefined {
+  return solutionByTestId.get(testId);
+}
+
+export function answerKeyValuesEqual(
+  a: string | string[] | null | undefined,
+  b: string | string[] | null | undefined
+): boolean {
+  if (a == null || b == null) return a === b;
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export function trimAnswerKey(
+  answerKey: (string | string[] | null | undefined)[]
+): (string | string[])[] {
+  const trimmed = [...answerKey];
+  while (trimmed.length > 0) {
+    const last = trimmed[trimmed.length - 1];
+    if (last === null || last === undefined) {
+      trimmed.pop();
+    } else {
+      break;
+    }
+  }
+  return trimmed as (string | string[])[];
+}
+
+function isGradableAnswer(answer: string | string[] | null | undefined): answer is string | string[] {
+  return answer !== null && answer !== undefined;
+}
 
 /**
  * Grades the user's answers against the correct answer key.
  * Supports multiple correct answers if the answer key contains an array of strings.
  * FAMAT scoring: 5 for correct, 1 for omitted, 0 for incorrect
+ * Skips answer-key slots without a defined correct answer (e.g. "throw" rows).
  */
 export function gradeTest(
   userAnswers: UserAnswers,
-  answerKey: (string | string[])[]
+  answerKey: (string | string[] | null | undefined)[]
 ): ScoreReport {
   let correctCount = 0;
   let incorrectCount = 0;
   let omitCount = 0;
   
   for (let i = 0; i < answerKey.length; i++) {
+    const correctAnswer = answerKey[i];
+    if (!isGradableAnswer(correctAnswer)) {
+      continue;
+    }
+
     const questionNumber = i + 1;
     const userAnswer = userAnswers[questionNumber];
-    const correctAnswer = answerKey[i];
 
     if (userAnswer === undefined || userAnswer === null) {
       omitCount++;
@@ -151,6 +215,72 @@ function scoresMatch(a: ScoreReport, b: ScoreReport): boolean {
   );
 }
 
+/** Per-question overrides keyed by 1-based question number (future admin corrections). */
+export type AnswerKeyOverrides = Record<number, string | string[]>;
+
+/** Current answer key for grading/display (JSON base + optional overrides). */
+export function getEffectiveAnswerKey(
+  baseKey: (string | string[] | null | undefined)[],
+  overrides?: AnswerKeyOverrides
+): (string | string[])[] {
+  const effective = trimAnswerKey(baseKey);
+  if (!overrides || Object.keys(overrides).length === 0) return effective;
+  const result = [...effective];
+  for (const [qStr, answer] of Object.entries(overrides)) {
+    const idx = Number(qStr) - 1;
+    if (idx >= 0 && idx < result.length) {
+      result[idx] = answer;
+    }
+  }
+  return result;
+}
+
+export function getCatalogAnswerForQuestion(
+  testId: string,
+  questionNumber: number
+): string | string[] | null {
+  const solution = findSolutionByTestId(testId);
+  if (!solution || questionNumber < 1) return null;
+  const answer = solution.answers[questionNumber - 1];
+  if (answer === null || answer === undefined) return null;
+  return answer;
+}
+
+export function getEffectiveAnswerForQuestion(
+  testId: string,
+  questionNumber: number,
+  overrides?: AnswerKeyOverrides
+): string | string[] | null {
+  const solution = findSolutionByTestId(testId);
+  if (!solution || questionNumber < 1) return null;
+  const key = getEffectiveAnswerKey(solution.answers, overrides);
+  const answer = key[questionNumber - 1];
+  if (answer === null || answer === undefined) return null;
+  return answer;
+}
+
+function countExplicitAnswers(answers: UserAnswers): number {
+  return Object.values(answers).filter(
+    (v) => v !== null && v !== undefined
+  ).length;
+}
+
+function findRetakeBaseAnswers(
+  retake: TestSubmission,
+  allSubmissions: TestSubmission[]
+): UserAnswers | undefined {
+  if (retake.retakeSourceSubmissionId) {
+    return allSubmissions.find(
+      (s) => s.id === retake.retakeSourceSubmissionId
+    )?.answers;
+  }
+  const idx = allSubmissions.findIndex((s) => s.id === retake.id);
+  if (idx >= 0 && idx + 1 < allSubmissions.length) {
+    return allSubmissions[idx + 1].answers;
+  }
+  return undefined;
+}
+
 /**
  * Full merged answers for display/review. New retakes store the complete attempt;
  * legacy retakes stored only a delta and must be merged with the source attempt.
@@ -162,45 +292,59 @@ export function resolveRetakeDisplayAnswers(
 ): UserAnswers {
   if (!retake.isRetake) return retake.answers;
 
+  const keyLen = trimAnswerKey(answerKey).length;
+  const explicitCount = countExplicitAnswers(retake.answers);
   const directGrade = gradeTest(retake.answers, answerKey);
+
+  // New-format retakes: full answer sheet matched stored score at submit time.
   if (scoresMatch(directGrade, retake.score)) {
     return retake.answers;
   }
 
-  let base: UserAnswers | undefined;
-  if (retake.retakeSourceSubmissionId) {
-    base = allSubmissions.find(
-      (s) => s.id === retake.retakeSourceSubmissionId
-    )?.answers;
-  }
-  if (!base) {
-    const idx = allSubmissions.findIndex((s) => s.id === retake.id);
-    if (idx >= 0 && idx + 1 < allSubmissions.length) {
-      base = allSubmissions[idx + 1].answers;
-    }
-  }
+  const base = findRetakeBaseAnswers(retake, allSubmissions);
   if (!base) return retake.answers;
-  return mergeLegacyRetakeDelta(base, retake.answers);
+
+  const merged = mergeLegacyRetakeDelta(base, retake.answers);
+  const mergedGrade = gradeTest(merged, answerKey);
+
+  // Legacy delta: few explicit answers, or grading delta alone omits far more.
+  const looksLikeLegacyDelta =
+    explicitCount < keyLen * 0.4 ||
+    directGrade.omitCount > mergedGrade.omitCount + 3;
+
+  if (looksLikeLegacyDelta) {
+    return merged;
+  }
+
+  return retake.answers;
 }
 
-/** Score for a submission row; retakes use stored score when answers are complete. */
+/**
+ * Lazy regrade: always grade from stored answers against the current answer key.
+ * Falls back to stored score only when no key is available.
+ */
+export function resolveSubmissionDisplayScore(
+  submission: TestSubmission,
+  allSubmissions: TestSubmission[],
+  answerKey: (string | string[] | null | undefined)[] | undefined,
+  overrides?: AnswerKeyOverrides
+): ScoreReport {
+  if (!answerKey) return submission.score;
+
+  const effectiveKey = getEffectiveAnswerKey(answerKey, overrides);
+  const answers = submission.isRetake
+    ? resolveRetakeDisplayAnswers(submission, allSubmissions, effectiveKey)
+    : submission.answers;
+  return gradeTest(answers, effectiveKey);
+}
+
+/** @deprecated Use resolveSubmissionDisplayScore */
 export function resolveRetakeDisplayScore(
   submission: TestSubmission,
   allSubmissions: TestSubmission[],
   answerKey: (string | string[])[] | undefined
 ): ScoreReport {
-  if (!submission.isRetake || !answerKey) return submission.score;
-
-  const answers = resolveRetakeDisplayAnswers(
-    submission,
-    allSubmissions,
-    answerKey
-  );
-  const resolved = gradeTest(answers, answerKey);
-  if (scoresMatch(resolved, submission.score)) {
-    return submission.score;
-  }
-  return resolved;
+  return resolveSubmissionDisplayScore(submission, allSubmissions, answerKey);
 }
 
 export type LatestDisplayAttempt = {
@@ -217,19 +361,24 @@ export type LatestDisplayAttempt = {
  */
 export function getLatestDisplayAttempt(
   test: Pick<FamatTestWithHistory, 'history' | 'inProgress'>,
-  solution: FamatSolution
+  solution: FamatSolution,
+  overrides?: AnswerKeyOverrides
 ): LatestDisplayAttempt | null {
   const history = [...test.history].sort(
     (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
   );
   if (history.length > 0) {
     const latest = history[0];
+    const effectiveKey = getEffectiveAnswerKey(solution.answers, overrides);
     const answers = latest.isRetake
-      ? resolveRetakeDisplayAnswers(latest, history, solution.answers)
+      ? resolveRetakeDisplayAnswers(latest, history, effectiveKey)
       : latest.answers;
-    const score = latest.isRetake
-      ? resolveRetakeDisplayScore(latest, history, solution.answers)
-      : latest.score;
+    const score = resolveSubmissionDisplayScore(
+      latest,
+      history,
+      solution.answers,
+      overrides
+    );
     return {
       answers,
       score,
@@ -240,9 +389,10 @@ export function getLatestDisplayAttempt(
 
   if (test.inProgress !== undefined) {
     const answers = test.inProgress;
+    const effectiveKey = getEffectiveAnswerKey(solution.answers, overrides);
     return {
       answers,
-      score: gradeTest(answers, solution.answers),
+      score: gradeTest(answers, effectiveKey),
       isLiveSession: true,
       isRetake: false,
     };

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
-import { Moon, Sun, Laptop, Trash2 } from 'lucide-react';
+import { Moon, Sun, Laptop, Trash2, Mail } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   AlertDialog,
@@ -34,6 +34,7 @@ import { Switch } from '@/components/ui/switch';
 import { doc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { getInitials } from '@/lib/utils';
+import { FEEDBACK_EMAIL, FEEDBACK_MAILTO } from '@/lib/feedback';
 
 
 function ThemeSwitcher() {
@@ -252,6 +253,28 @@ export default function SettingsPage() {
                 />
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Feedback</CardTitle>
+            <CardDescription>
+              Found a bug or have an idea to improve the app?
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              For anything other than answer key disputes (use report in test
+              review for those), send us an email with your bug report or
+              improvement idea.
+            </p>
+            <Button variant="outline" asChild>
+              <a href={FEEDBACK_MAILTO}>
+                <Mail className="mr-2 h-4 w-4" />
+                {FEEDBACK_EMAIL}
+              </a>
+            </Button>
           </CardContent>
         </Card>
 

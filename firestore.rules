@@ -144,5 +144,54 @@ service cloud.firestore {
     match /users/{userId}/groupMemberships/{groupId} {
       allow read, write: if isOwner(userId);
     }
+
+    /**
+     * Admin roster — seed docs via Firebase Console: /admins/{uid}
+     */
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && request.auth.uid == adminId;
+      allow list, write: if false;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    /**
+     * User-submitted answer key correction requests.
+     */
+    match /answer_key_reports/{reportId} {
+      allow get: if isSignedIn() && (
+        isAdmin()
+        || !exists(/databases/$(database)/documents/answer_key_reports/$(reportId))
+        || resource.data.userId == request.auth.uid
+      );
+      allow list: if isSignedIn() && (
+        isAdmin()
+        || resource.data.userId == request.auth.uid
+      );
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      // Admins approve/reject; users may edit or withdraw pending reports.
+      allow update: if isAdmin()
+        || (isSignedIn()
+            && resource.data.userId == request.auth.uid
+            && resource.data.status == 'pending'
+            && request.resource.data.userId == request.auth.uid
+            && request.resource.data.status == 'pending');
+      allow delete: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && resource.data.status == 'pending';
+    }
+
+    /**
+     * Approved per-test answer key overrides (public read — same as catalog keys).
+     */
+    match /answer_key_overrides/{testId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

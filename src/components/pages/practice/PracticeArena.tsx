@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Calculator,
   BookOpenCheck,
@@ -24,7 +24,9 @@ import type {
 import { Scantron } from './Scantron';
 import { Button } from '@/components/ui/button';
 import { ScoreModal } from './ScoreModal';
-import { gradeTest, getTestName, buildRetakeSubmitAnswers, buildRetakePracticeUrl } from '@/lib/test-logic';
+import { gradeTest, getTestName, buildRetakeSubmitAnswers, buildRetakePracticeUrl, getDivisionLabel, getEffectiveAnswerKey } from '@/lib/test-logic';
+import { useAnswerKeyOverridesForTest } from '@/contexts/AnswerKeyOverridesContext';
+import { getUserPendingReportQuestions } from '@/lib/answer-key-reports';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import {
@@ -150,6 +152,27 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const retakeOmittedQuestionsRef = useRef<Set<number>>(new Set());
   const retakeInitializedRef = useRef(false);
 
+  const keyOverrides = useAnswerKeyOverridesForTest(test.id);
+  const overrideSignature = useMemo(
+    () => JSON.stringify(keyOverrides),
+    [keyOverrides]
+  );
+  const effectiveAnswerKey = useMemo(
+    () =>
+      solution ? getEffectiveAnswerKey(solution.answers, keyOverrides) : null,
+    [solution, overrideSignature]
+  );
+  const [pendingReportQuestions, setPendingReportQuestions] = useState<
+    Set<number>
+  >(new Set());
+
+  useEffect(() => {
+    if (!user || !firestore || !isReviewMode) return;
+    getUserPendingReportQuestions(firestore, user.uid, test.id)
+      .then(setPendingReportQuestions)
+      .catch(() => setPendingReportQuestions(new Set()));
+  }, [user, firestore, isReviewMode, test.id]);
+
 
   const isStatsTest = test.division === 'Stats';
 
@@ -229,9 +252,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     ): ReviewData => {
       const data: ReviewData = {};
       for (let i = 0; i < correctAnswers.length; i++) {
+        const correctAnswer = correctAnswers[i];
+        if (correctAnswer === null || correctAnswer === undefined) {
+          continue;
+        }
         const qNum = i + 1;
         const userAnswer = answers[qNum];
-        const correctAnswer = correctAnswers[i];
         let isCorrect = false;
         if (userAnswer) {
           isCorrect = Array.isArray(correctAnswer)
@@ -249,6 +275,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     },
     []
   );
+
+  useEffect(() => {
+    if (!isReviewMode || !effectiveAnswerKey) return;
+    setReviewData(createReviewData(userAnswers, effectiveAnswerKey));
+    setScoreReport(gradeTest(userAnswers, effectiveAnswerKey));
+  }, [overrideSignature, isReviewMode, userAnswers, createReviewData, effectiveAnswerKey]);
 
   const handleSubmit = useCallback(async () => {
     if (!solution) {
@@ -276,7 +308,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         )
       : userAnswers;
 
-    const report = gradeTest(answersToSubmit, solution.answers);
+    const gradingKey = effectiveAnswerKey ?? solution.answers;
+    const report = gradeTest(answersToSubmit, gradingKey);
     const newSubmissionId = await saveSubmission(
       firestore,
       user.uid,
@@ -304,7 +337,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       });
 
       // Transition to review mode
-      const newReviewData = createReviewData(answersToSubmit, solution.answers);
+      const newReviewData = createReviewData(answersToSubmit, gradingKey);
       setReviewData(newReviewData);
       setScoreReport(report);
       setIsScoreModalOpen(true);
@@ -323,6 +356,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     toast,
     createReviewData,
     isRetakeMode,
+    effectiveAnswerKey,
   ]);
 
   // Effect to initialize the arena for either review or practice mode
@@ -454,9 +488,12 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       const originalScore = gradeTest(initialAnswers, solution.answers);
 
       for (let i = 0; i < solution.answers.length; i++) {
+        const correctAnswer = solution.answers[i];
+        if (correctAnswer === null || correctAnswer === undefined) {
+          continue;
+        }
         const qNum = i + 1;
         const originalAnswer = initialAnswers[qNum];
-        const correctAnswer = solution.answers[i];
 
         let isOriginalCorrect = false;
         if (originalAnswer !== undefined && originalAnswer !== null) {
@@ -701,12 +738,15 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
               retakeOmittedQuestionsRef.current
             )
           : userAnswers;
-        return createReviewData(answersForReview, solution.answers);
+        return createReviewData(
+          answersForReview,
+          effectiveAnswerKey ?? solution.answers
+        );
       });
 
       setCheckedQuestions((prev) => ({ ...prev, [question]: true }));
     },
-    [solution, createReviewData, userAnswers, isRetakeMode]
+    [solution, createReviewData, userAnswers, isRetakeMode, effectiveAnswerKey]
   );
 
   const handleSetHideCheckWarning = (hide: boolean) => {
@@ -898,7 +938,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b px-4">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold tracking-tight">
-              {test.division}: {test.year} {test.month && `${test.month} `}{test.test_type}
+              {getDivisionLabel(test.division)}: {test.year} {test.month && `${test.month} `}{test.test_type}
               {isRetakeMode && <span className="text-primary ml-2">(Retake)</span>}
             </h2>
             {isReviewMode && currentSubmissionId && (
@@ -1030,6 +1070,29 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                         isReviewMode={isReviewMode}
                         hideCheckWarning={hideCheckWarning}
                         onSetHideCheckWarning={handleSetHideCheckWarning}
+                        reportContext={
+                          isReviewMode
+                            ? {
+                                testId: test.id,
+                                testName: getTestName(test),
+                              }
+                            : undefined
+                        }
+                        pendingReportQuestions={pendingReportQuestions}
+                        onReportSubmitted={(qNum) => {
+                          setPendingReportQuestions((prev) => {
+                            const next = new Set(prev);
+                            next.add(qNum);
+                            return next;
+                          });
+                        }}
+                        onReportCancelled={(qNum) => {
+                          setPendingReportQuestions((prev) => {
+                            const next = new Set(prev);
+                            next.delete(qNum);
+                            return next;
+                          });
+                        }}
                       />
                     </div>
                   </>
@@ -1058,7 +1121,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           onClose={() => setIsScoreModalOpen(false)}
           scoreReport={scoreReport}
           testName={getTestName(test)}
-          testId={test.id}
         />
       )}
     </>

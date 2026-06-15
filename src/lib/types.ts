@@ -134,3 +134,31 @@ export type InProgressTestState = {
   /** Questions explicitly cleared during a retake (survives Firestore null stripping). */
   retakeOmittedQuestions?: number[];
 };
+
+export type AnswerKeyReportStatus = 'pending' | 'approved' | 'rejected';
+
+export type AnswerKeyReport = {
+  id: string;
+  testId: string;
+  testName: string;
+  questionNumber: number;
+  currentAnswer: string | string[];
+  proposedAnswer: string | string[];
+  userAnswer?: string | null;
+  message: string;
+  userId: string;
+  userDisplayName: string;
+  status: AnswerKeyReportStatus;
+  createdAt: Date;
+  reviewedAt?: Date;
+  reviewedBy?: string;
+  adminNote?: string;
+};
+
+export type AnswerKeyOverrideDoc = {
+  testId: string;
+  overrides: Record<string, string | string[]>;
+  updatedAt: Date;
+  updatedBy: string;
+  sourceReportId?: string;
+};

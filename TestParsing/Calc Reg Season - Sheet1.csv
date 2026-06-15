@@ -1,0 +1,31 @@
+CALC,Jan15I,Feb15R,Feb15I,Mar15R,Mar15I,Jan16R,Joey16,Feb16R,Feb16I,Mar16R,Mar16I,Jan17R,Jan17I,Feb17R,Feb17I,Mar17R,Mar17I,Jan18R,Jan18I,Feb18R,Feb18I,Mar18R,Mar18I,Jan19R,Jan19I,Feb19R,Feb19I,Mar19R,Mar19I,Jan20R,Jan20I,Feb20R,Feb20I,Mar20R,Jan22R,Jan22I,Feb22R,Feb22I,Mar22R,Jan23R,Feb23R,Feb23I,Mar23R,Mar23i,Jan24R,Jan24I,Feb24R,Feb24I,Mar24R,Jan25R,Jan25I,Feb25R,Feb25I,Mar25R,Mar25I
+b,c,d,a,b,c,b,c,a,b,c,d,b,a,b,d,c,b,c,*,b,b,c,b,c,b,c,c,b,b,c,a,d,b,b,d,b,b,d,e,d,c,c,c,d,c,,c,c,d,b,d,c,d,d,c
+e,a,b,d,c,d,a,d,d,b,d,e,b,c,c,d,b,d,e,b,d,d,c,e,e,c,a,d,b/e,e,e,e,e,d,e,d,a,a,c,d,d,c,a,d,c,a,,e,b,d,d,b,d,d,e,a
+b,d,c,c,c,b,e,e,c,d,a,b,c,c,c,c,b,a,e,b,b,b,b,b,a,c,e,c,c,b,d,b,b,c,c,a,e,e,d,b,b,b,c,d,c,d,,a,d,b,a,a,c,a,c,d
+c,b,b,a,a,a,b,a,e,b,e,c,d,d,a,b,d,a,b,d,a,a,c,e,d,c,*,a,d,c,c,c,d,a,e,a,c,d,a,c,b,b,a,c,d,c,,b,a,d,d,d,c,c,b,d
+a,d,c,e,a,c,e,e,c,d,c,c,c,c,d,a,b,c,a,d,b,a,e,d,c,a,b,ac,a,d,b,a,a,b,b,b,c,d,c,a,c,a,b,d,e,c,,c,b,c,c,b,d,e,b,c
+d,b,a,d,a,a,c,a,b,d,b,b,b,a,e,b,d,d,a,c,a,b,a,a,d,b,c,c,a,c,a,d,b,c/d,d,c,e,a,b,e,b,d,d,a,b,a,,d,b,e,e,c,b,a,d,d
+b,a,a,*,e,b,c,c,d,b,d,e,c,a,c,c/e,b,c,b,a,d,d,b,b,a/e,c,b,e,* (ans),d,b/e,c,e,d/e,e,b,a,a,a,b,d,d,c,a,b,a,,b,d,b,b,b,a,b,e,a
+a,a,c,a,d,d,e,a,c,c,b,c,b,b,a,a,e,c,a,e,c,c,c,c,a,d/e,*,e,* (ans),*,d,c,d,c,a,b,b,a,e,e,a,e,e,a,a,d,,d,a,c,a,b,b,c,c,d
+b,b,d,c,c,c,b,d,d,a,c,b,d,c,e,b,c,d,d,e,b,d,d,e,b,d/e,a,d,d,d,d,a,b,c,a,b,a,c,b,c,c,c,c,b,a,b,,a,c,a,c/e,e,b,b,b,a
+d,a,d,d,d,a,c,a,b,d,b,d,c,e,d,b,a,a,c,a,b,a,c,c,e,a,d,e,e,c,e,b,c,x,b,e,e,d,d,c,c,c,a,a,b,a,,c,c,d,d,b,a,d,b,b
+b,b,e,e,e,c,d,a,e,a,b,a,a,b,e,b,c,a,e,c,d,c,d,b,c,b,b/c/e,b,c,b,c,d,b,a,e,c,b,d,b,b,c,b,a,a,a,c,,a,e,b,c,e,d,d,a,e
+e/a,a,b,c,d,b,d,d,d,b,a,c,d,a,d,d,a,d,c,c,c,b,c,a,e,c,b,b,d,e,a,c,a,b,a,d,c,d,c,b,c,b,d,d,c,c,,c,x,a,e,d,a,c,a,d
+a,d,c,c,b,d,b,d,b,d,d,c,a,a,a,b,b,a,b/e,d,d,c,e,b,d,a,e,c,b,e,c,a,e,b,c,c,a,b,a,b,e,b,e,c,a,b,,b,a,b,e,a,c,d,a/b,d
+c,e,d,a,b,e,a,c,a,d,a,e,b,b,c,c,c,e,a,a,e,a,b,c,e,b,d,a,c,a,e,b,b/c,c,b,a,a,d,b,c,a,e,c,b,d,d,,a,b,a,a,throw,b,a,c,a
+d,b,d,d,a,a,d,d,a,a,a,*,c,c,c,a,c,c,b,c,a,d,c,b,e,a,a,d/e,* (ans),*,c,b,b,b,c,b,d,c,c,c,a,b,b,d,d,c,,b,c,b,a,d,a,d,c,b
+d,d,d,c,e,b,d,b,b,c,c,b,a,b,b,e,b,c,d/e,b,a,c,a/c,d,d,d,b,a,c,a,a/e,d,d,b,c,d,b,a,b,d,c,e,b,b,c,c,,c,a,c,a,d/e,a,a,b,c
+e,e,c,b,b,b,b,b,a,c,a,e,b,e,c,b,b,*,c/e,c,d,a,b,a,a,b,a,a,a,b,b,c,a,d,d,c,d,b,e,a,b,a,b,c,b,b,,d,c,e,d,b,d,e,a,d
+b,c,a,b,b,d,c,e,d,b,a,e,a,c,e,d,e,d,c/e,a,a,c,a,d,d,c,c,b,b/d,a,a/e,b,d,a,a,a,a,c,c,d,e,d,a,d,c,c,,a,b,e,b,d/e,b,throw,b,e
+b,e,b,c,c,c,c,b,b,c,c,c,a,e,b,c,b,c,a,c,b,b,c,b,b,a,c,a,c,c,b,a,c/d/e,c,b,b,d,a,d,a,a,b,c,b,e,c,,c,d,b,d,d,a,a,a,e
+d,c,e,b,c/e,c,b,d,a,d,d,d,d,c,b,b,d,e,b,d,a,d,a,d,b,e,b,c,b,d,c,b,d,d,c,b,b,d,b,e,a,c,b,a,c,b,,b,b,d,c,a,d,b,c,b
+c,c,a,a,a,d,a,c,c,c,c,a,b,b,c,c,b,b,d,e,d,b,b,a,c,b,a,b,* (ans),d,d,c,b,e,d/e,b,e,a,a,b,c,a,c,c,b,d,,d,d,a,d,d,a,d,a,d
+b,*,c,c/e,c,d,c,c,b,a,b,a,d,c,a,b,d,c,c,b,a,c,e,b,b,d,a,d,a,a,a,e,c,d,e,c,d,b,c,a,b,b,a,c,a,a,,b,b,b,a,b,a,b,e,d
+b,a,b,c,a,b,e,a,d,a,c,d,c,c,b,e,a,a,d,e,a,b,d,e,b/e,b,a,d,* (ans),a,b/e,b,d,d,e,d,a,b,b,d,b,b,c,c,c,c,,d,a,c,a,e,c,a,b,d
+c,c,a/b/e,e,c,a,c,b,c,c,c,c,c,d,c,e,b,b,a,b,c,c,d,b,e,a,c,a,c,b,a,e,e,b,e,a,a,c,a,d,e,d,c,b,c,a,,a,d,b,c,d,a,a,d,c
+e,b,b,b,a,b,a,e,b,c,c,d,b,d,b,d,c,d,e,a,e,b,b,d,a,d,*,a,d,d,b,d,c/e,b,b,d,c,d,b,a,d,a,b,b,d,b,,b,x,a,b,c,c,c,c,e
+d,a,a,b,d,a,d,b,a,a,d,b,e,b,a,b,d,b,b,d,b,a,b,d,c,a/b/c/d,b,d,b,e,e,c,c,c,b/e,c,c,b,x,a,b,a,a,b,d,b,,d,b,c,b,throw,b,e,c,a/b
+c,c,b,c,b,d,a,c,b,e,a,d,c,c,c,*,b,a,a,a,e,d,b,a,c,*,b,a,b,c,c,d,d,d,b,c,b,e,a,d,b,c,c,a,d,a,,a,c,a,b,e,c,b,d,e
+d,b,d,d,a,c,b,b,c,d,b,a,a,b,a,d,b,d,c,a,a,b,a,d,*,c,b,d,a,b,a,b,c,b,a/e,c,d,b,b,e,b,b,b,d,b,c,,c,x,c,b,b,d,c,b,a
+c,c,a,a,c,b,a,b,e,c,b,b,b,b,e,d,d,a,d,c,b,c,e,c,e,d,b/c,b,b,b,b,a,e,e,b,b,a,b,c,c,b,b,c,d,a,b,,d,d,c,c,e,a,b,b,throw
+a,e,d,e,b,c,a,c,e,c,d,*,a,c,b,a,c,d,e,c,b,d,d,e,e,a,*,b,d,a,e,e,d,b,c/e,d,b,d,d,e,a,b,b,a,b,d,,c,e,b,c,c,c,throw,d,throw

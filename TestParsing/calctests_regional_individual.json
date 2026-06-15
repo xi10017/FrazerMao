@@ -1,0 +1,2851 @@
+[
+  {
+    "test_id": 708,
+    "year": 1991,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2102,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2102",
+        "docs_name": "/docs/2102 1991 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2102%201991%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2103,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2103",
+        "docs_name": "/docs/2103 1991 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2103%201991%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1197,
+    "year": 1991,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3070,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3070",
+        "docs_name": "/docs/3070 1991 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3070%201991%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3071,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3071",
+        "docs_name": "/docs/3071 1991 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3071%201991%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1290,
+    "year": 1991,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3254,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3254",
+        "docs_name": "/docs/3254 1991 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3254%201991%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3255,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3255",
+        "docs_name": "/docs/3255 1991 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3255%201991%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 709,
+    "year": 1992,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2104,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2104",
+        "docs_name": "/docs/2104 1992 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2104%201992%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2105,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2105",
+        "docs_name": "/docs/2105 1992 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2105%201992%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1198,
+    "year": 1992,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3072,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3072",
+        "docs_name": "/docs/3072 1992 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3072%201992%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3073,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3073",
+        "docs_name": "/docs/3073 1992 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3073%201992%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1291,
+    "year": 1992,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3256,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3256",
+        "docs_name": "/docs/3256 1992 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3256%201992%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3257,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3257",
+        "docs_name": "/docs/3257 1992 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3257%201992%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 710,
+    "year": 1993,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2106,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2106",
+        "docs_name": "/docs/2106 1993 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2106%201993%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2107,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2107",
+        "docs_name": "/docs/2107 1993 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2107%201993%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1199,
+    "year": 1993,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3074,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3074",
+        "docs_name": "/docs/3074 1993 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3074%201993%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3075,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3075",
+        "docs_name": "/docs/3075 1993 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3075%201993%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1292,
+    "year": 1993,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3258,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3258",
+        "docs_name": "/docs/3258 1993 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3258%201993%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3259,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3259",
+        "docs_name": "/docs/3259 1993 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3259%201993%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 711,
+    "year": 1994,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2108,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2108",
+        "docs_name": "/docs/2108 1994 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2108%201994%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2109,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2109",
+        "docs_name": "/docs/2109 1994 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2109%201994%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1200,
+    "year": 1994,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3076,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3076",
+        "docs_name": "/docs/3076 1994 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3076%201994%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3077,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3077",
+        "docs_name": "/docs/3077 1994 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3077%201994%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1293,
+    "year": 1994,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3260,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3260",
+        "docs_name": "/docs/3260 1994 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3260%201994%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3261,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3261",
+        "docs_name": "/docs/3261 1994 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3261%201994%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 712,
+    "year": 1995,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2110,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2110",
+        "docs_name": "/docs/2110 1995 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2110%201995%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2111,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2111",
+        "docs_name": "/docs/2111 1995 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2111%201995%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1201,
+    "year": 1995,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3078,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3078",
+        "docs_name": "/docs/3078 1995 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3078%201995%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3079,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3079",
+        "docs_name": "/docs/3079 1995 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3079%201995%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1294,
+    "year": 1995,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3262,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3262",
+        "docs_name": "/docs/3262 1995 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3262%201995%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3263,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3263",
+        "docs_name": "/docs/3263 1995 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3263%201995%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 713,
+    "year": 1996,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2112,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2112",
+        "docs_name": "/docs/2112 1996 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2112%201996%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2113,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2113",
+        "docs_name": "/docs/2113 1996 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2113%201996%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1295,
+    "year": 1996,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3264,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3264",
+        "docs_name": "/docs/3264 1996 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3264%201996%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3265,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3265",
+        "docs_name": "/docs/3265 1996 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3265%201996%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 714,
+    "year": 1997,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2114,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2114",
+        "docs_name": "/docs/2114 1997 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2114%201997%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2928,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2928",
+        "docs_name": "/docs/2928 1997 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2928%201997%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1202,
+    "year": 1997,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3080,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3080",
+        "docs_name": "/docs/3080 1997 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3080%201997%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3081,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3081",
+        "docs_name": "/docs/3081 1997 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3081%201997%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1296,
+    "year": 1997,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3266,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3266",
+        "docs_name": "/docs/3266 1997 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3266%201997%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3267,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3267",
+        "docs_name": "/docs/3267 1997 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3267%201997%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1125,
+    "year": 1998,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2929,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2929",
+        "docs_name": "/docs/2929 1998 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2929%201998%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2930,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2930",
+        "docs_name": "/docs/2930 1998 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2930%201998%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1203,
+    "year": 1998,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3082,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3082",
+        "docs_name": "/docs/3082 1998 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3082%201998%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3083,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3083",
+        "docs_name": "/docs/3083 1998 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3083%201998%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1297,
+    "year": 1998,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3268,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3268",
+        "docs_name": "/docs/3268 1998 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3268%201998%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3269,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3269",
+        "docs_name": "/docs/3269 1998 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3269%201998%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1126,
+    "year": 1999,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2931,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2931",
+        "docs_name": "/docs/2931 1999 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2931%201999%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2932,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2932",
+        "docs_name": "/docs/2932 1999 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2932%201999%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1204,
+    "year": 1999,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3084,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3084",
+        "docs_name": "/docs/3084 1999 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3084%201999%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3085,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3085",
+        "docs_name": "/docs/3085 1999 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3085%201999%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1298,
+    "year": 1999,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3270,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3270",
+        "docs_name": "/docs/3270 1999 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3270%201999%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3271,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3271",
+        "docs_name": "/docs/3271 1999 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3271%201999%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1127,
+    "year": 2000,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2933,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2933",
+        "docs_name": "/docs/2933 2000 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2933%202000%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2934,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2934",
+        "docs_name": "/docs/2934 2000 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2934%202000%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1001,
+    "year": 2000,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2686,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2686",
+        "docs_name": "/docs/2686 2000 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2686%202000%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2687,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2687",
+        "docs_name": "/docs/2687 2000 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2687%202000%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1299,
+    "year": 2000,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3272,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3272",
+        "docs_name": "/docs/3272 2000 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3272%202000%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3273,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3273",
+        "docs_name": "/docs/3273 2000 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3273%202000%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1128,
+    "year": 2001,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2935,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2935",
+        "docs_name": "/docs/2935 2001 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2935%202001%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2936,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2936",
+        "docs_name": "/docs/2936 2001 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2936%202001%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1002,
+    "year": 2001,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2688,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2688",
+        "docs_name": "/docs/2688 2001 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2688%202001%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2689,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2689",
+        "docs_name": "/docs/2689 2001 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2689%202001%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2206,
+    "year": 2001,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 6547,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6547",
+        "docs_name": "/docs/6547 S_2001 Mar Reg  Calc Ind Sol.PDF",
+        "docs_url": "https://tests.famat.org/docs/6547%20S_2001%20Mar%20Reg%20%20Calc%20Ind%20Sol.PDF",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 6548,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6548",
+        "docs_name": "/docs/6548 T_2001 Mar Reg  Calc Ind.PDF",
+        "docs_url": "https://tests.famat.org/docs/6548%20T_2001%20Mar%20Reg%20%20Calc%20Ind.PDF",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1129,
+    "year": 2002,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2937,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2937",
+        "docs_name": "/docs/2937 2002 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2937%202002%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2938,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2938",
+        "docs_name": "/docs/2938 2002 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2938%202002%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1003,
+    "year": 2002,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2690,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2690",
+        "docs_name": "/docs/2690 2002 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2690%202002%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2691,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2691",
+        "docs_name": "/docs/2691 2002 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2691%202002%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1300,
+    "year": 2002,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3274,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3274",
+        "docs_name": "/docs/3274 2002 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3274%202002%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3275,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3275",
+        "docs_name": "/docs/3275 2002 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3275%202002%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1130,
+    "year": 2003,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2939,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2939",
+        "docs_name": "/docs/2939 2003 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2939%202003%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2940,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2940",
+        "docs_name": "/docs/2940 2003 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2940%202003%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1004,
+    "year": 2003,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2692,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2692",
+        "docs_name": "/docs/2692 2003 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2692%202003%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2693,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2693",
+        "docs_name": "/docs/2693 2003 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2693%202003%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1301,
+    "year": 2003,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3276,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3276",
+        "docs_name": "/docs/3276 2003 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3276%202003%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3277,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3277",
+        "docs_name": "/docs/3277 2003 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3277%202003%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1131,
+    "year": 2004,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2941,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2941",
+        "docs_name": "/docs/2941 2004 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2941%202004%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2942,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2942",
+        "docs_name": "/docs/2942 2004 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2942%202004%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1005,
+    "year": 2004,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2694,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2694",
+        "docs_name": "/docs/2694 2004 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2694%202004%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2695,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2695",
+        "docs_name": "/docs/2695 2004 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2695%202004%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1132,
+    "year": 2005,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2943,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2943",
+        "docs_name": "/docs/2943 2005 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2943%202005%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2944,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2944",
+        "docs_name": "/docs/2944 2005 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2944%202005%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1006,
+    "year": 2005,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 2696,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2696",
+        "docs_name": "/docs/2696 2005 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/2696%202005%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 2697,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=2697",
+        "docs_name": "/docs/2697 2005 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/2697%202005%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1302,
+    "year": 2005,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 3278,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3278",
+        "docs_name": "/docs/3278 2005 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/3278%202005%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 3279,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=3279",
+        "docs_name": "/docs/3279 2005 Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/3279%202005%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1714,
+    "year": 2006,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 5004,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=5004",
+        "docs_name": "/docs/5004 A_Ind 2006 February Calculus Answer Key.pdf",
+        "docs_url": "https://tests.famat.org/docs/5004%20A_Ind%202006%20February%20Calculus%20Answer%20Key.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 5005,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=5005",
+        "docs_name": "/docs/5005 S_2006 February Calculus Regional Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/5005%20S_2006%20February%20Calculus%20Regional%20Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 5006,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=5006",
+        "docs_name": "/docs/5006 T_2006 February Calculus Regional Individual.pdf",
+        "docs_url": "https://tests.famat.org/docs/5006%20T_2006%20February%20Calculus%20Regional%20Individual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1725,
+    "year": 2006,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 5038,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=5038",
+        "docs_name": "/docs/5038 A_Jan iND Answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/5038%20A_Jan%20iND%20Answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 5039,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=5039",
+        "docs_name": "/docs/5039 S_Jan Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/5039%20S_Jan%20Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 5040,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=5040",
+        "docs_name": "/docs/5040 T_Jan Individual.pdf",
+        "docs_url": "https://tests.famat.org/docs/5040%20T_Jan%20Individual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1506,
+    "year": 2007,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 4495,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4495",
+        "docs_name": "/docs/4495 A_Calculus Individual Answers.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/4495%20A_Calculus%20Individual%20Answers.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Solutions": {
+        "tid": 4496,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4496",
+        "docs_name": "/docs/4496 S_Calculus Individual Solutions.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/4496%20S_Calculus%20Individual%20Solutions.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 4497,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4497",
+        "docs_name": "/docs/4497 T_February individual 2007.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/4497%20T_February%20individual%202007.doc.pdf",
+        "resolved_via": "download.php"
+      }
+    }
+  },
+  {
+    "test_id": 1494,
+    "year": 2007,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 4466,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4466",
+        "docs_name": "/docs/4466 S_Calculus Individual-Jan SOLUTIONS.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/4466%20S_Calculus%20Individual-Jan%20SOLUTIONS.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 4467,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4467",
+        "docs_name": "/docs/4467 T_Calculus Individual Test-Jan.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/4467%20T_Calculus%20Individual%20Test-Jan.doc.pdf",
+        "resolved_via": "download.php"
+      }
+    }
+  },
+  {
+    "test_id": 1518,
+    "year": 2007,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 4527,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4527",
+        "docs_name": "/docs/4527 S_mu_solutions.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/4527%20S_mu_solutions.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 4528,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4528",
+        "docs_name": "/docs/4528 T_mu_inditest.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/4528%20T_mu_inditest.doc.pdf",
+        "resolved_via": "download.php"
+      }
+    }
+  },
+  {
+    "test_id": 1584,
+    "year": 2008,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 4672,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4672",
+        "docs_name": "/docs/4672 A_Ind Calculus Answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/4672%20A_Ind%20Calculus%20Answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 4673,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4673",
+        "docs_name": "/docs/4673 S_February Regional Calculus Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/4673%20S_February%20Regional%20Calculus%20Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 4674,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4674",
+        "docs_name": "/docs/4674 T_February Calculus Individual.pdf",
+        "docs_url": "https://tests.famat.org/docs/4674%20T_February%20Calculus%20Individual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1594,
+    "year": 2008,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 4700,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4700",
+        "docs_name": "/docs/4700 A_IndAns.pdf",
+        "docs_url": "https://tests.famat.org/docs/4700%20A_IndAns.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 4701,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4701",
+        "docs_name": "/docs/4701 S_IndSolutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/4701%20S_IndSolutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 4702,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4702",
+        "docs_name": "/docs/4702 T_JanuaryRegionalCalculusIndividualTest.pdf",
+        "docs_url": "https://tests.famat.org/docs/4702%20T_JanuaryRegionalCalculusIndividualTest.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 1658,
+    "year": 2008,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 4869,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4869",
+        "docs_name": "/docs/4869 A_Calc Ind Ans.pdf",
+        "docs_url": "https://tests.famat.org/docs/4869%20A_Calc%20Ind%20Ans.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 4870,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4870",
+        "docs_name": "/docs/4870 S_Calc Ind Sol.pdf",
+        "docs_url": "https://tests.famat.org/docs/4870%20S_Calc%20Ind%20Sol.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 4871,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=4871",
+        "docs_name": "/docs/4871 T_Calc Ind.pdf",
+        "docs_url": "https://tests.famat.org/docs/4871%20T_Calc%20Ind.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2045,
+    "year": 2009,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 6159,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6159",
+        "docs_name": "/docs/6159 A_februaryregionalcalculusanswers.pdf",
+        "docs_url": "https://tests.famat.org/docs/6159%20A_februaryregionalcalculusanswers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 6160,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6160",
+        "docs_name": "/docs/6160 S_februaryregionalcalculusindividualsolutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/6160%20S_februaryregionalcalculusindividualsolutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 6161,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6161",
+        "docs_name": "/docs/6161 T_februaryregionalcalculusindividual.pdf",
+        "docs_url": "https://tests.famat.org/docs/6161%20T_februaryregionalcalculusindividual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2033,
+    "year": 2009,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 6116,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6116",
+        "docs_name": "/docs/6116 S_Calculus Indiv--SOLUTIONS.pdf",
+        "docs_url": "https://tests.famat.org/docs/6116%20S_Calculus%20Indiv--SOLUTIONS.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 6117,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6117",
+        "docs_name": "/docs/6117 T_Calculus Regional Indiv.pdf",
+        "docs_url": "https://tests.famat.org/docs/6117%20T_Calculus%20Regional%20Indiv.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2076,
+    "year": 2009,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 6234,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6234",
+        "docs_name": "/docs/6234 S_marchregionalcalculusindividualanswers.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6234%20S_marchregionalcalculusindividualanswers.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 6235,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6235",
+        "docs_name": "/docs/6235 T_marchregionalcalcindiv.pdf",
+        "docs_url": "https://tests.famat.org/docs/6235%20T_marchregionalcalcindiv.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2305,
+    "year": 2010,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 6797,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6797",
+        "docs_name": "/docs/6797 A_ Answer Key.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6797%20A_%20Answer%20Key.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Solutions": {
+        "tid": 6798,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6798",
+        "docs_name": "/docs/6798 S_Individual Solutions.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6798%20S_Individual%20Solutions.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 6799,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6799",
+        "docs_name": "/docs/6799 T_Individual.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6799%20T_Individual.doc.pdf",
+        "resolved_via": "download.php"
+      }
+    }
+  },
+  {
+    "test_id": 2317,
+    "year": 2010,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 6835,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6835",
+        "docs_name": "/docs/6835 A_Individual Answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/6835%20A_Individual%20Answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 6836,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6836",
+        "docs_name": "/docs/6836 S_Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/6836%20S_Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 6837,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6837",
+        "docs_name": "/docs/6837 T_Individual test.pdf",
+        "docs_url": "https://tests.famat.org/docs/6837%20T_Individual%20test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2268,
+    "year": 2010,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 6709,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6709",
+        "docs_name": "/docs/6709 A_Calculus March Regional Answers.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6709%20A_Calculus%20March%20Regional%20Answers.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Solutions": {
+        "tid": 6710,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6710",
+        "docs_name": "/docs/6710 S_Calculus March Regional Individual Solutions.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6710%20S_Calculus%20March%20Regional%20Individual%20Solutions.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 6711,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6711",
+        "docs_name": "/docs/6711 T_Calculus March Regional Individual Test.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6711%20T_Calculus%20March%20Regional%20Individual%20Test.doc.pdf",
+        "resolved_via": "download.php"
+      }
+    }
+  },
+  {
+    "test_id": 2362,
+    "year": 2011,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 6999,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6999",
+        "docs_name": "/docs/6999 A_Calc2_Ind&Team_Ans_11.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6999%20A_Calc2_Ind%26Team_Ans_11.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Solutions": {
+        "tid": 7000,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7000",
+        "docs_name": "/docs/7000 S_Calc2_Ind_Soln_11.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/7000%20S_Calc2_Ind_Soln_11.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 7001,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7001",
+        "docs_name": "/docs/7001 T_Calc2_Ind_Feb_11.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/7001%20T_Calc2_Ind_Feb_11.doc.pdf",
+        "resolved_via": "download.php"
+      }
+    }
+  },
+  {
+    "test_id": 2350,
+    "year": 2011,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 6954,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6954",
+        "docs_name": "/docs/6954 A_January Regional 2010 Calculus Answers.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6954%20A_January%20Regional%202010%20Calculus%20Answers.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Solutions": {
+        "tid": 6955,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6955",
+        "docs_name": "/docs/6955 S_January Regional 2010 Calculus Individual Solutions EDIT.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6955%20S_January%20Regional%202010%20Calculus%20Individual%20Solutions%20EDIT.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Test": {
+        "tid": 6956,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6956",
+        "docs_name": "/docs/6956 T_January Regional 2010 Calculus Individual - EDIT.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6956%20T_January%20Regional%202010%20Calculus%20Individual%20-%20EDIT.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Errata": {
+        "tid": 6969,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=6969",
+        "docs_name": "/docs/6969 E_CALC Indv Err.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/6969%20E_CALC%20Indv%20Err.doc.pdf",
+        "resolved_via": "download.php"
+      }
+    }
+  },
+  {
+    "test_id": 2386,
+    "year": 2011,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 7063,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7063",
+        "docs_name": "/docs/7063 A_marchregionalcalculusanswerkey.pdf",
+        "docs_url": "https://tests.famat.org/docs/7063%20A_marchregionalcalculusanswerkey.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 7064,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7064",
+        "docs_name": "/docs/7064 S_marchregionalcalculusindividualsolutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/7064%20S_marchregionalcalculusindividualsolutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 7065,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7065",
+        "docs_name": "/docs/7065 T_marchregionalcalculusindividual.pdf",
+        "docs_url": "https://tests.famat.org/docs/7065%20T_marchregionalcalculusindividual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2570,
+    "year": 2012,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Errata": {
+        "tid": 7554,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7554",
+        "docs_name": "/docs/7554 E_Calculus errata.pdf",
+        "docs_url": "https://tests.famat.org/docs/7554%20E_Calculus%20errata.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 7555,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7555",
+        "docs_name": "/docs/7555 S_2012 FebruaryRegionalCalculusIndividualSolutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/7555%20S_2012%20FebruaryRegionalCalculusIndividualSolutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 7556,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7556",
+        "docs_name": "/docs/7556 T_2012 myFebruaryregionalcalctest.pdf",
+        "docs_url": "https://tests.famat.org/docs/7556%20T_2012%20myFebruaryregionalcalctest.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2558,
+    "year": 2012,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 7512,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7512",
+        "docs_name": "/docs/7512 A_January Regional Calculus Answer Key.pdf",
+        "docs_url": "https://tests.famat.org/docs/7512%20A_January%20Regional%20Calculus%20Answer%20Key.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 7513,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7513",
+        "docs_name": "/docs/7513 S_January Regional Calculus Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/7513%20S_January%20Regional%20Calculus%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 7514,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7514",
+        "docs_name": "/docs/7514 T_January Regional Calculus Individual Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/7514%20T_January%20Regional%20Calculus%20Individual%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2596,
+    "year": 2012,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 7620,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7620",
+        "docs_name": "/docs/7620 A_MarchCalcAnswers.pdf",
+        "docs_url": "https://tests.famat.org/docs/7620%20A_MarchCalcAnswers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Errata": {
+        "tid": 7621,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7621",
+        "docs_name": "/docs/7621 E_march errata Calculus.doc.pdf",
+        "docs_url": "https://tests.famat.org/docs/7621%20E_march%20errata%20Calculus.doc.pdf",
+        "resolved_via": "download.php"
+      },
+      "Solutions": {
+        "tid": 7622,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7622",
+        "docs_name": "/docs/7622 S_MarchRegionalCalcIndvSols.pdf",
+        "docs_url": "https://tests.famat.org/docs/7622%20S_MarchRegionalCalcIndvSols.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 7623,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7623",
+        "docs_name": "/docs/7623 T_MarchRegCalcIndv.pdf",
+        "docs_url": "https://tests.famat.org/docs/7623%20T_MarchRegCalcIndv.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2696,
+    "year": 2013,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 7881,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7881",
+        "docs_name": "/docs/7881 A_2013 FebCalcAnswers.pdf",
+        "docs_url": "https://tests.famat.org/docs/7881%20A_2013%20FebCalcAnswers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 7882,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7882",
+        "docs_name": "/docs/7882 S_2013 FebCalcIndvSols.pdf",
+        "docs_url": "https://tests.famat.org/docs/7882%20S_2013%20FebCalcIndvSols.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 7883,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7883",
+        "docs_name": "/docs/7883 T_2013 FebruaryCalcIndvTest.pdf",
+        "docs_url": "https://tests.famat.org/docs/7883%20T_2013%20FebruaryCalcIndvTest.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2690,
+    "year": 2013,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 7862,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7862",
+        "docs_name": "/docs/7862 S_2013 C Individual Solutions_min.pdf",
+        "docs_url": "https://tests.famat.org/docs/7862%20S_2013%20C%20Individual%20Solutions_min.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 7863,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7863",
+        "docs_name": "/docs/7863 T_2013 C Individual_min.pdf",
+        "docs_url": "https://tests.famat.org/docs/7863%20T_2013%20C%20Individual_min.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2722,
+    "year": 2013,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 7935,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7935",
+        "docs_name": "/docs/7935 A_Calculus Answers- March Regional.pdf",
+        "docs_url": "https://tests.famat.org/docs/7935%20A_Calculus%20Answers-%20March%20Regional.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 7936,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7936",
+        "docs_name": "/docs/7936 S_Calculus Individual Solutions- March Regional.pdf",
+        "docs_url": "https://tests.famat.org/docs/7936%20S_Calculus%20Individual%20Solutions-%20March%20Regional.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 7937,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=7937",
+        "docs_name": "/docs/7937 T_Calculus Individual- March Regional.pdf",
+        "docs_url": "https://tests.famat.org/docs/7937%20T_Calculus%20Individual-%20March%20Regional.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2814,
+    "year": 2014,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8145,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8145",
+        "docs_name": "/docs/8145 A_2014 February Calculus Answer Key.pdf",
+        "docs_url": "https://tests.famat.org/docs/8145%20A_2014%20February%20Calculus%20Answer%20Key.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8146,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8146",
+        "docs_name": "/docs/8146 S_Individual Solution Calculus.pdf",
+        "docs_url": "https://tests.famat.org/docs/8146%20S_Individual%20Solution%20Calculus.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8147,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8147",
+        "docs_name": "/docs/8147 T_Individual Test Calculus.pdf",
+        "docs_url": "https://tests.famat.org/docs/8147%20T_Individual%20Test%20Calculus.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2790,
+    "year": 2014,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8093,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8093",
+        "docs_name": "/docs/8093 A_JanCalcAnswers.pdf",
+        "docs_url": "https://tests.famat.org/docs/8093%20A_JanCalcAnswers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8094,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8094",
+        "docs_name": "/docs/8094 T_JanCalcIndvTest.pdf",
+        "docs_url": "https://tests.famat.org/docs/8094%20T_JanCalcIndvTest.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8095,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8095",
+        "docs_name": "/docs/8095 S_JanCalcIndvSols.pdf",
+        "docs_url": "https://tests.famat.org/docs/8095%20S_JanCalcIndvSols.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2851,
+    "year": 2014,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8238,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8238",
+        "docs_name": "/docs/8238 A_Calculus Reduced Answer sheet (Individual).pdf",
+        "docs_url": "https://tests.famat.org/docs/8238%20A_Calculus%20Reduced%20Answer%20sheet%20%28Individual%29.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8239,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8239",
+        "docs_name": "/docs/8239 S_Calc Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/8239%20S_Calc%20Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8240,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8240",
+        "docs_name": "/docs/8240 T_March Individual Final.pdf",
+        "docs_url": "https://tests.famat.org/docs/8240%20T_March%20Individual%20Final.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2942,
+    "year": 2015,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8475,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8475",
+        "docs_name": "/docs/8475 A_february regional calculus individual answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/8475%20A_february%20regional%20calculus%20individual%20answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8476,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8476",
+        "docs_name": "/docs/8476 S_february regional calculus individual solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/8476%20S_february%20regional%20calculus%20individual%20solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8477,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8477",
+        "docs_name": "/docs/8477 T_february regional calculus individual.pdf",
+        "docs_url": "https://tests.famat.org/docs/8477%20T_february%20regional%20calculus%20individual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2927,
+    "year": 2015,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8423,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8423",
+        "docs_name": "/docs/8423 A_calc answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/8423%20A_calc%20answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8424,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8424",
+        "docs_name": "/docs/8424 S_calc indiv solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/8424%20S_calc%20indiv%20solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8425,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8425",
+        "docs_name": "/docs/8425 T_calc indiv test.pdf",
+        "docs_url": "https://tests.famat.org/docs/8425%20T_calc%20indiv%20test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 2950,
+    "year": 2015,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8499,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8499",
+        "docs_name": "/docs/8499 A_Mu Alpha Theta Individual Test 1 Answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/8499%20A_Mu%20Alpha%20Theta%20Individual%20Test%201%20Answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8500,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8500",
+        "docs_name": "/docs/8500 S_Mu Alpha Theta Solutions 1.pdf",
+        "docs_url": "https://tests.famat.org/docs/8500%20S_Mu%20Alpha%20Theta%20Solutions%201.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8501,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8501",
+        "docs_name": "/docs/8501 T_Mu Alpha Theta Questions 1.pdf",
+        "docs_url": "https://tests.famat.org/docs/8501%20T_Mu%20Alpha%20Theta%20Questions%201.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3060,
+    "year": 2016,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8785,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8785",
+        "docs_name": "/docs/8785 A_Calc Ans 2016 Feb.pdf",
+        "docs_url": "https://tests.famat.org/docs/8785%20A_Calc%20Ans%202016%20Feb.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8786,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8786",
+        "docs_name": "/docs/8786 S_2016 Feb Calc Indiv solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/8786%20S_2016%20Feb%20Calc%20Indiv%20solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8787,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8787",
+        "docs_name": "/docs/8787 T_2016 Feb Calc Indiv.pdf",
+        "docs_url": "https://tests.famat.org/docs/8787%20T_2016%20Feb%20Calc%20Indiv.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Errata": {
+        "tid": 8810,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8810",
+        "docs_name": "/docs/8810 E_February 2016 Errata sheet.pdf",
+        "docs_url": "https://tests.famat.org/docs/8810%20E_February%202016%20Errata%20sheet.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3048,
+    "year": 2016,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8742,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8742",
+        "docs_name": "/docs/8742 A_calc january regional individual test answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/8742%20A_calc%20january%20regional%20individual%20test%20answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8743,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8743",
+        "docs_name": "/docs/8743 S_calc january regional individual test solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/8743%20S_calc%20january%20regional%20individual%20test%20solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8744,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8744",
+        "docs_name": "/docs/8744 T_calc january regional individual test.pdf",
+        "docs_url": "https://tests.famat.org/docs/8744%20T_calc%20january%20regional%20individual%20test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3086,
+    "year": 2016,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 8840,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8840",
+        "docs_name": "/docs/8840 A_March Mu Calc Ind Key.pdf",
+        "docs_url": "https://tests.famat.org/docs/8840%20A_March%20Mu%20Calc%20Ind%20Key.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 8841,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8841",
+        "docs_name": "/docs/8841 S_March 2016 Calculus Ind Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/8841%20S_March%202016%20Calculus%20Ind%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 8842,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=8842",
+        "docs_name": "/docs/8842 T_March MAO Calculus Ind Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/8842%20T_March%20MAO%20Calculus%20Ind%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3165,
+    "year": 2017,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 9065,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9065",
+        "docs_name": "/docs/9065 S_Feb Calc SOLUTIONS[1].pdf",
+        "docs_url": "https://tests.famat.org/docs/9065%20S_Feb%20Calc%20SOLUTIONS%5B1%5D.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9066,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9066",
+        "docs_name": "/docs/9066 T_Feb Calc INDIV[1].pdf",
+        "docs_url": "https://tests.famat.org/docs/9066%20T_Feb%20Calc%20INDIV%5B1%5D.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3154,
+    "year": 2017,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Errata": {
+        "tid": 9030,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9030",
+        "docs_name": "/docs/9030 E_2017 Calculus Individual Errata.pdf",
+        "docs_url": "https://tests.famat.org/docs/9030%20E_2017%20Calculus%20Individual%20Errata.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 9031,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9031",
+        "docs_name": "/docs/9031 S_Calc January Regional 2017 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9031%20S_Calc%20January%20Regional%202017%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9032,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9032",
+        "docs_name": "/docs/9032 T_January Regional 2017.pdf",
+        "docs_url": "https://tests.famat.org/docs/9032%20T_January%20Regional%202017.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3175,
+    "year": 2017,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 9097,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9097",
+        "docs_name": "/docs/9097 S_Indiv Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9097%20S_Indiv%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9098,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9098",
+        "docs_name": "/docs/9098 T_Indiv.pdf",
+        "docs_url": "https://tests.famat.org/docs/9098%20T_Indiv.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3281,
+    "year": 2018,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 9373,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9373",
+        "docs_name": "/docs/9373 A_2018 February Calculus Answer Keys.pdf",
+        "docs_url": "https://tests.famat.org/docs/9373%20A_2018%20February%20Calculus%20Answer%20Keys.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 9374,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9374",
+        "docs_name": "/docs/9374 S_Feb Regional 2018 Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9374%20S_Feb%20Regional%202018%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9375,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9375",
+        "docs_name": "/docs/9375 T_Feb Regional 2018.pdf",
+        "docs_url": "https://tests.famat.org/docs/9375%20T_Feb%20Regional%202018.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3273,
+    "year": 2018,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Test": {
+        "tid": 9349,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9349",
+        "docs_name": "/docs/9349 T_2018 Jan Calc Individual.pdf",
+        "docs_url": "https://tests.famat.org/docs/9349%20T_2018%20Jan%20Calc%20Individual.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 9350,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9350",
+        "docs_name": "/docs/9350 S_Calc Test Indiv Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9350%20S_Calc%20Test%20Indiv%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3308,
+    "year": 2018,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 9428,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9428",
+        "docs_name": "/docs/9428 A_2018 March Calc Indi Answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/9428%20A_2018%20March%20Calc%20Indi%20Answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 9429,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9429",
+        "docs_name": "/docs/9429 S_2018  March Calculus Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9429%20S_2018%20%20March%20Calculus%20Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9430,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9430",
+        "docs_name": "/docs/9430 T_2018 March Calculus Individual Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/9430%20T_2018%20March%20Calculus%20Individual%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3384,
+    "year": 2019,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 9627,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9627",
+        "docs_name": "/docs/9627 A_February Calculus Individual Answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/9627%20A_February%20Calculus%20Individual%20Answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 9628,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9628",
+        "docs_name": "/docs/9628 S_February Calculus Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9628%20S_February%20Calculus%20Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9629,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9629",
+        "docs_name": "/docs/9629 T_February Calculus Individual.pdf",
+        "docs_url": "https://tests.famat.org/docs/9629%20T_February%20Calculus%20Individual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3368,
+    "year": 2019,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 9587,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9587",
+        "docs_name": "/docs/9587 A_Jan Calc Answer sheet.pdf",
+        "docs_url": "https://tests.famat.org/docs/9587%20A_Jan%20Calc%20Answer%20sheet.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 9588,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9588",
+        "docs_name": "/docs/9588 S_Calculus Jan Individual Round Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9588%20S_Calculus%20Jan%20Individual%20Round%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9589,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9589",
+        "docs_name": "/docs/9589 T_Individual Test January Regional.pdf",
+        "docs_url": "https://tests.famat.org/docs/9589%20T_Individual%20Test%20January%20Regional.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3396,
+    "year": 2019,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 9660,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9660",
+        "docs_name": "/docs/9660 S_March Regional 2019 Individual Solutions[1].pdf",
+        "docs_url": "https://tests.famat.org/docs/9660%20S_March%20Regional%202019%20Individual%20Solutions%5B1%5D.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9661,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9661",
+        "docs_name": "/docs/9661 T_March Regional 2019 Individual[1].pdf",
+        "docs_url": "https://tests.famat.org/docs/9661%20T_March%20Regional%202019%20Individual%5B1%5D.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3519,
+    "year": 2020,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 9913,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9913",
+        "docs_name": "/docs/9913 S_February Calculus Individual Test Solution.pdf",
+        "docs_url": "https://tests.famat.org/docs/9913%20S_February%20Calculus%20Individual%20Test%20Solution.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9914,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9914",
+        "docs_name": "/docs/9914 T_February Calculus Individual Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/9914%20T_February%20Calculus%20Individual%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3479,
+    "year": 2020,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 9861,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9861",
+        "docs_name": "/docs/9861 S_2020 JAN CALC Indi SOLUTIONS.pdf",
+        "docs_url": "https://tests.famat.org/docs/9861%20S_2020%20JAN%20CALC%20Indi%20SOLUTIONS.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 9862,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9862",
+        "docs_name": "/docs/9862 T_2020 JAN CALC INDIV.pdf",
+        "docs_url": "https://tests.famat.org/docs/9862%20T_2020%20JAN%20CALC%20INDIV.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3546,
+    "year": 2020,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Test": {
+        "tid": 9967,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=9967",
+        "docs_name": "/docs/9967 T_ march inidi with solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/9967%20T_%20march%20inidi%20with%20solutions.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3571,
+    "year": 2021,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 10021,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10021",
+        "docs_name": "/docs/10021 S_Calculus \u044e\u2510\u0432__ February Regional \u044e\u2510\u0432__ Individual Solutions \u044e\u2510\u0432__ 2021.pdf",
+        "docs_url": "https://tests.famat.org/docs/10021%20S_Calculus%20%D1%8E%E2%94%90%D0%B2__%20February%20Regional%20%D1%8E%E2%94%90%D0%B2__%20Individual%20Solutions%20%D1%8E%E2%94%90%D0%B2__%202021.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 10022,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10022",
+        "docs_name": "/docs/10022 T_Calculus \u0413__ February Regional \u0413__ Individual Test \u0413__ 2021.pdf",
+        "docs_url": "https://tests.famat.org/docs/10022%20T_Calculus%20%D0%93__%20February%20Regional%20%D0%93__%20Individual%20Test%20%D0%93__%202021.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3561,
+    "year": 2021,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 10000,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10000",
+        "docs_name": "/docs/10000 S_2021 Jan Calc Individual Solutions.pdf",
+        "docs_url": "https://tests.famat.org/docs/10000%20S_2021%20Jan%20Calc%20Individual%20Solutions.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 10001,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10001",
+        "docs_name": "/docs/10001 T_2021 Jan Regional Calc Individual.pdf",
+        "docs_url": "https://tests.famat.org/docs/10001%20T_2021%20Jan%20Regional%20Calc%20Individual.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3585,
+    "year": 2021,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Answers": {
+        "tid": 10056,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10056",
+        "docs_name": "/docs/10056 A_Calculus Individual Answers.pdf",
+        "docs_url": "https://tests.famat.org/docs/10056%20A_Calculus%20Individual%20Answers.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Solutions": {
+        "tid": 10057,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10057",
+        "docs_name": "/docs/10057 S_Calculus Individual Soluttions .pdf",
+        "docs_url": "https://tests.famat.org/docs/10057%20S_Calculus%20Individual%20Soluttions%20.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 10342,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10342",
+        "docs_name": "/docs/10342 T_Calc Mar 2022 Reg Indiv Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/10342%20T_Calc%20Mar%202022%20Reg%20Indiv%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3671,
+    "year": 2022,
+    "category": "Regionals - February",
+    "test_type": "Regional",
+    "month": "February",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 10279,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10279",
+        "docs_name": "/docs/10279 S_Calc Feb 2022 Reg Indiv Ans and Sols.pdf",
+        "docs_url": "https://tests.famat.org/docs/10279%20S_Calc%20Feb%202022%20Reg%20Indiv%20Ans%20and%20Sols.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 10280,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10280",
+        "docs_name": "/docs/10280 T_Calc Feb 2022 Reg Indiv Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/10280%20T_Calc%20Feb%202022%20Reg%20Indiv%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3662,
+    "year": 2022,
+    "category": "Regionals - January",
+    "test_type": "Regional",
+    "month": "January",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 10257,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10257",
+        "docs_name": "/docs/10257 S_Calc Jan 2022 Reg Indiv Ans and Sols.pdf",
+        "docs_url": "https://tests.famat.org/docs/10257%20S_Calc%20Jan%202022%20Reg%20Indiv%20Ans%20and%20Sols.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Test": {
+        "tid": 10258,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10258",
+        "docs_name": "/docs/10258 T_Calc Jan 2022 Reg Indiv Test.pdf",
+        "docs_url": "https://tests.famat.org/docs/10258%20T_Calc%20Jan%202022%20Reg%20Indiv%20Test.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  },
+  {
+    "test_id": 3699,
+    "year": 2022,
+    "category": "Regionals - March",
+    "test_type": "Regional",
+    "month": "March",
+    "level": "Calculus/Mu",
+    "style": "(Individual)",
+    "calculator": "N",
+    "host": "FAMAT",
+    "is_individual": true,
+    "downloads": {
+      "Solutions": {
+        "tid": 10341,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10341",
+        "docs_name": "/docs/10341 S_Calc Mar 2022 Reg Indiv Ans and Sols.pdf",
+        "docs_url": "https://tests.famat.org/docs/10341%20S_Calc%20Mar%202022%20Reg%20Indiv%20Ans%20and%20Sols.pdf",
+        "resolved_via": "docs_index"
+      },
+      "Errata": {
+        "tid": 10354,
+        "download_url": "https://tests.famat.org/scripts/download.php?tid=10354",
+        "docs_name": "/docs/10354 E_Errata for All Tests from 3-5-2022 Regional.pdf",
+        "docs_url": "https://tests.famat.org/docs/10354%20E_Errata%20for%20All%20Tests%20from%203-5-2022%20Regional.pdf",
+        "resolved_via": "docs_index"
+      }
+    }
+  }
+]
