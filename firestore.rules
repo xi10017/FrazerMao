@@ -187,9 +187,9 @@ service cloud.firestore {
     }
 
     /**
-     * Approved per-test answer key overrides (public read — same as catalog keys).
+     * Live answer key overrides — single global doc (public read).
      */
-    match /answer_key_overrides/{testId} {
+    match /answer_key_overrides/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }

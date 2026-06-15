@@ -14,6 +14,7 @@ import {
   Timestamp,
   writeBatch,
   deleteDoc,
+  runTransaction,
   type Firestore,
 } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -27,6 +28,9 @@ export const SUPERSEDED_REPORT_NOTE =
   'Auto-closed: another correction was approved for this question.';
 
 export const ANSWER_KEY_ARCHIVE_DAYS = 30;
+
+/** Single Firestore doc holding all per-test answer key overrides. */
+export const GLOBAL_OVERRIDES_DOC_ID = 'global';
 
 export type AnswerKeyReportGroup = {
   key: string;
@@ -60,6 +64,38 @@ export function firestoreOverridesToMap(
     const q = Number(key);
     if (q >= 1) result[q] = value;
   }
+  return result;
+}
+
+function globalOverridesRef(db: Firestore) {
+  return doc(db, 'answer_key_overrides', GLOBAL_OVERRIDES_DOC_ID);
+}
+
+function parseByTestField(
+  byTest: Record<string, Record<string, string | string[]>> | undefined
+): Record<string, AnswerKeyOverrides> {
+  if (!byTest) return {};
+  const result: Record<string, AnswerKeyOverrides> = {};
+  for (const [testId, raw] of Object.entries(byTest)) {
+    result[testId] = firestoreOverridesToMap(raw);
+  }
+  return result;
+}
+
+/** Merge legacy per-test override docs into a single map (pre-migration). */
+async function fetchLegacyPerTestOverrides(
+  db: Firestore
+): Promise<Record<string, AnswerKeyOverrides>> {
+  const snap = await getDocs(collection(db, 'answer_key_overrides'));
+  const result: Record<string, AnswerKeyOverrides> = {};
+  snap.forEach((docSnap) => {
+    if (docSnap.id === GLOBAL_OVERRIDES_DOC_ID) return;
+    const data = docSnap.data();
+    const testId = (data.testId as string) || docSnap.id;
+    result[testId] = firestoreOverridesToMap(
+      data.overrides as Record<string, string | string[]> | undefined
+    );
+  });
   return result;
 }
 
@@ -364,31 +400,26 @@ export async function fetchAnswerKeyOverridesForTest(
   db: Firestore,
   testId: string
 ): Promise<AnswerKeyOverrides> {
-  const ref = doc(db, 'answer_key_overrides', testId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return {};
-  const data = snap.data();
-  return firestoreOverridesToMap(
-    data.overrides as Record<string, string | string[]> | undefined
-  );
+  const all = await fetchAllAnswerKeyOverrides(db);
+  return all[testId] ?? {};
 }
 
 export async function fetchAllAnswerKeyOverrides(
   db: Firestore
 ): Promise<Record<string, AnswerKeyOverrides>> {
   try {
-    const snap = await getDocs(collection(db, 'answer_key_overrides'));
-    const result: Record<string, AnswerKeyOverrides> = {};
-    snap.forEach((docSnap) => {
-      const data = docSnap.data();
-      const testId = (data.testId as string) || docSnap.id;
-      result[testId] = firestoreOverridesToMap(
-        data.overrides as Record<string, string | string[]> | undefined
+    const globalSnap = await getDoc(globalOverridesRef(db));
+    if (globalSnap.exists()) {
+      return parseByTestField(
+        globalSnap.data().byTest as
+          | Record<string, Record<string, string | string[]>>
+          | undefined
       );
-    });
-    return result;
+    }
+
+    // Fallback while legacy per-test docs still exist.
+    return await fetchLegacyPerTestOverrides(db);
   } catch (error) {
-    // Rules may not be deployed yet — treat as no overrides instead of crashing UI.
     const code = (error as { code?: string })?.code;
     if (code === 'permission-denied') {
       return {};
@@ -405,24 +436,33 @@ async function mergeApprovedOverride(
   adminUid: string,
   sourceReportId: string
 ): Promise<void> {
-  const overrideRef = doc(db, 'answer_key_overrides', testId);
-  const existing = await getDoc(overrideRef);
-  const merged: Record<string, string | string[]> = existing.exists()
-    ? { ...(existing.data().overrides as Record<string, string | string[]>) }
-    : {};
-  merged[String(questionNumber)] = proposedAnswer;
+  await runTransaction(db, async (transaction) => {
+    const ref = globalOverridesRef(db);
+    const snap = await transaction.get(ref);
+    const byTest: Record<string, Record<string, string | string[]>> = snap.exists()
+      ? {
+          ...(snap.data().byTest as Record<
+            string,
+            Record<string, string | string[]>
+          >),
+        }
+      : {};
 
-  await setDoc(
-    overrideRef,
-    {
-      testId,
-      overrides: merged,
-      updatedAt: serverTimestamp(),
-      updatedBy: adminUid,
-      sourceReportId,
-    },
-    { merge: true }
-  );
+    const testOverrides = { ...(byTest[testId] ?? {}) };
+    testOverrides[String(questionNumber)] = proposedAnswer;
+    byTest[testId] = testOverrides;
+
+    transaction.set(
+      ref,
+      {
+        byTest,
+        updatedAt: serverTimestamp(),
+        updatedBy: adminUid,
+        lastSourceReportId: sourceReportId,
+      },
+      { merge: true }
+    );
+  });
 }
 
 export async function approveAnswerKeyReport(

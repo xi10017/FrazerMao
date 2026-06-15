@@ -20,6 +20,7 @@ import { useAnswerKeyOverridesContext } from '@/contexts/AnswerKeyOverridesConte
 import type { AnswerKeyReport } from '@/lib/types';
 import {
   answerKeyValuesEqual,
+  buildBrowseTestUrl,
   getCatalogAnswerForQuestion,
   getEffectiveAnswerForQuestion,
 } from '@/lib/test-logic';
@@ -36,7 +37,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
-import { AlertTriangle, Check, X } from 'lucide-react';
+import { AlertTriangle, Check, ExternalLink, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 function ReportGroupCard({
@@ -72,13 +73,23 @@ function ReportGroupCard({
                 ` · ${group.reports.length} reports`}
             </CardDescription>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {group.hasConflictingProposals && (
               <Badge variant="destructive" className="gap-1">
                 <AlertTriangle className="h-3 w-3" />
                 Conflicting proposals
               </Badge>
             )}
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={buildBrowseTestUrl(group.testId)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                View test
+              </a>
+            </Button>
             <Badge variant="outline">Pending</Badge>
           </div>
         </div>
@@ -196,9 +207,21 @@ function ArchiveReportCard({ report }: { report: AnswerKeyReport }) {
                 : '—'}
             </CardDescription>
           </div>
-          <Badge variant={isApproved ? 'default' : 'secondary'}>
-            {isApproved ? 'Approved' : isSuperseded ? 'Auto-closed' : 'Rejected'}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={buildBrowseTestUrl(report.testId)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                View test
+              </a>
+            </Button>
+            <Badge variant={isApproved ? 'default' : 'secondary'}>
+              {isApproved ? 'Approved' : isSuperseded ? 'Auto-closed' : 'Rejected'}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">

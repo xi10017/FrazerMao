@@ -412,3 +412,13 @@ export function buildRetakePracticeUrl(
   const submissionData = encodeURIComponent(JSON.stringify(submission.answers));
   return `/practice/${testId}?retake=true&submissionId=${submission.id}&submission=${submissionData}`;
 }
+
+/** Read-only test + solutions viewer (no scantron). */
+export function buildBrowseTestUrl(
+  testId: string,
+  returnTo = '/admin/answer-keys'
+): string {
+  const safeReturn =
+    returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/admin/answer-keys';
+  return `/practice/${testId}?browse=true&returnTo=${encodeURIComponent(safeReturn)}`;
+}

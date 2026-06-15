@@ -89,6 +89,9 @@ interface PracticeArenaProps {
   isRetakeMode?: boolean;
   continueRetake?: boolean;
   startFresh?: boolean;
+  /** Test + solutions only — no scantron, timer, or submission flow. */
+  isBrowseMode?: boolean;
+  returnTo?: string;
 }
 
 const PracticeArena: React.FC<PracticeArenaProps> = ({
@@ -100,6 +103,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   isRetakeMode: isRetakeModeProp,
   continueRetake: continueRetakeProp,
   startFresh: startFreshProp,
+  isBrowseMode: isBrowseModeProp = false,
+  returnTo: returnToProp,
 }) => {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [markedQuestions, setMarkedQuestions] = useState<MarkedQuestions>({});
@@ -137,7 +142,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const [solutionDividerPosition, setSolutionDividerPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingSolution, setIsDraggingSolution] = useState(false);
-  const [isScantronCollapsed, setIsScantronCollapsed] = useState(false);
+  const [isScantronCollapsed, setIsScantronCollapsed] = useState(
+    isBrowseModeProp
+  );
   const [isProgressLoading, setIsProgressLoading] = useState(true);
   const [retakeLocked, setRetakeLocked] = useState(false);
 
@@ -361,7 +368,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   // Effect to initialize the arena for either review or practice mode
   useEffect(() => {
-    if (!user || !isClient) return;
+    if (!isClient) return;
+
+    if (isBrowseModeProp) {
+      setIsProgressLoading(false);
+      return;
+    }
+
+    if (!user) return;
 
     let cancelled = false;
 
@@ -584,12 +598,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     isClient,
     toast,
     router,
+    isBrowseModeProp,
   ]);
 
 
   // Effect to save progress (answers or marks) to localStorage
   useEffect(() => {
-    if (!user || !isClient) return;
+    if (!user || !isClient || isBrowseModeProp) return;
 
     if (isReviewMode && currentSubmissionId) {
       saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
@@ -622,6 +637,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     isRetakeMode,
     currentSubmissionId,
     isClient,
+    isBrowseModeProp,
   ]);
 
   useEffect(() => {
@@ -634,7 +650,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   }, [userAnswers, markedQuestions, checkedQuestions, timerState]);
 
   const flushInProgress = useCallback(() => {
-    if (!user || !isClient || isReviewMode) return;
+    if (!user || !isClient || isReviewMode || isBrowseModeProp) return;
     const payload = buildInProgressPayload();
     if (isRetakeMode && retakeSourceAnswersRef.current) {
       persistRetakeInProgressLocally(user.uid, test.id, payload);
@@ -654,6 +670,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     isReviewMode,
     isRetakeMode,
     isClient,
+    isBrowseModeProp,
     buildInProgressPayload,
   ]);
 
@@ -674,23 +691,23 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   
   // Effect to save checked questions to localStorage
   useEffect(() => {
-    if (!user || !isClient || isReviewMode || isRetakeMode) return;
+    if (!user || !isClient || isReviewMode || isRetakeMode || isBrowseModeProp) return;
     saveInProgressChecked(user.uid, test.id, checkedQuestions);
-  }, [checkedQuestions, user, test.id, isClient, isReviewMode, isRetakeMode]);
+  }, [checkedQuestions, user, test.id, isClient, isReviewMode, isRetakeMode, isBrowseModeProp]);
 
   // Timer: save on start/pause and every 15s while running (not every second)
   useEffect(() => {
-    if (!user || !isClient || isReviewMode || isRetakeMode) return;
+    if (!user || !isClient || isReviewMode || isRetakeMode || isBrowseModeProp) return;
     saveTimerState(user.uid, test.id, latestProgressRef.current.timerState);
-  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode]);
+  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode, isBrowseModeProp]);
 
   useEffect(() => {
-    if (!user || !isClient || isReviewMode || isRetakeMode || !timerState.isRunning) return;
+    if (!user || !isClient || isReviewMode || isRetakeMode || isBrowseModeProp || !timerState.isRunning) return;
     const intervalId = setInterval(() => {
       saveTimerState(user.uid, test.id, latestProgressRef.current.timerState);
     }, 15000);
     return () => clearInterval(intervalId);
-  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode]);
+  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode, isBrowseModeProp]);
 
   const handleAnswerSelect = (question: number, answer: string | null) => {
     if (isRetakeMode) {
@@ -759,6 +776,14 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     router.push(`/`);
   };
 
+  const handleBrowseBack = () => {
+    const dest =
+      returnToProp?.startsWith('/') && !returnToProp.startsWith('//')
+        ? returnToProp
+        : '/admin/answer-keys';
+    router.push(dest);
+  };
+
   const handleRetakeCancelled = () => {
     router.push(`/history/${test.id}`);
   };
@@ -777,8 +802,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     setShowSolution(!showSolution);
   };
 
-  const isPracticeMode = !isReviewMode;
+  const isPracticeMode = !isReviewMode && !isBrowseModeProp;
   const isSubmittable = Object.keys(userAnswers).length > 0;
+  const hideScantron = isBrowseModeProp;
 
   // --- Main Divider Dragging Logic ---
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -869,7 +895,22 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       )}
       {isClient && (
         <>
-          {isPracticeMode ? (
+          {isBrowseModeProp ? (
+            <>
+              {solution && (
+                <Button
+                  variant={showSolution ? 'secondary' : 'outline'}
+                  onClick={handleToggleSolution}
+                >
+                  <BookOpenCheck className="mr-2 h-4 w-4" />
+                  {showSolution ? 'Hide Solutions' : 'Show Solutions'}
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleBrowseBack}>
+                Back to Answer Keys
+              </Button>
+            </>
+          ) : isPracticeMode ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button disabled={!isSubmittable}>Submit Test</Button>
@@ -940,8 +981,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
             <h2 className="text-xl font-bold tracking-tight">
               {getDivisionLabel(test.division)}: {test.year} {test.month && `${test.month} `}{test.test_type}
               {isRetakeMode && <span className="text-primary ml-2">(Retake)</span>}
+              {isBrowseModeProp && (
+                <span className="text-muted-foreground ml-2 text-base font-normal">
+                  (Preview)
+                </span>
+              )}
             </h2>
-            {isReviewMode && currentSubmissionId && (
+            {isReviewMode && currentSubmissionId && !isBrowseModeProp && (
               retakeLocked ? (
                 <div className="flex items-center gap-2 rounded-md border border-muted bg-muted/50 px-3 py-1.5">
                   <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -993,9 +1039,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                   ref={leftPanelRef}
                   className="relative flex h-full"
                   style={{
-                    width: isScantronCollapsed
-                      ? '100%'
-                      : `${dividerPosition}%`,
+                    width:
+                      hideScantron || isScantronCollapsed
+                        ? '100%'
+                        : `${dividerPosition}%`,
                   }}
                 >
                   {/* Panel for Test and Solution */}
@@ -1008,6 +1055,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                       }}
                     >
                       <div className="relative h-full w-full">
+                        {!hideScantron && (
                          <div className="absolute top-2 left-2 z-10">
                           <TooltipProvider>
                             <Tooltip>
@@ -1027,12 +1075,13 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                             </Tooltip>
                           </TooltipProvider>
                         </div>
+                        )}
                         <PDFDisplay url={test.url} />
                       </div>
                     </div>
 
                     {/* Solution PDF - slides in from the right of the test */}
-                    {isReviewMode && solution && (
+                    {(isReviewMode || isBrowseModeProp) && solution && (
                        <div
                         className="absolute top-0 right-0 h-full flex transition-transform duration-500 ease-in-out"
                         style={{
@@ -1050,7 +1099,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
                   </div>
                 </div>
 
-                {!isScantronCollapsed && (
+                {!hideScantron && !isScantronCollapsed && (
                   <>
                     <DraggableDivider onMouseDown={handleMouseDown} />
                     {/* Right Panel: Scantron */}

@@ -5,8 +5,8 @@ import type { FamatTest, AnyFamatTest, UserAnswers } from '@/lib/types';
 import PracticeArena from '@/components/pages/practice/PracticeArena';
 
 type Props = {
-  params: { testId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ testId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export default async function PracticePage({ params, searchParams }: Props) {
@@ -34,6 +34,11 @@ export default async function PracticePage({ params, searchParams }: Props) {
   const freshParam = sParams?.fresh;
   const startFresh = freshParam === 'true';
   const submissionId = sParams?.submissionId as string | undefined;
+  const browseParam = sParams?.browse;
+  const isBrowseMode = browseParam === 'true';
+  const returnToParam = sParams?.returnTo;
+  const returnTo =
+    typeof returnToParam === 'string' ? returnToParam : undefined;
 
   let initialAnswers: UserAnswers | undefined = undefined;
   const submissionParam = sParams?.submission;
@@ -55,6 +60,8 @@ export default async function PracticePage({ params, searchParams }: Props) {
       continueRetake={continueRetake}
       startFresh={startFresh}
       submissionId={submissionId}
+      isBrowseMode={isBrowseMode}
+      returnTo={returnTo}
     />
   );
 }

@@ -89,7 +89,14 @@ export async function createStudyGroup(
     joinedAt: Timestamp.now(),
   } satisfies Omit<GroupMembership, 'joinedAt'> & { joinedAt: Timestamp });
 
-  return { id: groupRef.id, ...groupData };
+  return {
+    id: groupRef.id,
+    name: groupData.name,
+    inviteCode: groupData.inviteCode,
+    createdBy: groupData.createdBy,
+    memberCount: groupData.memberCount,
+    createdAt: groupData.createdAt.toDate(),
+  };
 }
 
 export async function joinStudyGroup(
