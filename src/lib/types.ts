@@ -156,9 +156,8 @@ export type AnswerKeyReport = {
 };
 
 export type AnswerKeyOverrideDoc = {
-  testId: string;
-  overrides: Record<string, string | string[]>;
+  byTest: Record<string, Record<string, string | string[]>>;
   updatedAt: Date;
   updatedBy: string;
-  sourceReportId?: string;
+  lastSourceReportId?: string;
 };
