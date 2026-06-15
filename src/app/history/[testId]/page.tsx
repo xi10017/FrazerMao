@@ -9,11 +9,14 @@ import famatTests from '@/data/famat_tests.json';
 import {
   getTestId,
   getTestName,
+  getDivisionLabel,
   findSolutionForTest,
   buildRetakePracticeUrl,
   resolveRetakeDisplayAnswers,
-  resolveRetakeDisplayScore,
+  resolveSubmissionDisplayScore,
+  getEffectiveAnswerKey,
 } from '@/lib/test-logic';
+import { useAnswerKeyOverridesForTest } from '@/contexts/AnswerKeyOverridesContext';
 import { getSubmissionsForTest, readRetakeInProgressForTest, readPracticeInProgressForTest } from '@/lib/user-data';
 import { CancelRetakeButton } from '@/components/CancelRetakeButton';
 import { CancelPracticeButton } from '@/components/CancelPracticeButton';
@@ -73,8 +76,15 @@ function HistoryPage() {
     [test]
   );
 
+  const keyOverrides = useAnswerKeyOverridesForTest(testId);
+
   const getDisplayScore = (sub: TestSubmission) =>
-    resolveRetakeDisplayScore(sub, submissions, solution?.answers);
+    resolveSubmissionDisplayScore(
+      sub,
+      submissions,
+      solution?.answers,
+      keyOverrides
+    );
 
   useEffect(() => {
     let cancelled = false;
@@ -139,12 +149,15 @@ function HistoryPage() {
   }
 
   const handleReview = (submission: TestSubmission) => {
+    const effectiveKey = solution
+      ? getEffectiveAnswerKey(solution.answers, keyOverrides)
+      : [];
     const displayAnswers =
       submission.isRetake && solution
         ? resolveRetakeDisplayAnswers(
             submission,
             submissions,
-            solution.answers
+            effectiveKey
           )
         : submission.answers;
     const submissionData = encodeURIComponent(JSON.stringify(displayAnswers));
@@ -175,7 +188,7 @@ function HistoryPage() {
       <Card className="mb-4">
         <CardHeader>
           <CardTitle className="text-2xl">
-            History for: <span className="text-primary">{test.division}</span>
+            History for: <span className="text-primary">{getDivisionLabel(test.division)}</span>
           </CardTitle>
           <CardDescription>{getTestName(test)}</CardDescription>
           {(hasRetakeInProgress || hasPracticeInProgress) ? (

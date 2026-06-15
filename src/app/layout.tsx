@@ -8,6 +8,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import { Inter } from 'next/font/google';
 import { Source_Code_Pro } from 'next/font/google';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
+import { AnswerKeyOverridesProvider } from '@/contexts/AnswerKeyOverridesContext';
 
 export const metadata: Metadata = {
   title: 'MAOpractice',
@@ -45,11 +46,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
+            <AnswerKeyOverridesProvider>
             <div className="relative flex min-h-screen flex-col">
               <Header />
               <main className="flex-1">{children}</main>
             </div>
             <Toaster />
+            </AnswerKeyOverridesProvider>
           </FirebaseClientProvider>
         </ThemeProvider>
       </body>

@@ -11,7 +11,11 @@ import type {
 import {
   findSolutionForTest,
   getLatestDisplayAttempt,
+  getDivisionShortLabel,
+  getTestName,
+  getEffectiveAnswerKey,
 } from '@/lib/test-logic';
+import { useAnswerKeyOverridesContext } from '@/contexts/AnswerKeyOverridesContext';
 import {
   Card,
   CardContent,
@@ -55,14 +59,17 @@ interface CellData {
 
 const createReviewDataFromAttempt = (
   answers: UserAnswers,
-  solution: ReturnType<typeof findSolutionForTest>
+  answerKey: (string | string[])[]
 ): ReviewData | null => {
-  if (!solution) return null;
+  if (!answerKey.length) return null;
   const reviewData: ReviewData = {};
-  for (let i = 0; i < solution.answers.length; i++) {
+  for (let i = 0; i < answerKey.length; i++) {
+    const correctAnswer = answerKey[i];
+    if (correctAnswer === null || correctAnswer === undefined) {
+      continue;
+    }
     const qNum = i + 1;
     const userAnswer = answers[qNum];
-    const correctAnswer = solution.answers[i];
     let isCorrect = false;
 
     if (userAnswer) {
@@ -179,6 +186,7 @@ interface ProgressGridProps {
 }
 
 export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
+  const { overridesByTestId } = useAnswerKeyOverridesContext();
   const questionNumbers = useMemo(
     () => Array.from({ length: TOTAL_QUESTIONS }, (_, i) => i + 1),
     []
@@ -188,9 +196,12 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
     const data = new Map<string, Map<number, CellData>>();
     tests.forEach((test) => {
       const solution = findSolutionForTest(test);
+      const overrides = overridesByTestId[test.id];
       const testMap = new Map<number, CellData>();
 
-      const latest = solution ? getLatestDisplayAttempt(test, solution) : null;
+      const latest = solution
+        ? getLatestDisplayAttempt(test, solution, overrides)
+        : null;
 
       let reviewData: ReviewData | null = null;
       let markedQuestions: MarkedQuestions = {};
@@ -206,13 +217,20 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
         } else {
           markedQuestions = test.markedForReview || {};
         }
-        reviewData = createReviewDataFromAttempt(latest.answers, solution);
+        reviewData = solution
+          ? createReviewDataFromAttempt(
+              latest.answers,
+              getEffectiveAnswerKey(solution.answers, overrides)
+            )
+          : null;
       }
 
       questionNumbers.forEach((qNum) => {
         const note = markedQuestions[qNum];
         let cellData: Partial<CellData> = { note };
-        const correctAnswer = solution?.answers[qNum - 1] || 'N/A';
+        const correctAnswer =
+          getEffectiveAnswerKey(solution?.answers ?? [], overrides)[qNum - 1] ||
+          'N/A';
 
         if (reviewData && reviewData[qNum]) {
           const { userAnswer, isCorrect } = reviewData[qNum];
@@ -239,7 +257,7 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
       data.set(test.id, testMap);
     });
     return data;
-  }, [tests, questionNumbers]);
+  }, [tests, questionNumbers, overridesByTestId]);
 
   const getShortTestType = (testType: string) => {
     if (testType === 'Regional') return 'Reg';
@@ -277,8 +295,9 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
               </TableHead>
               {tests.map((test) => {
                 const solution = findSolutionForTest(test);
+                const overrides = overridesByTestId[test.id];
                 const latest = solution
-                  ? getLatestDisplayAttempt(test, solution)
+                  ? getLatestDisplayAttempt(test, solution, overrides)
                   : null;
                 const score = latest?.score.totalScore;
                 const isLive = latest?.isLiveSession ?? false;
@@ -290,34 +309,49 @@ export const ProgressGrid: React.FC<ProgressGridProps> = ({ tests }) => {
                 return (
                   <TableHead
                     key={test.id}
-                    className="w-14 min-w-14 text-center text-xs p-1 h-auto"
+                    className="w-14 min-w-14 max-w-14 text-center text-xs p-1 h-auto overflow-hidden"
                   >
-                    <Link
-                      href={linkHref}
-                      className="flex flex-col hover:underline"
-                    >
-                      <div
-                        className={cn(
-                          'font-bold text-lg',
-                          score !== undefined && !isLive
-                            ? 'text-primary'
-                            : isLive
-                            ? 'text-blue-500'
-                            : 'text-muted-foreground'
-                        )}
-                      >
-                        {score !== undefined ? score : 'N/A'}
-                      </div>
-                      <div className="font-bold">{test.division}</div>
-                      <div>{test.year}</div>
-                      <div>{test.month ? test.month.substring(0, 3) : ''}</div>
-                      <div className="text-muted-foreground">
-                        {getShortTestType(test.test_type)}
-                      </div>
-                      {latest?.isRetake && !isLive && (
-                        <div className="text-[10px] text-primary">Retake</div>
-                      )}
-                    </Link>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link
+                            href={linkHref}
+                            className="flex flex-col items-center hover:underline"
+                          >
+                            <div
+                              className={cn(
+                                'font-bold text-lg leading-none',
+                                score !== undefined && !isLive
+                                  ? 'text-primary'
+                                  : isLive
+                                  ? 'text-blue-500'
+                                  : 'text-muted-foreground'
+                              )}
+                            >
+                              {score !== undefined ? score : 'N/A'}
+                            </div>
+                            <div className="font-bold leading-tight">
+                              {getDivisionShortLabel(test.division)}
+                            </div>
+                            <div className="leading-tight">{test.year}</div>
+                            <div className="leading-tight">
+                              {test.month ? test.month.substring(0, 3) : ''}
+                            </div>
+                            <div className="text-muted-foreground leading-tight">
+                              {getShortTestType(test.test_type)}
+                            </div>
+                            {latest?.isRetake && !isLive && (
+                              <div className="text-[10px] text-primary leading-tight">
+                                Retake
+                              </div>
+                            )}
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{getTestName(test)}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableHead>
                 );
               })}

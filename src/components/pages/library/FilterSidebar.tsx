@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { getDivisionLabel } from '@/lib/test-logic';
 
 const FilterSection: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
@@ -29,7 +30,8 @@ const CheckboxFilter: React.FC<{
   selectedItems: string[];
   onSelectionChange: (items: string[]) => void;
   title: string;
-}> = ({ items, selectedItems, onSelectionChange, title }) => {
+  formatLabel?: (item: string) => string;
+}> = ({ items, selectedItems, onSelectionChange, title, formatLabel }) => {
   return (
     <>
       {items.map((item) => (
@@ -46,7 +48,7 @@ const CheckboxFilter: React.FC<{
             }}
           />
           <Label htmlFor={`${title}-${item}-filter`} className="font-normal">
-            {item}
+            {formatLabel ? formatLabel(item) : item}
           </Label>
         </div>
       ))}
@@ -109,6 +111,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               items={uniqueValues.divisions}
               selectedItems={selectedDivisions}
               onSelectionChange={setSelectedDivisions}
+              formatLabel={getDivisionLabel}
             />
           </FilterSection>
 

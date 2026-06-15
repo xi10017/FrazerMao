@@ -3,7 +3,13 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { FamatTestWithHistory, TestSubmission } from '@/lib/types';
-import { getTestName, buildRetakePracticeUrl } from '@/lib/test-logic';
+import {
+  getTestName,
+  buildRetakePracticeUrl,
+  findSolutionForTest,
+  resolveSubmissionDisplayScore,
+} from '@/lib/test-logic';
+import { useAnswerKeyOverridesContext } from '@/contexts/AnswerKeyOverridesContext';
 import {
   countTestsThisWeek,
   computePracticeStreak,
@@ -53,6 +59,7 @@ export const LibraryHomeSections: React.FC<LibraryHomeSectionsProps> = ({
   onSaveGoals,
   onRetakeCancelled,
 }) => {
+  const { overridesByTestId } = useAnswerKeyOverridesContext();
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [draftWeekly, setDraftWeekly] = useState(String(weeklyGoal));
   const [draftStreak, setDraftStreak] = useState(String(streakGoal));
@@ -68,6 +75,19 @@ export const LibraryHomeSections: React.FC<LibraryHomeSectionsProps> = ({
     () => tests.filter((test) => test.retakeInProgress !== undefined),
     [tests]
   );
+
+  const submissionsByTestId = useMemo(() => {
+    const map = new Map<string, TestSubmission[]>();
+    for (const sub of submissions) {
+      const list = map.get(sub.testId) ?? [];
+      list.push(sub);
+      map.set(sub.testId, list);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    }
+    return map;
+  }, [submissions]);
 
   const recentlyCompleted = useMemo(() => {
     const inProgressIds = new Set([
@@ -98,10 +118,26 @@ export const LibraryHomeSections: React.FC<LibraryHomeSectionsProps> = ({
     [submissions]
   );
   const streak = useMemo(() => computePracticeStreak(submissions), [submissions]);
-  const rollingAverage = useMemo(
-    () => computeRollingAverage(submissions),
-    [submissions]
-  );
+  const rollingAverage = useMemo(() => {
+    const regraded = submissions.map((sub) => {
+      const test = tests.find((t) => t.id === sub.testId);
+      if (!test) return sub;
+      const solution = findSolutionForTest(test);
+      if (!solution) return sub;
+      const testSubs = submissionsByTestId.get(sub.testId) ?? [sub];
+      const overrides = overridesByTestId[sub.testId];
+      return {
+        ...sub,
+        score: resolveSubmissionDisplayScore(
+          sub,
+          testSubs,
+          solution.answers,
+          overrides
+        ),
+      };
+    });
+    return computeRollingAverage(regraded);
+  }, [submissions, tests, submissionsByTestId, overridesByTestId]);
   const weeklyProgress = Math.min(100, (testsThisWeek / weeklyGoal) * 100);
   const streakProgress = Math.min(100, (streak / streakGoal) * 100);
 
@@ -376,7 +412,21 @@ export const LibraryHomeSections: React.FC<LibraryHomeSectionsProps> = ({
                   Recently completed
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {recentlyCompleted.map(({ test, submission }) => (
+                  {recentlyCompleted.map(({ test, submission }) => {
+                    const solution = findSolutionForTest(test);
+                    const testSubs =
+                      submissionsByTestId.get(test.id) ?? [submission];
+                    const overrides = overridesByTestId[test.id];
+                    const displayScore = solution
+                      ? resolveSubmissionDisplayScore(
+                          submission,
+                          testSubs,
+                          solution.answers,
+                          overrides
+                        )
+                      : submission.score;
+
+                    return (
                     <div
                       key={submission.id}
                       className="flex flex-col justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center"
@@ -390,7 +440,7 @@ export const LibraryHomeSections: React.FC<LibraryHomeSectionsProps> = ({
                             <Badge variant="outline">Retake</Badge>
                           )}
                           <Badge variant="secondary">
-                            Score: {submission.score.totalScore}
+                            Score: {displayScore.totalScore}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(submission.submittedAt, {
@@ -411,7 +461,8 @@ export const LibraryHomeSections: React.FC<LibraryHomeSectionsProps> = ({
                         </Link>
                       </Button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

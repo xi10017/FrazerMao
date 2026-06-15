@@ -12,6 +12,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getDivisionLabel, DIVISIONS } from '@/lib/test-logic';
 import {
   Card,
   CardContent,
@@ -211,8 +212,7 @@ export const Leaderboard = () => {
       return overallData.filter(entry => !entry.showOnLeaderboard || entry.testsCompleted === 0).length;
   }, [overallData]);
 
-  // Divisions are based on the actual data available in famat_tests.json
-  const divisions = ['Stats', 'Alpha'];
+  const divisions = [...DIVISIONS];
 
   return (
     <Card>
@@ -239,10 +239,10 @@ export const Leaderboard = () => {
           </TabsContent>
           <TabsContent value="by_division" className="mt-4">
             <Tabs defaultValue={divisions[0]} className="mt-4">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="flex h-auto w-full flex-wrap gap-1">
                 {divisions.map((div) => (
-                  <TabsTrigger key={div} value={div}>
-                    {div === 'Alpha' ? 'Pre-calculus' : div}
+                  <TabsTrigger key={div} value={div} className="flex-1 min-w-[5.5rem]">
+                    {getDivisionLabel(div)}
                   </TabsTrigger>
                 ))}
               </TabsList>

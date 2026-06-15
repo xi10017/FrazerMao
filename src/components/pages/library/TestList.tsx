@@ -3,7 +3,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { getTestName } from '@/lib/test-logic';
+import {
+  getTestName,
+  getDivisionLabel,
+  findSolutionForTest,
+  resolveSubmissionDisplayScore,
+} from '@/lib/test-logic';
+import { useAnswerKeyOverridesContext } from '@/contexts/AnswerKeyOverridesContext';
 import type { FamatTestWithHistory } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +31,7 @@ export const TestList: React.FC<TestListProps> = ({
   isBookmarkSaving = false,
 }) => {
   const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const { overridesByTestId } = useAnswerKeyOverridesContext();
 
   const displayedTests = showSavedOnly
     ? tests.filter((test) => bookmarkedTestIds.includes(test.id))
@@ -54,8 +61,17 @@ export const TestList: React.FC<TestListProps> = ({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {displayedTests.map((test) => {
             const hasHistory = test.history && test.history.length > 0;
+            const solution = findSolutionForTest(test);
+            const overrides = overridesByTestId[test.id];
             const mostRecentScore = hasHistory
-              ? test.history[0].score.totalScore
+              ? solution
+                ? resolveSubmissionDisplayScore(
+                    test.history[0],
+                    test.history,
+                    solution.answers,
+                    overrides
+                  ).totalScore
+                : test.history[0].score.totalScore
               : null;
             const isInProgress = test.inProgress !== undefined;
             const hasRetakeInProgress = test.retakeInProgress !== undefined;
@@ -68,7 +84,7 @@ export const TestList: React.FC<TestListProps> = ({
               >
                 <CardHeader>
                   <div className="flex items-center justify-between gap-2">
-                    <CardTitle>{test.division}</CardTitle>
+                    <CardTitle>{getDivisionLabel(test.division)}</CardTitle>
                     <div className="flex items-center gap-2">
                       {hasHistory && mostRecentScore !== null && (
                         <Badge variant="secondary">
