@@ -134,6 +134,29 @@ export function proposedAnswerToFormValue(
   return proposed;
 }
 
+export function parseProposedAnswerSelection(
+  proposed: string | string[]
+): { isThrowout: boolean; letters: string[] } {
+  if (Array.isArray(proposed)) {
+    if (proposed.length >= 5) {
+      return { isThrowout: true, letters: [] };
+    }
+    return { isThrowout: false, letters: [...proposed].sort() };
+  }
+  return { isThrowout: false, letters: [proposed] };
+}
+
+export function buildProposedAnswerFromSelection(
+  letters: readonly string[],
+  isThrowout: boolean
+): string | string[] | null {
+  if (isThrowout) return THROWOUT_ANSWER;
+  const sorted = [...letters].sort();
+  if (sorted.length === 0) return null;
+  if (sorted.length === 1) return sorted[0];
+  return sorted;
+}
+
 export async function getUserAnswerKeyReportForQuestion(
   db: Firestore,
   userId: string,
