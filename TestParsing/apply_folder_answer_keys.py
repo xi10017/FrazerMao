@@ -56,11 +56,14 @@ def parse_answer_cell(raw) -> str | list[str] | None:
     value = re.sub(r"\s*\([^)]*\)", "", value).strip()
     if not value:
         return None
-    if value.lower() in {"throw", "x"}:
+    if value.lower() in {"throw", "thrown", "x"}:
         return list(ALL_ACCEPTED_ANSWERS)
     # Thrown out / accept any response (e.g. "*", "* (ans)").
     if value.startswith("*"):
         return list(ALL_ACCEPTED_ANSWERS)
+    or_match = re.match(r"^([A-Ea-e])\s+or\s+([A-Ea-e])$", value)
+    if or_match:
+        return sorted({or_match.group(1).upper(), or_match.group(2).upper()})
     if "/" in value:
         parts = [p.strip().upper() for p in value.split("/") if p.strip()]
         if len(parts) > 1:

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,23 +12,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { useFirestore, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import {
+  buildProposedAnswerFromSelection,
   cancelPendingAnswerKeyReport,
   DuplicateAnswerKeyReportError,
   formatAnswerKeyValue,
   getUserAnswerKeyReportForQuestion,
-  proposedAnswerToFormValue,
+  parseProposedAnswerSelection,
   submitAnswerKeyReport,
-  THROWOUT_ANSWER,
   updatePendingAnswerKeyReport,
 } from '@/lib/answer-key-reports';
+import { cn } from '@/lib/utils';
 
 const CHOICES = ['A', 'B', 'C', 'D', 'E'] as const;
-const THROWOUT_VALUE = 'THROWOUT';
 
 interface ReportAnswerKeyDialogProps {
   open: boolean;
@@ -60,12 +59,18 @@ export function ReportAnswerKeyDialog({
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
-  const [proposed, setProposed] = useState<string>('');
+  const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
+  const [isThrowout, setIsThrowout] = useState(false);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
   const [editingPending, setEditingPending] = useState(false);
+
+  const resetSelection = () => {
+    setSelectedLetters([]);
+    setIsThrowout(false);
+  };
 
   useEffect(() => {
     if (!open) {
@@ -75,7 +80,7 @@ export function ReportAnswerKeyDialog({
 
     if (!isPendingReport || !user || !firestore) {
       setEditingPending(false);
-      setProposed('');
+      resetSelection();
       setMessage('');
       setIsLoading(false);
       setIsSubmitting(false);
@@ -95,18 +100,20 @@ export function ReportAnswerKeyDialog({
       .then((report) => {
         if (cancelled) return;
         if (report?.status === 'pending') {
-          setProposed(proposedAnswerToFormValue(report.proposedAnswer));
+          const parsed = parseProposedAnswerSelection(report.proposedAnswer);
+          setIsThrowout(parsed.isThrowout);
+          setSelectedLetters(parsed.letters);
           setMessage(report.message);
         } else {
           setEditingPending(false);
-          setProposed('');
+          resetSelection();
           setMessage('');
         }
       })
       .catch(() => {
         if (!cancelled) {
           setEditingPending(false);
-          setProposed('');
+          resetSelection();
           setMessage('');
         }
       })
@@ -119,15 +126,33 @@ export function ReportAnswerKeyDialog({
     };
   }, [open, isPendingReport, user, firestore, testId, questionNumber]);
 
-  const proposedAnswer =
-    proposed === THROWOUT_VALUE ? THROWOUT_ANSWER : proposed;
+  const proposedAnswer = useMemo(
+    () => buildProposedAnswerFromSelection(selectedLetters, isThrowout),
+    [selectedLetters, isThrowout]
+  );
+
+  const toggleLetter = (choice: string) => {
+    setIsThrowout(false);
+    setSelectedLetters((prev) => {
+      if (prev.includes(choice)) {
+        return prev.filter((c) => c !== choice);
+      }
+      return [...prev, choice].sort();
+    });
+  };
+
+  const selectThrowout = () => {
+    setIsThrowout(true);
+    setSelectedLetters([]);
+  };
 
   const validateForm = (): boolean => {
-    if (!proposed) {
+    if (proposedAnswer == null) {
       toast({
         variant: 'destructive',
         title: 'Select an answer',
-        description: 'Choose the proposed correct answer before submitting.',
+        description:
+          'Choose one or more letters, or Throwout, before submitting.',
       });
       return false;
     }
@@ -154,7 +179,7 @@ export function ReportAnswerKeyDialog({
       return;
     }
 
-    if (!validateForm()) return;
+    if (!validateForm() || proposedAnswer == null) return;
 
     setIsSubmitting(true);
     try {
@@ -191,7 +216,7 @@ export function ReportAnswerKeyDialog({
 
   const handleSaveChanges = async () => {
     if (!user || !firestore) return;
-    if (!validateForm()) return;
+    if (!validateForm() || proposedAnswer == null) return;
 
     setIsSubmitting(true);
     try {
@@ -316,39 +341,48 @@ export function ReportAnswerKeyDialog({
 
               <div className="space-y-2">
                 <Label>Proposed correct answer</Label>
-                <RadioGroup
-                  value={proposed || undefined}
-                  onValueChange={setProposed}
-                  disabled={isBusy}
-                >
-                  <div className="flex flex-wrap gap-3">
-                    {CHOICES.map((choice) => (
-                      <div
+                <p className="text-xs text-muted-foreground">
+                  Select one or more letters. Throwout clears letter choices.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {CHOICES.map((choice) => {
+                    const selected =
+                      !isThrowout && selectedLetters.includes(choice);
+                    return (
+                      <Button
                         key={choice}
-                        className="flex items-center space-x-2"
+                        type="button"
+                        variant={selected ? 'default' : 'outline'}
+                        size="sm"
+                        className={cn('h-9 w-9 p-0 font-semibold')}
+                        disabled={isBusy}
+                        aria-pressed={selected}
+                        onClick={() => toggleLetter(choice)}
                       >
-                        <RadioGroupItem
-                          value={choice}
-                          id={`proposed-q${questionNumber}-${choice}`}
-                        />
-                        <Label
-                          htmlFor={`proposed-q${questionNumber}-${choice}`}
-                        >
-                          {choice}
-                        </Label>
-                      </div>
-                    ))}
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value={THROWOUT_VALUE}
-                        id={`proposed-q${questionNumber}-throwout`}
-                      />
-                      <Label htmlFor={`proposed-q${questionNumber}-throwout`}>
-                        Throwout
-                      </Label>
-                    </div>
-                  </div>
-                </RadioGroup>
+                        {choice}
+                      </Button>
+                    );
+                  })}
+                  <Button
+                    type="button"
+                    variant={isThrowout ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-9 px-3"
+                    disabled={isBusy}
+                    aria-pressed={isThrowout}
+                    onClick={selectThrowout}
+                  >
+                    Throwout
+                  </Button>
+                </div>
+                {proposedAnswer != null && (
+                  <p className="text-xs text-muted-foreground">
+                    Proposing:{' '}
+                    <span className="font-medium text-foreground">
+                      {formatAnswerKeyValue(proposedAnswer)}
+                    </span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
