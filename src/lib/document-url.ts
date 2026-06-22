@@ -21,7 +21,7 @@ export function getDocumentOpenUrl(url: string): string {
   }
 
   if (kind === 'word') {
-    return `https://docs.google.com/gview?url=${encodeURIComponent(normalized)}`;
+    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(normalized)}`;
   }
 
   return normalized;

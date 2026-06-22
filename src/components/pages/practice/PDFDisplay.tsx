@@ -4,6 +4,7 @@
 import React, { memo } from 'react';
 import { PDFViewer } from './PDFViewer';
 import { GoogleDrivePDFViewer } from './GoogleDrivePDFViewer';
+import { WordDocumentViewer } from './WordDocumentViewer';
 import {
   getDocumentViewerKind,
   getDocumentOpenUrl,
@@ -23,6 +24,8 @@ const PDFDisplayComponent: React.FC<PDFDisplayProps> = ({ url }) => {
   const viewer =
     viewerKind === 'google-drive' ? (
       <GoogleDrivePDFViewer url={normalizedUrl} />
+    ) : viewerKind === 'word' ? (
+      <WordDocumentViewer url={normalizedUrl} />
     ) : (
       <PDFViewer url={normalizedUrl} />
     );
