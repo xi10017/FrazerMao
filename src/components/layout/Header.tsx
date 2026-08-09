@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getInitials } from '@/lib/utils';
+import { getAuthRedirectUrl } from '@/lib/site-url';
 
 
 function UserAuth() {
@@ -37,7 +38,7 @@ function UserAuth() {
     try {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: getAuthRedirectUrl() },
       });
     } catch (error: any) {
       console.error('Error during sign-in:', error);
