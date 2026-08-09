@@ -186,6 +186,20 @@ export at migration time.
 - Verified both the normal static build and the `/FrazerMao` project-site build:
   all 677 pages export successfully, and `npm run typecheck` passes.
 
+### Phase 7 — Custom Domain and Supabase Heartbeat (Aug 9, 2026)
+
+- Updated the Pages build for the root custom domain
+  `https://frazermao.online/` instead of the repository-path URL.
+- Added a daily GitHub Actions Supabase REST read using only the public anon key.
+  The service-role key is not used by the deployment or heartbeat workflows.
+- The heartbeat is intended to provide regular database activity for the
+  Supabase Free Plan; it does not replace backups or guarantee that Supabase
+  will never pause an inactive project.
+- Because GitHub scheduled workflows run from the repository's default branch,
+  the heartbeat must be merged into or selected as the default branch before
+  its daily schedule is active. It also runs on pushes to `supabase-migration`
+  for an immediate connectivity check.
+
 ---
 
 ## Architecture & Stack
@@ -205,7 +219,7 @@ export at migration time.
 | Frontend | Next.js 15.5, React 19, TypeScript, Tailwind, Radix UI |
 | Authentication | Supabase Auth with Google OAuth |
 | Backend / DB | Supabase Postgres with Row Level Security |
-| Hosting | GitHub Pages static export configured; hosting cutover is pending |
+| Hosting | GitHub Pages static export configured for `frazermao.online`; DNS cutover is pending |
 | Functions | Legacy Firebase Cloud Function retained for rollback |
 | Data | Static JSON catalog + Supabase tables for user/completion/group data |
 
@@ -255,8 +269,8 @@ modules or deploying through the old App Hosting configuration.
 - Push `supabase-migration`, enable GitHub Pages with **GitHub Actions** as the
   source, and add `NEXT_PUBLIC_SUPABASE_URL` plus
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` as repository Actions secrets.
-- Add `https://xi10017.github.io/FrazerMao/` to Supabase Auth redirect URLs and
-  keep the Google OAuth client callback pointed at Supabase's Auth callback.
+- Add `https://frazermao.online/` to Supabase Auth redirect URLs and keep the
+  Google OAuth client callback pointed at Supabase's Auth callback.
 - Remove the legacy Firebase client, functions, config, and dependency after a
   full production cutover and backup verification.
 - Expand catalog for 2026 season tests as they become available
