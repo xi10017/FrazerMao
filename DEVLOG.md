@@ -172,6 +172,20 @@ and those legacy services are intentionally retired.
 No study-group or answer-key-report documents were present in the Firebase
 export at migration time.
 
+### Phase 6 — Static GitHub Pages Export (Aug 8, 2026)
+
+- Configured Next.js with `output: 'export'` and trailing-slash routes.
+- Added static parameter generation for both practice and history routes.
+- Moved query-string parsing for practice into a client component so the route
+  can be prerendered without a Next.js server.
+- Added GitHub Pages project-path support through `NEXT_PUBLIC_BASE_PATH`.
+- Updated Supabase Google OAuth redirects to include the `/FrazerMao/` project
+  path when deployed at `https://xi10017.github.io/FrazerMao/`.
+- Added `.github/workflows/deploy-pages.yml`; it builds the `out/` directory and
+  deploys it through GitHub Pages when the migration branch is pushed.
+- Verified both the normal static build and the `/FrazerMao` project-site build:
+  all 677 pages export successfully, and `npm run typecheck` passes.
+
 ---
 
 ## Architecture & Stack
@@ -191,14 +205,14 @@ export at migration time.
 | Frontend | Next.js 15.5, React 19, TypeScript, Tailwind, Radix UI |
 | Authentication | Supabase Auth with Google OAuth |
 | Backend / DB | Supabase Postgres with Row Level Security |
-| Hosting | Firebase App Hosting remains configured; hosting cutover is pending |
+| Hosting | GitHub Pages static export configured; hosting cutover is pending |
 | Functions | Legacy Firebase Cloud Function retained for rollback |
 | Data | Static JSON catalog + Supabase tables for user/completion/group data |
 
 **Routes:**
 
 - `/` — Test library (home)
-- `/practice/[testId]` — Practice arena (107 static paths at last build)
+- `/practice/[testId]` — Practice arena (static paths generated from the catalog)
 - `/history/[testId]` — Review past attempts / retake
 - `/settings` — Account, bookmarks, history deletion
 - `/admin/answer-keys` — Admin dispute review
@@ -238,9 +252,11 @@ modules or deploying through the old App Hosting configuration.
 
 ## Possible Next Steps
 
-- Move hosting to a non-Firebase provider and add the production Supabase URL to
-  Auth redirect settings.
+- Push `supabase-migration`, enable GitHub Pages with **GitHub Actions** as the
+  source, and add `NEXT_PUBLIC_SUPABASE_URL` plus
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` as repository Actions secrets.
+- Add `https://xi10017.github.io/FrazerMao/` to Supabase Auth redirect URLs and
+  keep the Google OAuth client callback pointed at Supabase's Auth callback.
 - Remove the legacy Firebase client, functions, config, and dependency after a
   full production cutover and backup verification.
-- Wire CI for the new hosting provider.
 - Expand catalog for 2026 season tests as they become available

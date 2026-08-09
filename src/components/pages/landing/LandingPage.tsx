@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getAuthRedirectUrl } from '@/lib/site-url';
 
 
 const FeatureCard = ({
@@ -53,7 +54,7 @@ const UserAuthButton = () => {
     try {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: getAuthRedirectUrl() },
       });
     } catch (error: any) {
       console.error('Error during sign-in:', error);
