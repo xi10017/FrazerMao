@@ -1,14 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  useUser,
-  useFirestore,
-  useCollection,
-  useMemoFirebase,
-  useDoc,
-} from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
+import { useSupabase, useUser } from '@/supabase';
 import type { GroupMember, GroupMembership } from '@/lib/types';
 import {
   createStudyGroup,
@@ -47,7 +40,7 @@ import { Users, Copy, LogOut, Trash2 } from 'lucide-react';
 
 export const StudyGroups = () => {
   const { user } = useUser();
-  const firestore = useFirestore();
+  const { supabase } = useSupabase();
   const { toast } = useToast();
 
   const [newGroupName, setNewGroupName] = useState('');
@@ -62,25 +55,89 @@ export const StudyGroups = () => {
     groupName: string;
     inviteCode: string;
   } | null>(null);
+  const [memberships, setMemberships] = useState<
+    (GroupMembership & { id: string })[]
+  >([]);
+  const [isMembershipsLoading, setIsMembershipsLoading] = useState(true);
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [isMembersLoading, setIsMembersLoading] = useState(false);
+  const [groupDoc, setGroupDoc] = useState<{ createdBy: string } | null>(null);
 
-  const membershipsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'users', user.uid, 'groupMemberships'));
-  }, [firestore, user]);
+  useEffect(() => {
+    if (!user) {
+      setMemberships([]);
+      setIsMembershipsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setIsMembershipsLoading(true);
+    supabase
+      .from('group_memberships')
+      .select('*')
+      .eq('user_id', user.uid)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setMemberships(
+          error
+            ? []
+            : (data ?? []).map((row) => ({
+                id: row.group_id,
+                groupId: row.group_id,
+                groupName: row.group_name,
+                inviteCode: row.invite_code,
+                joinedAt: new Date(row.joined_at),
+              }))
+        );
+        setIsMembershipsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user]);
 
-  const { data: memberships, isLoading: isMembershipsLoading } =
-    useCollection<GroupMembership & { id: string }>(membershipsQuery);
-
-  const membersQuery = useMemoFirebase(() => {
-    if (!firestore || !selectedGroupId) return null;
-    return query(
-      collection(firestore, 'study_groups', selectedGroupId, 'members'),
-      orderBy('testsCompleted', 'desc')
-    );
-  }, [firestore, selectedGroupId]);
-
-  const { data: members, isLoading: isMembersLoading } =
-    useCollection<GroupMember>(membersQuery);
+  useEffect(() => {
+    if (!selectedGroupId) {
+      setMembers([]);
+      setGroupDoc(null);
+      return;
+    }
+    let cancelled = false;
+    setIsMembersLoading(true);
+    Promise.all([
+      supabase
+        .from('study_group_members')
+        .select('*')
+        .eq('group_id', selectedGroupId)
+        .order('tests_completed', { ascending: false }),
+      supabase
+        .from('study_groups')
+        .select('created_by')
+        .eq('id', selectedGroupId)
+        .maybeSingle(),
+    ]).then(([membersResult, groupResult]) => {
+      if (cancelled) return;
+      setMembers(
+        membersResult.error
+          ? []
+          : (membersResult.data ?? []).map((row) => ({
+              userId: row.user_id,
+              displayName: row.display_name,
+              photoURL: row.photo_url,
+              testsCompleted: row.tests_completed ?? 0,
+              showOnLeaderboard: row.show_on_leaderboard ?? true,
+            }))
+      );
+      setGroupDoc(
+        groupResult.error || !groupResult.data
+          ? null
+          : { createdBy: groupResult.data.created_by }
+      );
+      setIsMembersLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, selectedGroupId]);
 
   const displayMemberships = useMemo(() => {
     const fromFirestore = memberships ?? [];
@@ -100,11 +157,11 @@ export const StudyGroups = () => {
   }, [memberships, pendingGroup]);
 
   useEffect(() => {
-    if (!user || !firestore) return;
-    syncUserGroupMemberStats(firestore, user).catch((error) => {
+    if (!user) return;
+    syncUserGroupMemberStats(supabase, user).catch((error) => {
       console.error('Failed to sync group member stats:', error);
     });
-  }, [user, firestore]);
+  }, [user, supabase]);
 
   useEffect(() => {
     if (
@@ -125,12 +182,6 @@ export const StudyGroups = () => {
     (m) => m.id === selectedGroupId
   );
 
-  const groupRef = useMemoFirebase(() => {
-    if (!firestore || !selectedGroupId) return null;
-    return doc(firestore, 'study_groups', selectedGroupId);
-  }, [firestore, selectedGroupId]);
-
-  const { data: groupDoc } = useDoc<{ createdBy: string }>(groupRef);
   const isCreator = !!user && groupDoc?.createdBy === user.uid;
 
   const visibleMembers = useMemo(() => {
@@ -138,10 +189,10 @@ export const StudyGroups = () => {
   }, [members]);
 
   const handleCreateGroup = async () => {
-    if (!user || !firestore) return;
+    if (!user) return;
     setIsCreating(true);
     try {
-      const group = await createStudyGroup(firestore, user, newGroupName);
+      const group = await createStudyGroup(supabase, user, newGroupName);
       setNewGroupName('');
       setPendingGroup({
         id: group.id,
@@ -165,10 +216,10 @@ export const StudyGroups = () => {
   };
 
   const handleJoinGroup = async () => {
-    if (!user || !firestore) return;
+    if (!user) return;
     setIsJoining(true);
     try {
-      const group = await joinStudyGroup(firestore, user, inviteCodeInput);
+      const group = await joinStudyGroup(supabase, user, inviteCodeInput);
       setInviteCodeInput('');
       setPendingGroup({
         id: group.id,
@@ -201,10 +252,10 @@ export const StudyGroups = () => {
   };
 
   const handleLeaveGroup = async () => {
-    if (!user || !firestore || !selectedGroupId) return;
+    if (!user || !selectedGroupId) return;
     setIsLeaving(true);
     try {
-      await leaveStudyGroup(firestore, user, selectedGroupId);
+      await leaveStudyGroup(supabase, user, selectedGroupId);
       setSelectedGroupId(null);
       toast({ title: 'Left group' });
     } catch (error) {
@@ -219,10 +270,10 @@ export const StudyGroups = () => {
   };
 
   const handleDeleteGroup = async () => {
-    if (!user || !firestore || !selectedGroupId) return;
+    if (!user || !selectedGroupId) return;
     setIsDeleting(true);
     try {
-      await deleteStudyGroup(firestore, user, selectedGroupId);
+      await deleteStudyGroup(supabase, user, selectedGroupId);
       setSelectedGroupId(null);
       toast({ title: 'Group deleted' });
     } catch (error) {

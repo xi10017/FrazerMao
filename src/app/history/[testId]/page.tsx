@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore } from '@/supabase';
 import type { FamatTest, TestSubmission, AnyFamatTest } from '@/lib/types';
 import famatTests from '@/data/famat_tests.json';
 import {

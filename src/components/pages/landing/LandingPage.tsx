@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth, useFirestore } from '@/firebase';
+import { useSupabase } from '@/supabase';
 import {
   BarChart3,
   BookCopy,
@@ -11,10 +11,8 @@ import {
   Swords,
   Timer,
 } from 'lucide-react';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { createUserProfile } from '@/lib/user-data';
 
 
 const FeatureCard = ({
@@ -38,25 +36,25 @@ const FeatureCard = ({
 );
 
 const UserAuthButton = () => {
-  const auth = useAuth();
-  const firestore = useFirestore();
+  const { supabase } = useSupabase();
   const { toast } = useToast();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   const handleSignIn = async () => {
-    if (!auth || !firestore) {
+    if (!supabase) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Firebase not ready. Please try again in a moment.',
+        description: 'Supabase not ready. Please try again in a moment.',
       });
       return;
     }
-    const provider = new GoogleAuthProvider();
     setIsAuthLoading(true);
     try {
-      const result = await signInWithPopup(auth, provider);
-      await createUserProfile(firestore, result.user);
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
     } catch (error: any) {
       console.error('Error during sign-in:', error);
       toast({

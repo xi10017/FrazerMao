@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useSupabase, useUser } from '@/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { Moon, Sun, Laptop, Trash2, Mail } from 'lucide-react';
@@ -31,7 +31,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { doc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { getInitials } from '@/lib/utils';
 import { FEEDBACK_EMAIL, FEEDBACK_MAILTO } from '@/lib/feedback';
@@ -60,7 +59,7 @@ function ThemeSwitcher() {
 
 export default function SettingsPage() {
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const { supabase } = useSupabase();
   const router = useRouter();
   const { toast } = useToast();
   const [confirmationText, setConfirmationText] = useState('');
@@ -68,13 +67,42 @@ export default function SettingsPage() {
   const [isDeletingCloud, setIsDeletingCloud] = useState(false);
   const [isLeaderboardSaving, setIsLeaderboardSaving] = useState(false);
 
-  const userProfileRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
-  const { data: userProfile, isLoading: isProfileLoading } =
-    useDoc<UserProfile>(userProfileRef);
+  useEffect(() => {
+    if (!user) {
+      setUserProfile(null);
+      setIsProfileLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setIsProfileLoading(true);
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.uid)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data) {
+          setUserProfile({
+            uid: data.id,
+            displayName: data.display_name,
+            email: data.email ?? user.email ?? '',
+            photoURL: data.photo_url,
+            showOnLeaderboard: data.show_on_leaderboard,
+            bookmarkedTestIds: data.bookmarked_test_ids ?? [],
+            weeklyTestGoal: data.weekly_test_goal ?? undefined,
+            streakGoal: data.streak_goal ?? undefined,
+          });
+        }
+        setIsProfileLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -95,11 +123,11 @@ export default function SettingsPage() {
   };
 
   const handleDeleteCloudData = async () => {
-    if (!user || !firestore) return;
+    if (!user) return;
 
     setIsDeletingCloud(true);
     try {
-      const result = await deleteAllUserCloudData(firestore, user);
+      const result = await deleteAllUserCloudData(supabase, user);
       clearAllLocalData(user.uid);
       setCloudConfirmationText('');
       toast({
@@ -123,12 +151,12 @@ export default function SettingsPage() {
   };
 
   const handleLeaderboardVisibilityChange = async (checked: boolean) => {
-    if (!user || !firestore || !userProfile || isLeaderboardSaving) return;
+    if (!user || !userProfile || isLeaderboardSaving) return;
 
     setIsLeaderboardSaving(true);
     try {
       const result = await updateLeaderboardVisibility(
-        firestore,
+        supabase,
         user,
         checked,
         userProfile.showOnLeaderboard ?? true

@@ -1,16 +1,7 @@
 'use client';
 import React, { useMemo } from 'react';
-import {
-  useCollection,
-  useFirestore,
-  useMemoFirebase,
-} from '@/firebase';
-import {
-  collection,
-  query,
-  orderBy,
-  limit,
-} from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { useSupabase } from '@/supabase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDivisionLabel, DIVISIONS } from '@/lib/test-logic';
 import {
@@ -34,6 +25,17 @@ import type { LeaderboardEntry } from '@/lib/types';
 import { Trophy } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import { StudyGroups } from './StudyGroups';
+
+function toLeaderboardEntry(row: Record<string, any>): LeaderboardEntry {
+  return {
+    userId: row.user_id,
+    division: row.division,
+    testsCompleted: row.tests_completed ?? 0,
+    displayName: row.display_name ?? 'Anonymous User',
+    photoURL: row.photo_url ?? null,
+    showOnLeaderboard: row.show_on_leaderboard ?? true,
+  };
+}
 
 const LeaderboardTable = ({
   entries,
@@ -148,20 +150,27 @@ const LeaderboardTable = ({
 };
 
 const DivisionLeaderboard = ({ division }: { division: string }) => {
-  const firestore = useFirestore();
-  
-  // Query only by ordering, remove the 'where' clause to avoid needing a composite index.
-  const leaderBoardQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(
-      collection(firestore, 'leaderboard_by_division'),
-      orderBy('testsCompleted', 'desc'),
-      limit(200) // Fetch more to allow for client-side filtering
-    );
-  }, [firestore]);
+  const { supabase } = useSupabase();
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[] | null>(null);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(true);
 
-  const { data: leaderboardData, isLoading: isLeaderboardLoading } =
-    useCollection<LeaderboardEntry>(leaderBoardQuery);
+  useEffect(() => {
+    let cancelled = false;
+    setIsLeaderboardLoading(true);
+    supabase
+      .from('leaderboard_by_division')
+      .select('*')
+      .order('tests_completed', { ascending: false })
+      .limit(200)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setLeaderboardData(error ? [] : (data ?? []).map(toLeaderboardEntry));
+        setIsLeaderboardLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
     
   // Filter on the client-side
   const filteredData = useMemo(() => {
@@ -187,20 +196,27 @@ const DivisionLeaderboard = ({ division }: { division: string }) => {
 };
 
 export const Leaderboard = () => {
-  const firestore = useFirestore();
+  const { supabase } = useSupabase();
+  const [overallData, setOverallData] = useState<LeaderboardEntry[] | null>(null);
+  const [isOverallLoading, setIsOverallLoading] = useState(true);
 
-  const overallLeaderboardQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    // Query without `where` to avoid needing a composite index
-    return query(
-      collection(firestore, 'leaderboard_overall'),
-      orderBy('testsCompleted', 'desc'),
-      limit(200) // Fetch more to allow for client-side filtering
-    );
-  }, [firestore]);
-  
-  const { data: overallData, isLoading: isOverallLoading } =
-    useCollection<LeaderboardEntry>(overallLeaderboardQuery);
+  useEffect(() => {
+    let cancelled = false;
+    setIsOverallLoading(true);
+    supabase
+      .from('leaderboard_overall')
+      .select('*')
+      .order('tests_completed', { ascending: false })
+      .limit(200)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setOverallData(error ? [] : (data ?? []).map(toLeaderboardEntry));
+        setIsOverallLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
 
   const filteredOverallData = useMemo(() => {
       // Filter on the client-side for privacy

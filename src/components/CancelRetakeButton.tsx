@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore } from '@/supabase';
 import { clearRetakeInProgressForTest } from '@/lib/user-data';
 import { useToast } from '@/hooks/use-toast';
 

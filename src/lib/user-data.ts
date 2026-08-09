@@ -12,23 +12,8 @@ import type {
   InProgressChecked,
 } from './types';
 import { getTestName } from './test-logic';
-import {
-  collection,
-  addDoc,
-  query,
-  getDocs,
-  where,
-  Timestamp,
-  type Firestore,
-  doc,
-  getDoc,
-  setDoc,
-  deleteDoc,
-  writeBatch,
-} from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { getAuth, type User } from 'firebase/auth';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppUser } from '@/supabase';
 import { updateUserLeaderboardEntries } from './leaderboard';
 import { removeUserFromAllGroups } from './study-groups';
 import { incrementAggregateStats } from './aggregate-stats';
@@ -43,28 +28,32 @@ import { incrementAggregateStats } from './aggregate-stats';
  * @param firestore The Firestore instance.
  * @param user The authenticated Firebase User object from the auth result.
  */
-export const createUserProfile = (firestore: Firestore, user: User) => {
-  if (!firestore || !user) return;
-
-  const userRef = doc(firestore, 'users', user.uid);
-  const userData: UserProfile = {
-    uid: user.uid,
-    displayName: user.displayName || 'Anonymous User',
-    email: user.email!,
-    photoURL: user.photoURL,
-    showOnLeaderboard: true, // Default to true on creation
-  };
-
-  // Use non-blocking write with centralized error handling
-  setDoc(userRef, userData, { merge: true }).catch(() => {
-    const permissionError = new FirestorePermissionError({
-      path: userRef.path,
-      operation: 'write', // Covers both create and update with merge
-      requestResourceData: userData,
-    });
-    errorEmitter.emit('permission-error', permissionError);
+export const createUserProfile = async (db: SupabaseClient, user: AppUser) => {
+  if (!db || !user) return;
+  const { error } = await db.from('profiles').upsert({
+    id: user.uid,
+    display_name: user.displayName || 'Anonymous User',
+    email: user.email,
+    photo_url: user.photoURL,
   });
+  if (error) throw error;
 };
+
+function submissionFromRow(row: Record<string, any>): TestSubmission {
+  return {
+    id: row.id,
+    testId: row.test_id,
+    userId: row.user_id,
+    answers: row.answers ?? {},
+    score: row.score,
+    submittedAt: new Date(row.submitted_at),
+    division: row.division,
+    testName: row.test_name,
+    completionDate: row.completion_date,
+    isRetake: row.is_retake,
+    retakeSourceSubmissionId: row.retake_source_submission_id ?? undefined,
+  };
+}
 
 
 /**
@@ -74,34 +63,22 @@ export const createUserProfile = (firestore: Firestore, user: User) => {
  * @returns An array of TestSubmission objects.
  */
 export async function getSubmissionsForUser(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string
 ): Promise<TestSubmission[]> {
   if (typeof window === 'undefined' || !userId) return [];
 
-  const submissionsRef = collection(db, 'users', userId, 'testCompletions');
-  const q = query(submissionsRef);
-
   try {
-    const querySnapshot = await getDocs(q);
-    const submissions: TestSubmission[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      submissions.push({
-        ...data,
-        id: doc.id,
-        submittedAt: (data.submittedAt as Timestamp).toDate(),
-      } as TestSubmission);
-    });
-    return submissions;
+    const { data, error } = await db
+      .from('test_submissions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('submitted_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(submissionFromRow);
   } catch (error) {
-    const permissionError = new FirestorePermissionError({
-      path: submissionsRef.path,
-      operation: 'list',
-    });
-    errorEmitter.emit('permission-error', permissionError);
-    console.error('Error getting submissions, permission error emitted:', error);
-    return []; // Return empty array on error
+    console.error('Error getting submissions:', error);
+    return [];
   }
 }
 
@@ -109,29 +86,21 @@ export async function getSubmissionsForUser(
  * Retrieves test submissions for a single test (scoped query).
  */
 export async function getSubmissionsForTest(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<TestSubmission[]> {
   if (typeof window === 'undefined' || !userId || !testId) return [];
 
-  const submissionsRef = collection(db, 'users', userId, 'testCompletions');
-  const q = query(submissionsRef, where('testId', '==', testId));
-
   try {
-    const querySnapshot = await getDocs(q);
-    const submissions: TestSubmission[] = [];
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      submissions.push({
-        ...data,
-        id: docSnap.id,
-        submittedAt: (data.submittedAt as Timestamp).toDate(),
-      } as TestSubmission);
-    });
-    return submissions.sort(
-      (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
-    );
+    const { data, error } = await db
+      .from('test_submissions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('test_id', testId)
+      .order('submitted_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(submissionFromRow);
   } catch (error) {
     console.error('Error getting test submissions:', error);
     return [];
@@ -172,7 +141,7 @@ export function getLocalInProgressTestIds(userId: string): string[] {
  * @returns The ID of the newly created submission document, or null on failure.
  */
 export async function saveSubmission(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   test: FamatTest,
   userAnswers: UserAnswers,
@@ -183,49 +152,60 @@ export async function saveSubmission(
 ): Promise<string | null> {
   if (typeof window === 'undefined' || !userId) return null;
 
-  const submissionsRef = collection(db, 'users', userId, 'testCompletions');
   const newSubmission: Record<string, unknown> = {
-    testId: test.id,
-    userId,
+    user_id: userId,
     answers: userAnswers,
     score: scoreReport,
-    submittedAt: Timestamp.now(),
+    test_id: test.id,
+    submitted_at: new Date().toISOString(),
     division: test.division,
-    testName: getTestName(test),
-    completionDate: new Date().toISOString(),
-    isRetake: !!isRetake,
+    test_name: getTestName(test),
+    completion_date: new Date().toISOString(),
+    is_retake: !!isRetake,
+    marked_questions: inProgressFlags,
   };
   if (isRetake && retakeSourceSubmissionId) {
-    newSubmission.retakeSourceSubmissionId = retakeSourceSubmissionId;
+    newSubmission.retake_source_submission_id = retakeSourceSubmissionId;
   }
 
   try {
-    const docRef = await addDoc(submissionsRef, newSubmission);
+    const { data: submission, error } = await db
+      .from('test_submissions')
+      .insert(newSubmission)
+      .select('id')
+      .single();
+    if (error) throw error;
 
     // Save the flags from the session as review marks for this new submission
-    saveReviewMarks(userId, docRef.id, inProgressFlags);
+    saveReviewMarks(userId, submission.id, inProgressFlags);
 
     // After successful submission, update the leaderboards
-    const user = getAuth().currentUser;
+    const { data: authData } = await db.auth.getUser();
+    const user = authData.user;
     if (user) {
-      const userProfileRef = doc(db, 'users', user.uid);
-      const userProfileSnap = await getDoc(userProfileRef);
-      const showOnLeaderboard = userProfileSnap.exists()
-        ? userProfileSnap.data()?.showOnLeaderboard ?? true
-        : true;
+      const { data: profile } = await db
+        .from('profiles')
+        .select('show_on_leaderboard')
+        .eq('id', user.id)
+        .maybeSingle();
+      const appUser = Object.assign(user, {
+        uid: user.id,
+        displayName:
+          (user.user_metadata?.full_name as string | undefined) ??
+          user.email?.split('@')[0] ?? null,
+        photoURL: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+      }) as AppUser;
 
-      await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
+      await updateUserLeaderboardEntries(
+        db,
+        appUser,
+        profile?.show_on_leaderboard ?? true
+      );
       await incrementAggregateStats(db, test.id, scoreReport.totalScore);
     }
 
-    return docRef.id; // Return the new document ID
+    return submission.id;
   } catch (serverError) {
-    const permissionError = new FirestorePermissionError({
-      path: submissionsRef.path,
-      operation: 'create',
-      requestResourceData: newSubmission,
-    });
-    errorEmitter.emit('permission-error', permissionError);
     console.error('Error saving submission:', serverError);
     return null;
   }
@@ -454,33 +434,39 @@ function cloudDocToInProgressState(
   testId: string,
   data: Record<string, unknown>
 ): InProgressTestState {
-  const updatedAt = data.updatedAt as Timestamp | undefined;
-  const sessionMode = data.sessionMode as 'practice' | 'retake' | undefined;
+  const state = (data.state as Record<string, unknown> | undefined) ?? {};
+  const updatedAt = data.updated_at as string | undefined;
+  const sessionMode = state.sessionMode as 'practice' | 'retake' | undefined;
   return {
-    answers: (data.answers as UserAnswers) ?? {},
-    flags: (data.flags as MarkedQuestions) ?? {},
-    checked: (data.checked as InProgressChecked) ?? {},
-    timerState: (data.timerState as TimerState | null) ?? null,
-    updatedAt: updatedAt?.toDate() ?? new Date(0),
+    answers: (state.answers as UserAnswers) ?? {},
+    flags: (state.flags as MarkedQuestions) ?? {},
+    checked: (state.checked as InProgressChecked) ?? {},
+    timerState: (state.timerState as TimerState | null) ?? null,
+    updatedAt: updatedAt ? new Date(updatedAt) : new Date(0),
     sessionMode,
-    sourceSubmissionId: data.sourceSubmissionId as string | undefined,
-    sourceAnswers: data.sourceAnswers as UserAnswers | undefined,
-    retakeOmittedQuestions: data.retakeOmittedQuestions as number[] | undefined,
+    sourceSubmissionId: state.sourceSubmissionId as string | undefined,
+    sourceAnswers: state.sourceAnswers as UserAnswers | undefined,
+    retakeOmittedQuestions: state.retakeOmittedQuestions as number[] | undefined,
   };
 }
 
 export async function getCloudInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
   if (typeof window === 'undefined' || !userId) return null;
 
-  const ref = doc(db, 'users', userId, 'inProgress', testId);
   try {
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
-    const state = cloudDocToInProgressState(testId, snap.data());
+    const { data, error } = await db
+      .from('in_progress')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('test_id', testId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const state = cloudDocToInProgressState(testId, data);
     if (state.sessionMode === 'retake') return null;
     return state;
   } catch (error) {
@@ -490,26 +476,25 @@ export async function getCloudInProgress(
 }
 
 export async function getCloudRetakeInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
   if (typeof window === 'undefined' || !userId) return null;
 
-  const ref = doc(db, 'users', userId, 'retakeInProgress', testId);
   try {
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const state = cloudDocToInProgressState(testId, snap.data());
+    const { data, error } = await db
+      .from('retake_in_progress')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('test_id', testId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) {
+      const state = cloudDocToInProgressState(testId, data);
       return { ...state, sessionMode: 'retake' };
     }
-
-    const legacyRef = doc(db, 'users', userId, 'inProgress', testId);
-    const legacySnap = await getDoc(legacyRef);
-    if (!legacySnap.exists()) return null;
-    const legacy = cloudDocToInProgressState(testId, legacySnap.data());
-    if (legacy.sessionMode !== 'retake' || !legacy.sourceAnswers) return null;
-    return legacy;
+    return null;
   } catch (error) {
     console.error('Error loading cloud retake in-progress state:', error);
     return null;
@@ -517,19 +502,22 @@ export async function getCloudRetakeInProgress(
 }
 
 export async function getAllCloudInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string
 ): Promise<Record<string, InProgressTestState>> {
   if (typeof window === 'undefined' || !userId) return {};
 
-  const ref = collection(db, 'users', userId, 'inProgress');
   try {
-    const snap = await getDocs(ref);
+    const { data, error } = await db
+      .from('in_progress')
+      .select('*')
+      .eq('user_id', userId);
+    if (error) throw error;
     const result: Record<string, InProgressTestState> = {};
-    snap.forEach((docSnap) => {
-      const state = cloudDocToInProgressState(docSnap.id, docSnap.data());
+    (data ?? []).forEach((row) => {
+      const state = cloudDocToInProgressState(row.test_id, row);
       if (state.sessionMode !== 'retake') {
-        result[docSnap.id] = state;
+        result[row.test_id] = state;
       }
     });
     return result;
@@ -540,20 +528,20 @@ export async function getAllCloudInProgress(
 }
 
 export async function getAllCloudRetakeInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string
 ): Promise<Record<string, InProgressTestState>> {
   if (typeof window === 'undefined' || !userId) return {};
 
-  const ref = collection(db, 'users', userId, 'retakeInProgress');
   try {
-    const snap = await getDocs(ref);
+    const { data, error } = await db
+      .from('retake_in_progress')
+      .select('*')
+      .eq('user_id', userId);
+    if (error) throw error;
     const result: Record<string, InProgressTestState> = {};
-    snap.forEach((docSnap) => {
-      result[docSnap.id] = cloudDocToInProgressState(
-        docSnap.id,
-        docSnap.data()
-      );
+    (data ?? []).forEach((row) => {
+      result[row.test_id] = cloudDocToInProgressState(row.test_id, row);
     });
     return result;
   } catch (error) {
@@ -581,7 +569,7 @@ export function getLocalRetakeInProgressTestIds(userId: string): string[] {
 }
 
 export async function saveCloudInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string,
   state: Omit<InProgressTestState, 'updatedAt'> & { updatedAt?: Date }
@@ -589,29 +577,21 @@ export async function saveCloudInProgress(
   if (typeof window === 'undefined' || !userId) return;
 
   const updatedAt = state.updatedAt ?? new Date();
-  const ref = doc(db, 'users', userId, 'inProgress', testId);
-
   try {
-    await setDoc(ref, {
-      answers: state.answers,
-      flags: state.flags,
-      checked: state.checked,
-      timerState: state.timerState,
-      updatedAt: Timestamp.fromDate(updatedAt),
-      sessionMode: 'practice',
+    const { error } = await db.from('in_progress').upsert({
+      user_id: userId,
+      test_id: testId,
+      state: { ...state, sessionMode: 'practice' },
+      updated_at: updatedAt.toISOString(),
     });
+    if (error) throw error;
   } catch (error) {
-    const permissionError = new FirestorePermissionError({
-      path: ref.path,
-      operation: 'write',
-    });
-    errorEmitter.emit('permission-error', permissionError);
     console.error('Error saving cloud in-progress state:', error);
   }
 }
 
 export async function saveCloudRetakeInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string,
   state: Omit<InProgressTestState, 'updatedAt'> & { updatedAt?: Date }
@@ -619,55 +599,52 @@ export async function saveCloudRetakeInProgress(
   if (typeof window === 'undefined' || !userId) return;
 
   const updatedAt = state.updatedAt ?? new Date();
-  const ref = doc(db, 'users', userId, 'retakeInProgress', testId);
-
   try {
-    await setDoc(ref, {
-      answers: state.answers,
-      flags: state.flags,
-      checked: state.checked,
-      timerState: state.timerState,
-      updatedAt: Timestamp.fromDate(updatedAt),
-      sessionMode: 'retake',
-      sourceSubmissionId: state.sourceSubmissionId ?? null,
-      sourceAnswers: state.sourceAnswers ?? null,
-      retakeOmittedQuestions: state.retakeOmittedQuestions ?? [],
+    const { error } = await db.from('retake_in_progress').upsert({
+      user_id: userId,
+      test_id: testId,
+      state: { ...state, sessionMode: 'retake' },
+      updated_at: updatedAt.toISOString(),
     });
+    if (error) throw error;
   } catch (error) {
-    const permissionError = new FirestorePermissionError({
-      path: ref.path,
-      operation: 'write',
-    });
-    errorEmitter.emit('permission-error', permissionError);
     console.error('Error saving cloud retake in-progress state:', error);
   }
 }
 
 export async function clearCloudInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<void> {
   if (typeof window === 'undefined' || !userId) return;
 
-  const ref = doc(db, 'users', userId, 'inProgress', testId);
   try {
-    await deleteDoc(ref);
+    const { error } = await db
+      .from('in_progress')
+      .delete()
+      .eq('user_id', userId)
+      .eq('test_id', testId);
+    if (error) throw error;
   } catch (error) {
     console.error('Error clearing cloud in-progress state:', error);
   }
 }
 
 export async function clearCloudRetakeInProgress(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<void> {
   if (typeof window === 'undefined' || !userId) return;
 
-  const ref = doc(db, 'users', userId, 'retakeInProgress', testId);
   try {
-    await deleteDoc(ref);
+    const { error } = await db
+      .from('retake_in_progress')
+      .delete()
+      .eq('user_id', userId)
+      .eq('test_id', testId);
+    if (error) throw error;
   } catch (error) {
     console.error('Error clearing cloud retake in-progress state:', error);
   }
@@ -675,7 +652,7 @@ export async function clearCloudRetakeInProgress(
 
 /** Merge local + cloud practice in-progress state. */
 export async function syncInProgressIfNeeded(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
@@ -799,7 +776,7 @@ export function persistRetakeInProgressLocally(
 
 /** Merge local + cloud retake in-progress state. */
 export async function syncRetakeInProgressIfNeeded(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
@@ -821,7 +798,7 @@ export async function syncRetakeInProgressIfNeeded(
 
 /** Read-only check for practice in-progress (no side-effect writes). */
 export async function readPracticeInProgressForTest(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
@@ -831,7 +808,7 @@ export async function readPracticeInProgressForTest(
 }
 
 export async function readRetakeInProgressForTest(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
@@ -841,7 +818,7 @@ export async function readRetakeInProgressForTest(
 }
 
 export async function getRetakeInProgressForTest(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
@@ -850,7 +827,7 @@ export async function getRetakeInProgressForTest(
 
 /** @deprecated Use getRetakeInProgressForTest for retakes. */
 export async function getInProgressSessionForTest(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string
 ): Promise<InProgressTestState | null> {
@@ -858,7 +835,7 @@ export async function getInProgressSessionForTest(
 }
 
 export async function clearPracticeInProgressForTest(
-  db: Firestore | null,
+  db: SupabaseClient | null,
   userId: string,
   testId: string
 ): Promise<void> {
@@ -873,7 +850,7 @@ export async function clearPracticeInProgressForTest(
 }
 
 export async function clearRetakeInProgressForTest(
-  db: Firestore | null,
+  db: SupabaseClient | null,
   userId: string,
   testId: string
 ): Promise<void> {
@@ -889,7 +866,7 @@ export async function clearRetakeInProgressForTest(
 }
 
 export async function clearInProgressForTest(
-  db: Firestore | null,
+  db: SupabaseClient | null,
   userId: string,
   testId: string
 ): Promise<void> {
@@ -953,17 +930,12 @@ function recordProfileWrite(cooldownKey: string) {
 export type ToggleBookmarkResult = { ids: string[]; saved: boolean };
 
 export async function toggleBookmark(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string,
   testId: string,
   currentlyBookmarked: boolean,
   currentIds: string[]
 ): Promise<ToggleBookmarkResult> {
-  const auth = getAuth();
-  if (!auth.currentUser || auth.currentUser.uid !== userId) {
-    throw new Error('Cannot modify bookmarks for another user');
-  }
-
   const isAlreadyBookmarked = currentIds.includes(testId);
   if (currentlyBookmarked && !isAlreadyBookmarked) {
     return { ids: currentIds, saved: false };
@@ -981,8 +953,11 @@ export async function toggleBookmark(
     ? currentIds.filter((id) => id !== testId)
     : [...currentIds, testId];
 
-  const userRef = doc(db, 'users', userId);
-  await setDoc(userRef, { bookmarkedTestIds: updated }, { merge: true });
+  const { error } = await db
+    .from('profiles')
+    .update({ bookmarked_test_ids: updated })
+    .eq('id', userId);
+  if (error) throw error;
   recordProfileWrite(cooldownKey);
   return { ids: updated, saved: true };
 }
@@ -992,8 +967,8 @@ export async function toggleBookmark(
  * Rate-limited to one cloud write every 0.5 seconds per user.
  */
 export async function updateLeaderboardVisibility(
-  db: Firestore,
-  user: User,
+  db: SupabaseClient,
+  user: AppUser,
   showOnLeaderboard: boolean,
   currentVisibility: boolean
 ): Promise<{ saved: boolean }> {
@@ -1006,131 +981,57 @@ export async function updateLeaderboardVisibility(
     return { saved: false };
   }
 
-  const userRef = doc(db, 'users', user.uid);
-  await setDoc(userRef, { showOnLeaderboard }, { merge: true });
+  const { error } = await db
+    .from('profiles')
+    .update({ show_on_leaderboard: showOnLeaderboard })
+    .eq('id', user.uid);
+  if (error) throw error;
   await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
   recordProfileWrite(cooldownKey);
   return { saved: true };
 }
-
-const BATCH_LIMIT = 450;
 
 /**
  * Permanently deletes ALL cloud data belonging to the signed-in user only.
  * Does not touch any other user's documents.
  */
 export async function deleteAllUserCloudData(
-  db: Firestore,
-  user: User
+  db: SupabaseClient,
+  user: AppUser
 ): Promise<{ deletedSubmissions: number; deletedLeaderboardEntries: number }> {
-  const auth = getAuth();
-  if (!auth.currentUser || auth.currentUser.uid !== user.uid) {
-    throw new Error('You must be signed in to delete your own data.');
-  }
-
   const userId = user.uid;
-  let deletedSubmissions = 0;
-  let deletedLeaderboardEntries = 0;
+  const { count: deletedSubmissions, error: submissionError } = await db
+    .from('test_submissions')
+    .delete({ count: 'exact' })
+    .eq('user_id', userId);
+  if (submissionError) throw submissionError;
 
-  const completionsRef = collection(db, 'users', userId, 'testCompletions');
-  const completionsSnap = await getDocs(completionsRef);
-
-  let batch = writeBatch(db);
-  let batchCount = 0;
-
-  for (const completionDoc of completionsSnap.docs) {
-    batch.delete(completionDoc.ref);
-    batchCount++;
-    deletedSubmissions++;
-
-    if (batchCount >= BATCH_LIMIT) {
-      await batch.commit();
-      batch = writeBatch(db);
-      batchCount = 0;
-    }
+  for (const table of ['in_progress', 'retake_in_progress'] as const) {
+    const { error } = await db.from(table).delete().eq('user_id', userId);
+    if (error) throw error;
   }
 
-  if (batchCount > 0) {
-    await batch.commit();
-    batch = writeBatch(db);
-    batchCount = 0;
-  }
-
-  const inProgressRef = collection(db, 'users', userId, 'inProgress');
-  const inProgressSnap = await getDocs(inProgressRef);
-  for (const inProgressDoc of inProgressSnap.docs) {
-    batch.delete(inProgressDoc.ref);
-    batchCount++;
-
-    if (batchCount >= BATCH_LIMIT) {
-      await batch.commit();
-      batch = writeBatch(db);
-      batchCount = 0;
-    }
-  }
-
-  if (batchCount > 0) {
-    await batch.commit();
-    batch = writeBatch(db);
-    batchCount = 0;
-  }
-
-  const retakeInProgressRef = collection(db, 'users', userId, 'retakeInProgress');
-  const retakeInProgressSnap = await getDocs(retakeInProgressRef);
-  for (const retakeDoc of retakeInProgressSnap.docs) {
-    batch.delete(retakeDoc.ref);
-    batchCount++;
-
-    if (batchCount >= BATCH_LIMIT) {
-      await batch.commit();
-      batch = writeBatch(db);
-      batchCount = 0;
-    }
-  }
-
-  if (batchCount > 0) {
-    await batch.commit();
-    batch = writeBatch(db);
-    batchCount = 0;
-  }
-
-  const overallRef = doc(db, 'leaderboard_overall', userId);
-  const overallSnap = await getDoc(overallRef);
-  if (overallSnap.exists()) {
-    batch.delete(overallRef);
-    deletedLeaderboardEntries++;
-    batchCount++;
-  }
-
-  const divisionQuery = query(
-    collection(db, 'leaderboard_by_division'),
-    where('userId', '==', userId)
-  );
-  const divisionSnap = await getDocs(divisionQuery);
-  for (const divisionDoc of divisionSnap.docs) {
-    batch.delete(divisionDoc.ref);
-    deletedLeaderboardEntries++;
-    batchCount++;
-
-    if (batchCount >= BATCH_LIMIT) {
-      await batch.commit();
-      batch = writeBatch(db);
-      batchCount = 0;
-    }
-  }
-
-  if (batchCount > 0) {
-    await batch.commit();
-  }
+  const { count: overallDeleted, error: overallError } = await db
+    .from('leaderboard_overall')
+    .delete({ count: 'exact' })
+    .eq('user_id', userId);
+  if (overallError) throw overallError;
+  const { count: divisionDeleted, error: divisionError } = await db
+    .from('leaderboard_by_division')
+    .delete({ count: 'exact' })
+    .eq('user_id', userId);
+  if (divisionError) throw divisionError;
 
   await removeUserFromAllGroups(db, userId);
 
-  const userRef = doc(db, 'users', userId);
-  await setDoc(
-    userRef,
-    { bookmarkedTestIds: [] },
-    { merge: true }
-  );
+  const { error: profileError } = await db
+    .from('profiles')
+    .update({ bookmarked_test_ids: [] })
+    .eq('id', userId);
+  if (profileError) throw profileError;
 
-  return { deletedSubmissions, deletedLeaderboardEntries };
+  return {
+    deletedSubmissions: deletedSubmissions ?? 0,
+    deletedLeaderboardEntries: (overallDeleted ?? 0) + (divisionDeleted ?? 0),
+  };
 }

@@ -2,13 +2,8 @@
 
 import Link from 'next/link';
 import { BookOpen, LogIn, Settings, ShieldCheck } from 'lucide-react';
-import { useUser, useAuth, useFirestore } from '@/firebase';
+import { useSupabase, useUser } from '@/supabase';
 import { Button } from '@/components/ui/button';
-import {
-  signOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,34 +17,29 @@ import { Skeleton } from '../ui/skeleton';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { createUserProfile } from '@/lib/user-data';
 import { getInitials } from '@/lib/utils';
 import { isAdminUid } from '@/lib/admin';
 
 
 function UserAuth() {
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
-  const firestore = useFirestore();
+  const { supabase } = useSupabase();
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   const handleSignOut = async () => {
-    if (!auth) return;
-    await signOut(auth);
+    await supabase.auth.signOut();
     router.push('/');
   };
 
   const handleSignIn = async () => {
-    if (!auth || !firestore) return;
-    const provider = new GoogleAuthProvider();
     setIsAuthLoading(true);
     try {
-      const result = await signInWithPopup(auth, provider);
-      // The onAuthStateChanged listener in FirebaseProvider will trigger
-      // a re-render and UI update. We can create the profile here.
-      await createUserProfile(firestore, result.user);
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
     } catch (error: any) {
       console.error('Error during sign-in:', error);
       toast({

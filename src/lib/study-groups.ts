@@ -1,21 +1,7 @@
 'use client';
 
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  limit,
-  writeBatch,
-  increment,
-  deleteDoc,
-  Timestamp,
-  type Firestore,
-} from 'firebase/firestore';
-import type { User } from 'firebase/auth';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppUser } from '@/supabase';
 import type { GroupMembership, StudyGroup, GroupMember } from './types';
 
 function generateInviteCode(): string {
@@ -27,154 +13,154 @@ function generateInviteCode(): string {
   return code;
 }
 
+function toStudyGroup(row: Record<string, any>): StudyGroup {
+  return {
+    id: row.id,
+    name: row.name,
+    inviteCode: row.invite_code,
+    createdBy: row.created_by,
+    memberCount: row.member_count ?? 0,
+    createdAt: new Date(row.created_at),
+  };
+}
+
 async function getUserGroupStats(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string
 ): Promise<{ testsCompleted: number; showOnLeaderboard: boolean }> {
-  const [completionsSnap, profileSnap] = await Promise.all([
-    getDocs(collection(db, 'users', userId, 'testCompletions')),
-    getDoc(doc(db, 'users', userId)),
-  ]);
-
+  const [{ count, error: submissionsError }, { data: profile, error: profileError }] =
+    await Promise.all([
+      db
+        .from('test_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId),
+      db
+        .from('profiles')
+        .select('show_on_leaderboard')
+        .eq('id', userId)
+        .maybeSingle(),
+    ]);
+  if (submissionsError) throw submissionsError;
+  if (profileError) throw profileError;
   return {
-    testsCompleted: completionsSnap.size,
-    showOnLeaderboard: profileSnap.exists()
-      ? profileSnap.data()?.showOnLeaderboard ?? true
-      : true,
+    testsCompleted: count ?? 0,
+    showOnLeaderboard: profile?.show_on_leaderboard ?? true,
   };
 }
 
 function buildMemberData(
-  user: User,
+  user: AppUser,
   stats: { testsCompleted: number; showOnLeaderboard: boolean }
-): GroupMember {
+) {
   return {
-    userId: user.uid,
-    displayName: user.displayName || 'Anonymous User',
-    photoURL: user.photoURL,
-    testsCompleted: stats.testsCompleted,
-    showOnLeaderboard: stats.showOnLeaderboard,
+    user_id: user.uid,
+    display_name: user.displayName || 'Anonymous User',
+    photo_url: user.photoURL,
+    tests_completed: stats.testsCompleted,
+    show_on_leaderboard: stats.showOnLeaderboard,
   };
 }
 
 export async function createStudyGroup(
-  db: Firestore,
-  user: User,
+  db: SupabaseClient,
+  user: AppUser,
   name: string
 ): Promise<StudyGroup> {
   const trimmed = name.trim();
   if (!trimmed) throw new Error('Group name is required');
 
-  const groupRef = doc(collection(db, 'study_groups'));
-  const inviteCode = generateInviteCode();
-
-  const groupData = {
-    name: trimmed,
-    inviteCode,
-    createdBy: user.uid,
-    memberCount: 1,
-    createdAt: Timestamp.now(),
-  };
-
-  await setDoc(groupRef, groupData);
+  const { data: group, error: groupError } = await db
+    .from('study_groups')
+    .insert({
+      name: trimmed,
+      invite_code: generateInviteCode(),
+      created_by: user.uid,
+      member_count: 1,
+    })
+    .select()
+    .single();
+  if (groupError) throw groupError;
 
   const stats = await getUserGroupStats(db, user.uid);
-  const memberData = buildMemberData(user, stats);
+  const { error: memberError } = await db
+    .from('study_group_members')
+    .insert({ group_id: group.id, ...buildMemberData(user, stats) });
+  if (memberError) throw memberError;
 
-  await setDoc(doc(db, 'study_groups', groupRef.id, 'members', user.uid), memberData);
-  await setDoc(doc(db, 'users', user.uid, 'groupMemberships', groupRef.id), {
-    groupId: groupRef.id,
-    groupName: trimmed,
-    inviteCode,
-    joinedAt: Timestamp.now(),
-  } satisfies Omit<GroupMembership, 'joinedAt'> & { joinedAt: Timestamp });
+  const { error: membershipError } = await db
+    .from('group_memberships')
+    .insert({
+      user_id: user.uid,
+      group_id: group.id,
+      group_name: trimmed,
+      invite_code: group.invite_code,
+    });
+  if (membershipError) throw membershipError;
 
-  return {
-    id: groupRef.id,
-    name: groupData.name,
-    inviteCode: groupData.inviteCode,
-    createdBy: groupData.createdBy,
-    memberCount: groupData.memberCount,
-    createdAt: groupData.createdAt.toDate(),
-  };
+  return toStudyGroup(group);
 }
 
 export async function joinStudyGroup(
-  db: Firestore,
-  user: User,
+  db: SupabaseClient,
+  user: AppUser,
   inviteCode: string
 ): Promise<StudyGroup> {
   const normalized = inviteCode.trim().toUpperCase();
   if (!normalized) throw new Error('Invite code is required');
 
-  const groupsQuery = query(
-    collection(db, 'study_groups'),
-    where('inviteCode', '==', normalized),
-    limit(1)
-  );
-  const snapshot = await getDocs(groupsQuery);
-  if (snapshot.empty) throw new Error('Invalid invite code');
-
-  const groupDoc = snapshot.docs[0];
-  const group = { id: groupDoc.id, ...(groupDoc.data() as Omit<StudyGroup, 'id'>) };
-
-  const memberRef = doc(db, 'study_groups', group.id, 'members', user.uid);
-  const existingMember = await getDoc(memberRef);
-  if (existingMember.exists()) return group;
+  const { data: group, error: groupError } = await db
+    .from('study_groups')
+    .select('*')
+    .eq('invite_code', normalized)
+    .maybeSingle();
+  if (groupError) throw groupError;
+  if (!group) throw new Error('Invalid invite code');
 
   const stats = await getUserGroupStats(db, user.uid);
+  const { error: memberError } = await db
+    .from('study_group_members')
+    .upsert({ group_id: group.id, ...buildMemberData(user, stats) });
+  if (memberError) throw memberError;
 
-  await setDoc(memberRef, buildMemberData(user, stats));
+  const { error: membershipError } = await db
+    .from('group_memberships')
+    .upsert({
+      user_id: user.uid,
+      group_id: group.id,
+      group_name: group.name,
+      invite_code: group.invite_code,
+    });
+  if (membershipError) throw membershipError;
 
-  await setDoc(doc(db, 'users', user.uid, 'groupMemberships', group.id), {
-    groupId: group.id,
-    groupName: group.name,
-    inviteCode: group.inviteCode,
-    joinedAt: Timestamp.now(),
-  });
-
-  await setDoc(
-    doc(db, 'study_groups', group.id),
-    { memberCount: increment(1) },
-    { merge: true }
-  );
-
-  return group;
+  return toStudyGroup(group);
 }
 
 export async function updateGroupMemberStats(
-  db: Firestore,
-  user: User,
+  db: SupabaseClient,
+  user: AppUser,
   testsCompleted: number,
   showOnLeaderboard: boolean
 ): Promise<void> {
-  const membershipsSnap = await getDocs(
-    collection(db, 'users', user.uid, 'groupMemberships')
-  );
-  if (membershipsSnap.empty) return;
+  const { data: memberships, error: membershipsError } = await db
+    .from('group_memberships')
+    .select('group_id')
+    .eq('user_id', user.uid);
+  if (membershipsError) throw membershipsError;
+  if (!memberships?.length) return;
 
-  const batch = writeBatch(db);
-  for (const membershipDoc of membershipsSnap.docs) {
-    const groupId = membershipDoc.id;
-    batch.set(
-      doc(db, 'study_groups', groupId, 'members', user.uid),
-      {
-        userId: user.uid,
-        displayName: user.displayName || 'Anonymous User',
-        photoURL: user.photoURL,
-        testsCompleted,
-        showOnLeaderboard,
-      },
-      { merge: true }
-    );
-  }
-  await batch.commit();
+  const rows = memberships.map((membership) => ({
+    group_id: membership.group_id,
+    ...buildMemberData(user, { testsCompleted, showOnLeaderboard }),
+  }));
+  const { error } = await db
+    .from('study_group_members')
+    .upsert(rows);
+  if (error) throw error;
 }
 
-/** Refreshes the current user's stats in every group they belong to. */
 export async function syncUserGroupMemberStats(
-  db: Firestore,
-  user: User
+  db: SupabaseClient,
+  user: AppUser
 ): Promise<void> {
   const stats = await getUserGroupStats(db, user.uid);
   await updateGroupMemberStats(
@@ -186,74 +172,89 @@ export async function syncUserGroupMemberStats(
 }
 
 export async function leaveStudyGroup(
-  db: Firestore,
-  user: User,
+  db: SupabaseClient,
+  user: AppUser,
   groupId: string
 ): Promise<void> {
-  await deleteDoc(doc(db, 'study_groups', groupId, 'members', user.uid));
-  await deleteDoc(doc(db, 'users', user.uid, 'groupMemberships', groupId));
+  const { error: memberError } = await db
+    .from('study_group_members')
+    .delete()
+    .eq('group_id', groupId)
+    .eq('user_id', user.uid);
+  if (memberError) throw memberError;
 
-  const groupRef = doc(db, 'study_groups', groupId);
-  const membersSnap = await getDocs(
-    collection(db, 'study_groups', groupId, 'members')
-  );
+  const { error: membershipError } = await db
+    .from('group_memberships')
+    .delete()
+    .eq('group_id', groupId)
+    .eq('user_id', user.uid);
+  if (membershipError) throw membershipError;
 
-  if (membersSnap.empty) {
-    await deleteDoc(groupRef);
-    return;
+  const { data: members, error: membersError } = await db
+    .from('study_group_members')
+    .select('user_id')
+    .eq('group_id', groupId);
+  if (membersError) throw membersError;
+
+  if (!members?.length) {
+    const { error } = await db.from('study_groups').delete().eq('id', groupId);
+    if (error) throw error;
+  } else {
+    const { error } = await db
+      .from('study_groups')
+      .update({ member_count: members.length })
+      .eq('id', groupId);
+    if (error) throw error;
   }
-
-  const groupSnap = await getDoc(groupRef);
-  if (!groupSnap.exists()) return;
-
-  const updates: Record<string, unknown> = { memberCount: membersSnap.size };
-  if (groupSnap.data().createdBy === user.uid) {
-    updates.createdBy = membersSnap.docs[0].id;
-  }
-
-  await setDoc(groupRef, updates, { merge: true });
 }
 
-/** Only the group creator can delete the group for everyone. */
 export async function deleteStudyGroup(
-  db: Firestore,
-  user: User,
+  db: SupabaseClient,
+  user: AppUser,
   groupId: string
 ): Promise<void> {
-  const groupRef = doc(db, 'study_groups', groupId);
-  const groupSnap = await getDoc(groupRef);
-  if (!groupSnap.exists()) throw new Error('Group not found');
-  if (groupSnap.data().createdBy !== user.uid) {
+  const { data: group, error: groupError } = await db
+    .from('study_groups')
+    .select('created_by')
+    .eq('id', groupId)
+    .maybeSingle();
+  if (groupError) throw groupError;
+  if (!group) throw new Error('Group not found');
+  if (group.created_by !== user.uid) {
     throw new Error('Only the group creator can delete this group');
   }
 
-  await deleteDoc(doc(db, 'study_groups', groupId, 'members', user.uid));
-  await deleteDoc(doc(db, 'users', user.uid, 'groupMemberships', groupId));
-  await deleteDoc(groupRef);
+  const { error } = await db.from('study_groups').delete().eq('id', groupId);
+  if (error) throw error;
 }
 
 export async function removeUserFromAllGroups(
-  db: Firestore,
+  db: SupabaseClient,
   userId: string
 ): Promise<void> {
-  const membershipsSnap = await getDocs(
-    collection(db, 'users', userId, 'groupMemberships')
-  );
-  if (membershipsSnap.empty) return;
+  const { data: memberships, error: membershipsError } = await db
+    .from('group_memberships')
+    .select('group_id')
+    .eq('user_id', userId);
+  if (membershipsError) throw membershipsError;
+  if (!memberships?.length) return;
 
-  const batch = writeBatch(db);
-  for (const membershipDoc of membershipsSnap.docs) {
-    const groupId = membershipDoc.id;
-    batch.delete(doc(db, 'study_groups', groupId, 'members', userId));
-    batch.delete(membershipDoc.ref);
-  }
-  await batch.commit();
+  const groupIds = memberships.map((membership) => membership.group_id);
+  const { error: membersError } = await db
+    .from('study_group_members')
+    .delete()
+    .eq('user_id', userId)
+    .in('group_id', groupIds);
+  if (membersError) throw membersError;
+  const { error: membershipError } = await db
+    .from('group_memberships')
+    .delete()
+    .eq('user_id', userId);
+  if (membershipError) throw membershipError;
 }
 
 export function buildShareText(testName: string | undefined, totalScore: number): string {
   const base = `I scored ${totalScore}/150`;
-  if (testName) {
-    return `${base} on ${testName} using ΜΑΘPractice!`;
-  }
+  if (testName) return `${base} on ${testName} using ΜΑΘPractice!`;
   return `${base} on ΜΑΘPractice!`;
 }

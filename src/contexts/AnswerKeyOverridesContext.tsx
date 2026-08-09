@@ -7,7 +7,7 @@ import React, {
   useState,
   useCallback,
 } from 'react';
-import { useFirestore } from '@/firebase';
+import { useFirestore } from '@/supabase';
 import type { AnswerKeyOverrides } from '@/lib/test-logic';
 import { fetchAllAnswerKeyOverrides } from '@/lib/answer-key-reports';
 

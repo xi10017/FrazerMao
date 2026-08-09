@@ -1,19 +1,7 @@
-'use client';
-
-import {
-  collection,
-  doc,
-  getDocs,
-  writeBatch,
-  query,
-  where,
-  Firestore,
-} from 'firebase/firestore';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { LeaderboardEntry } from './types';
 import { updateGroupMemberStats } from './study-groups';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-import type { User } from 'firebase/auth';
+import type { AppUser } from '@/supabase';
 
 /**
  * Updates a user's entries in all relevant leaderboard collections.
@@ -26,25 +14,25 @@ import type { User } from 'firebase/auth';
  * @param showOnLeaderboard The user's current visibility preference.
  */
 export async function updateUserLeaderboardEntries(
-  db: Firestore,
-  user: User | null,
+  db: SupabaseClient,
+  user: AppUser | null,
   showOnLeaderboard: boolean
 ) {
   if (!user) return;
   const userId = user.uid;
 
   try {
-    const batch = writeBatch(db);
-    const testCompletionsRef = collection(db, 'users', userId, 'testCompletions');
-    const completionsSnapshot = await getDocs(testCompletionsRef);
-    const allCompletions = completionsSnapshot.docs.map(doc => doc.data() as any);
+    const { data: allCompletions, error: completionsError } = await db
+      .from('test_submissions')
+      .select('division')
+      .eq('user_id', userId);
+    if (completionsError) throw completionsError;
 
     const displayName = user.displayName || 'Anonymous User';
     const photoURL = user.photoURL;
 
     // 1. Update the 'Overall' leaderboard.
     const overallTotal = allCompletions.length;
-    const overallLeaderboardRef = doc(db, 'leaderboard_overall', userId);
     const overallData: LeaderboardEntry = {
       userId,
       testsCompleted: overallTotal,
@@ -53,7 +41,17 @@ export async function updateUserLeaderboardEntries(
       photoURL,
       showOnLeaderboard,
     };
-    batch.set(overallLeaderboardRef, overallData, { merge: true });
+    const { error: overallError } = await db
+      .from('leaderboard_overall')
+      .upsert({
+        user_id: userId,
+        division: overallData.division,
+        tests_completed: overallData.testsCompleted,
+        display_name: overallData.displayName,
+        photo_url: overallData.photoURL,
+        show_on_leaderboard: overallData.showOnLeaderboard,
+      });
+    if (overallError) throw overallError;
 
     // 2. Group completions by division.
     const completionsByDivision = allCompletions.reduce((acc, c) => {
@@ -64,9 +62,6 @@ export async function updateUserLeaderboardEntries(
     // 3. Update each relevant 'By Division' leaderboard.
     for (const division in completionsByDivision) {
       const divisionTotal = completionsByDivision[division];
-      const divisionLeaderboardId = `${userId}_${division.replace(/\s+/g, '_').toLowerCase()}`;
-      const divisionLeaderboardRef = doc(db, 'leaderboard_by_division', divisionLeaderboardId);
-
       const divisionData: LeaderboardEntry = {
         userId,
         testsCompleted: divisionTotal,
@@ -75,22 +70,22 @@ export async function updateUserLeaderboardEntries(
         photoURL,
         showOnLeaderboard,
       };
-      batch.set(divisionLeaderboardRef, divisionData, { merge: true });
+      const { error: divisionError } = await db
+        .from('leaderboard_by_division')
+        .upsert({
+          user_id: userId,
+          division: divisionData.division,
+          tests_completed: divisionData.testsCompleted,
+          display_name: divisionData.displayName,
+          photo_url: divisionData.photoURL,
+          show_on_leaderboard: divisionData.showOnLeaderboard,
+        });
+      if (divisionError) throw divisionError;
     }
-
-    // 4. Commit all changes at once.
-    await batch.commit();
 
     await updateGroupMemberStats(db, user, overallTotal, showOnLeaderboard);
 
   } catch (error) {
     console.error('Error updating leaderboard entries:', error);
-    // Determine if it was a read or write error for better context
-    const permissionError = new FirestorePermissionError({
-        path: `users/${userId}/leaderboard_updates`,
-        operation: 'write', // This is a batch write operation
-        requestResourceData: { userId, showOnLeaderboard }
-    });
-    errorEmitter.emit('permission-error', permissionError);
   }
 }
