@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore } from '@/supabase';
-import { isAdminUid } from '@/lib/admin';
 import {
   ANSWER_KEY_ARCHIVE_DAYS,
   approveAnswerKeyReport,
@@ -256,7 +255,7 @@ function ArchiveReportCard({ report }: { report: AnswerKeyReport }) {
 }
 
 export default function AdminAnswerKeysPage() {
-  const { user, isUserLoading } = useUser();
+  const { user, isAdmin, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -272,8 +271,6 @@ export default function AdminAnswerKeysPage() {
   const [isArchiveLoading, setIsArchiveLoading] = useState(false);
   const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
   const [actingId, setActingId] = useState<string | null>(null);
-
-  const isAdmin = isAdminUid(user?.uid);
 
   const groups = useMemo(
     () => groupPendingAnswerKeyReports(reports),
@@ -323,7 +320,7 @@ export default function AdminAnswerKeysPage() {
       toast({
         variant: 'destructive',
         title: 'Failed to load reports',
-        description: 'Check Firestore rules and composite indexes.',
+        description: 'Check Supabase permissions and database policies.',
       });
     } finally {
       setIsPendingLoading(false);
@@ -344,9 +341,9 @@ export default function AdminAnswerKeysPage() {
         title: 'Failed to load archive',
         description:
           code === 'permission-denied'
-            ? 'Admin Firestore access required (admins/{uid} doc).'
+            ? 'Admin Supabase access required (your user must be in the admins table).'
             : code === 'failed-precondition'
-              ? 'Firestore index is still building — try again in a minute.'
+              ? 'The database query is not ready yet — try again in a minute.'
               : 'Could not load closed reports.',
       });
     } finally {
@@ -405,7 +402,7 @@ export default function AdminAnswerKeysPage() {
       toast({
         variant: 'destructive',
         title: 'Approve failed',
-        description: 'Could not apply override. Check admin Firestore access.',
+        description: 'Could not apply override. Check Supabase admin access.',
       });
     } finally {
       setActingId(null);

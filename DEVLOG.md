@@ -6,6 +6,8 @@
 **Live:** https://studio--studio-3139608084-d67c5.us-central1.hosted.app  
 **Firebase project:** `studio-3139608084-d67c5`
 
+**Current migration branch:** `supabase-migration` (Aug 2026)
+
 ---
 
 ## What MuPractice Is
@@ -126,6 +128,52 @@ The largest engineering push — both **data** and **product**:
 
 ---
 
+### Phase 5 — Supabase Migration (Aug 8–9, 2026)
+
+The backend was migrated from Firebase Auth/Firestore toward Supabase while
+keeping Firebase intact as a rollback and data-safety baseline.
+
+#### Migration work completed
+
+- Created the `supabase-migration` branch and checkpointed the Firebase baseline
+  on `main`.
+- Added a Postgres schema and row-level security policies for profiles,
+  submissions, progress, retakes, groups, memberships, leaderboards, aggregate
+  statistics, answer-key reports/overrides, and admins.
+- Replaced the active client-side auth and data access path with Supabase.
+- Configured Google sign-in through Supabase Auth and Google OAuth.
+- Exported the existing Firebase data without deleting or modifying Firebase:
+  - 40 Firebase Auth accounts
+  - 319 Firestore documents
+  - 213 test submissions
+  - 17 in-progress sessions
+  - 2 retake sessions
+  - 24 aggregate-stat records
+  - 20 leaderboard records
+  - 4 answer-key overrides
+- Imported the data into Supabase, mapping Firebase users to Supabase Auth users
+  by verified email and retaining the original Firebase UID in
+  `profiles.firebase_uid`.
+- Added repeatable migration utilities:
+  - `scripts/export-firebase-firestore.cjs`
+  - `scripts/import-firebase-to-supabase.cjs`
+- Verified Supabase row counts against the Firebase export.
+- `npm run typecheck` and `npm run build` pass successfully.
+
+#### Current migration boundary
+
+The active application on this branch uses Supabase for authentication and
+application data. Firebase is not yet removed from the repository or hosting
+workflow: `firebase.json`, `apphosting.yaml`, Firebase Cloud Functions, legacy
+Firebase client modules, and Firebase dependencies remain available for
+rollback. The site is not fully independent of Firebase until hosting is moved
+and those legacy services are intentionally retired.
+
+No study-group or answer-key-report documents were present in the Firebase
+export at migration time.
+
+---
+
 ## Architecture & Stack
 
 | Layer | Choice |
@@ -135,6 +183,17 @@ The largest engineering push — both **data** and **product**:
 | Hosting | Firebase App Hosting (`backendId: studio`) |
 | Functions | Firebase Cloud Functions (`functions/src/index.ts`) |
 | Data | Static JSON catalog + Firestore for user/completion/group data |
+
+### Migration-branch architecture
+
+| Layer | Choice |
+|-------|--------|
+| Frontend | Next.js 15.5, React 19, TypeScript, Tailwind, Radix UI |
+| Authentication | Supabase Auth with Google OAuth |
+| Backend / DB | Supabase Postgres with Row Level Security |
+| Hosting | Firebase App Hosting remains configured; hosting cutover is pending |
+| Functions | Legacy Firebase Cloud Function retained for rollback |
+| Data | Static JSON catalog + Supabase tables for user/completion/group data |
 
 **Routes:**
 
@@ -170,13 +229,18 @@ Work from the Aug 6 session:
 
 ## Known Build Notes
 
-Local `npm run build` succeeds but logs Firebase init warnings during static generation (`app/no-options`) — the app falls back to explicit Firebase config. This did not block deploy; worth monitoring if any Firebase client features misbehave in production.
+The Supabase migration branch passes `npm run typecheck` and `npm run build`.
+The active build no longer requires Firebase client initialization. Firebase
+warnings may still appear only when working with the retained legacy Firebase
+modules or deploying through the old App Hosting configuration.
 
 ---
 
 ## Possible Next Steps
 
-- Commit/push any remaining local-only changes (`.agents/`, `TestParsing` manifests, etc. are currently untracked)
-- Wire CI so `git push` auto-deploys via App Hosting GitHub integration
+- Move hosting to a non-Firebase provider and add the production Supabase URL to
+  Auth redirect settings.
+- Remove the legacy Firebase client, functions, config, and dependency after a
+  full production cutover and backup verification.
+- Wire CI for the new hosting provider.
 - Expand catalog for 2026 season tests as they become available
-- Address Firebase init warnings for cleaner production builds
