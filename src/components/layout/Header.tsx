@@ -18,11 +18,10 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getInitials } from '@/lib/utils';
-import { isAdminUid } from '@/lib/admin';
 
 
 function UserAuth() {
-  const { user, isUserLoading } = useUser();
+  const { user, isAdmin, isUserLoading } = useUser();
   const { supabase } = useSupabase();
   const router = useRouter();
   const { toast } = useToast();
@@ -57,7 +56,6 @@ function UserAuth() {
   }
 
   if (user) {
-    const showAdminLink = isAdminUid(user.uid);
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -89,7 +87,7 @@ function UserAuth() {
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
-          {showAdminLink && (
+          {isAdmin && (
             <DropdownMenuItem asChild>
               <Link href="/admin/answer-keys">
                 <ShieldCheck className="mr-2 h-4 w-4" />

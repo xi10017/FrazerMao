@@ -16,6 +16,7 @@ type SupabaseContextValue = {
   supabase: SupabaseClient;
   auth: SupabaseClient['auth'];
   user: AppUser | null;
+  isAdmin: boolean;
   isUserLoading: boolean;
   userError: Error | null;
 };
@@ -26,6 +27,7 @@ const SupabaseContext = createContext<SupabaseContextValue | undefined>(
 
 export function SupabaseProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [userError, setUserError] = useState<Error | null>(null);
 
@@ -39,6 +41,33 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const syncAdminStatus = async (nextUser: AppUser | null) => {
+    if (!nextUser) {
+      setIsAdmin(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('admins')
+      .select('user_id')
+      .eq('user_id', nextUser.uid)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to load Supabase admin status:', error);
+      setIsAdmin(false);
+      return;
+    }
+
+    setIsAdmin(Boolean(data));
+  };
+
+  const applyUser = (nextUser: AppUser | null) => {
+    setUser(nextUser);
+    syncProfile(nextUser);
+    void syncAdminStatus(nextUser);
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -50,8 +79,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
           setUserError(error);
         }
         const nextUser = toAppUser(data.user);
-        setUser(nextUser);
-        syncProfile(nextUser);
+        applyUser(nextUser);
         setIsUserLoading(false);
       })
       .catch((error: unknown) => {
@@ -65,8 +93,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
       const nextUser = toAppUser(session?.user ?? null);
-      setUser(nextUser);
-      syncProfile(nextUser);
+      applyUser(nextUser);
       setIsUserLoading(false);
     });
 
@@ -81,10 +108,11 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
       supabase,
       auth: supabase.auth,
       user,
+      isAdmin,
       isUserLoading,
       userError,
     }),
-    [user, isUserLoading, userError]
+    [user, isAdmin, isUserLoading, userError]
   );
 
   return (
@@ -107,6 +135,6 @@ export const useFirebase = useSupabase;
 export const useAuth = () => useSupabase().auth;
 export const useFirestore = () => useSupabase().supabase;
 export const useUser = () => {
-  const { user, isUserLoading, userError } = useSupabase();
-  return { user, isUserLoading, userError };
+  const { user, isAdmin, isUserLoading, userError } = useSupabase();
+  return { user, isAdmin, isUserLoading, userError };
 };
