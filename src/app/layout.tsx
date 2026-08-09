@@ -4,7 +4,7 @@ import 'katex/dist/katex.min.css';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/layout/Header';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
+import { SupabaseProvider } from '@/supabase';
 import { Inter } from 'next/font/google';
 import { Source_Code_Pro } from 'next/font/google';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
@@ -45,7 +45,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <FirebaseClientProvider>
+          <SupabaseProvider>
             <AnswerKeyOverridesProvider>
             <div className="relative flex min-h-screen flex-col">
               <Header />
@@ -53,7 +53,7 @@ export default function RootLayout({
             </div>
             <Toaster />
             </AnswerKeyOverridesProvider>
-          </FirebaseClientProvider>
+          </SupabaseProvider>
         </ThemeProvider>
       </body>
     </html>

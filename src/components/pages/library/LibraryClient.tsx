@@ -12,7 +12,7 @@ import type {
 } from '@/lib/types';
 import { FilterSidebar } from './FilterSidebar';
 import { TestList } from './TestList';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useSupabase, useUser } from '@/supabase';
 import {
   getSubmissionsForUser,
   getReviewMarks,
@@ -34,7 +34,6 @@ import { ProgressGrid } from './ProgressGrid';
 import { Leaderboard } from './Leaderboard';
 import { LandingPage } from '@/components/pages/landing/LandingPage';
 import { LibraryHomeSections } from './LibraryHomeSections';
-import { doc, setDoc } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -48,7 +47,7 @@ interface LibraryClientProps {
 
 const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const { supabase } = useSupabase();
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<TestSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,12 +70,36 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   const [bookmarkedTestIds, setBookmarkedTestIds] = useState<string[]>([]);
   const [isBookmarkSaving, setIsBookmarkSaving] = useState(false);
 
-  const userProfileRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  useEffect(() => {
+    if (!user) {
+      setUserProfile(null);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.uid)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled || error || !data) return;
+        setUserProfile({
+          uid: data.id,
+          displayName: data.display_name,
+          email: data.email ?? user.email ?? '',
+          photoURL: data.photo_url,
+          showOnLeaderboard: data.show_on_leaderboard,
+          bookmarkedTestIds: data.bookmarked_test_ids ?? [],
+          weeklyTestGoal: data.weekly_test_goal ?? undefined,
+          streakGoal: data.streak_goal ?? undefined,
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user]);
 
   useEffect(() => {
     setBookmarkedTestIds(userProfile?.bookmarkedTestIds ?? []);
@@ -84,10 +107,10 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (user && firestore) {
+      if (user) {
         setIsLoading(true);
         const storedSubmissions = await getSubmissionsForUser(
-          firestore,
+          supabase,
           user.uid
         );
         setSubmissions(storedSubmissions);
@@ -99,7 +122,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setAllMarks(marks);
 
         const cloudInProgress = await getAllCloudInProgress(
-          firestore,
+          supabase,
           user.uid
         );
 
@@ -128,7 +151,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           }
 
           if (!cloud || cloudMs < winnerMs) {
-            void saveCloudInProgress(firestore, user.uid, testId, winner);
+            void saveCloudInProgress(supabase, user.uid, testId, winner);
           }
 
           inProgressAnswers[testId] = winner.answers;
@@ -143,7 +166,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setInProgressTimers(inProgTimers);
 
         const cloudRetakes = await getAllCloudRetakeInProgress(
-          firestore,
+          supabase,
           user.uid
         );
         const retakeTestIds = new Set([
@@ -167,7 +190,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           }
 
           if (!cloud || cloudMs < winnerMs) {
-            void saveCloudRetakeInProgress(firestore, user.uid, testId, winner);
+            void saveCloudRetakeInProgress(supabase, user.uid, testId, winner);
           }
 
           retakeBundles[testId] = winner;
@@ -195,7 +218,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       }
     };
     fetchUserData();
-  }, [user, firestore, isUserLoading, tests]);
+  }, [user, supabase, isUserLoading, tests]);
 
   const testsWithHistory = useMemo((): FamatTestWithHistory[] => {
     const submissionsByTestId = submissions.reduce((acc, sub) => {
@@ -405,11 +428,11 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   };
 
   const handleToggleBookmark = async (testId: string, isBookmarked: boolean) => {
-    if (!user || !firestore || isBookmarkSaving) return;
+    if (!user || isBookmarkSaving) return;
     setIsBookmarkSaving(true);
     try {
       const result = await toggleBookmark(
-        firestore,
+        supabase,
         user.uid,
         testId,
         isBookmarked,
@@ -437,12 +460,12 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
   };
 
   const handleSaveGoals = async (weeklyGoal: number, streakGoal: number) => {
-    if (!userProfileRef || !user) return;
-    await setDoc(
-      userProfileRef,
-      { weeklyTestGoal: weeklyGoal, streakGoal },
-      { merge: true }
-    );
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ weekly_test_goal: weeklyGoal, streak_goal: streakGoal })
+      .eq('id', user.uid);
+    if (error) throw error;
     toast({ title: 'Goals updated' });
   };
 

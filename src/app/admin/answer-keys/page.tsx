@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore } from '@/supabase';
 import { isAdminUid } from '@/lib/admin';
 import {
   ANSWER_KEY_ARCHIVE_DAYS,

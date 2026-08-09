@@ -28,7 +28,7 @@ import { gradeTest, getTestName, buildRetakeSubmitAnswers, buildRetakePracticeUr
 import { useAnswerKeyOverridesForTest } from '@/contexts/AnswerKeyOverridesContext';
 import { getUserPendingReportQuestions } from '@/lib/answer-key-reports';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore } from '@/supabase';
 import {
   saveSubmission,
   getReviewMarks,
