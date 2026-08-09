@@ -1,0 +1,45 @@
+name: Supabase daily heartbeat
+
+on:
+  push:
+    branches:
+      - supabase-migration
+  schedule:
+    # Run away from the top of the hour to reduce scheduling delays.
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          set -eu
+
+          status="$(curl \
+            --fail \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-delay 5 \
+            --max-time 30 \
+            --output /dev/null \
+            --write-out '%{http_code}' \
+            "${SUPABASE_URL}/rest/v1/aggregate_stats?select=test_id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")"
+
+          if [ "${status}" != "200" ]; then
+            echo "Supabase heartbeat returned HTTP ${status}"
+            exit 1
+          fi
+
+          echo "Supabase heartbeat succeeded."
