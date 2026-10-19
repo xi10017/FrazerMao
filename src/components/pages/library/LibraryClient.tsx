@@ -31,7 +31,6 @@ import {
 } from '@/lib/user-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
-import { Leaderboard } from './Leaderboard';
 import { LandingPage } from '@/components/pages/landing/LandingPage';
 import { LibraryHomeSections } from './LibraryHomeSections';
 import type { UserProfile } from '@/lib/types';
@@ -504,10 +503,9 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       />
       <div className="flex-1 min-w-0">
         <Tabs defaultValue="library">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="library">Test Library</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
-            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           </TabsList>
           <TabsContent value="library" className="mt-4">
             <LibraryHomeSections
@@ -527,9 +525,6 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           </TabsContent>
           <TabsContent value="progress" className="mt-4">
             <ProgressGrid tests={filteredTests} />
-          </TabsContent>
-          <TabsContent value="leaderboard" className="mt-4">
-            <Leaderboard />
           </TabsContent>
         </Tabs>
       </div>

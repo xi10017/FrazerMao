@@ -8,7 +8,6 @@ import {
   BookCopy,
   ChevronRight,
   LogIn,
-  Swords,
   Timer,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -101,7 +100,7 @@ export const LandingPage = () => {
             Everything you need, all in one place.
           </p>
         </div>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           <FeatureCard
             icon={<BookCopy className="h-8 w-8" />}
             title="Folder Library"
@@ -117,11 +116,6 @@ export const LandingPage = () => {
             title="In-Depth Analytics"
             description="Visualize your performance with a detailed progress grid, review past attempts, and identify your strengths and weaknesses."
           />
-          <FeatureCard
-            icon={<Swords className="h-8 w-8" />}
-            title="Competitive Leaderboards"
-            description="Stay motivated by competing against peers. See how you rank overall and within specific test divisions."
-          />
         </div>
       </section>
 
@@ -131,8 +125,8 @@ export const LandingPage = () => {
             <div className="flex-1">
               <h3 className="text-2xl font-bold">Ready to Start Preparing?</h3>
               <p className="mt-2 text-muted-foreground">
-                Sign in to save your progress, track your history, and climb the
-                leaderboards. Your journey to the top starts now.
+                Sign in to save your progress, review past attempts, and build
+                confidence for your next competition.
               </p>
             </div>
             <UserAuthButton />
