@@ -5,7 +5,8 @@ export interface FamatTestBase {
   division: string;
   test_type: string;
   document_type: 'Test' | 'Solution';
-  format: 'Individual' | 'Team';
+  /** Individual, team, or the named topic event from the source catalog. */
+  format: string;
   name: string;
   url: string;
   source?: string;

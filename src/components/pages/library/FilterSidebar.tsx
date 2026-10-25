@@ -62,6 +62,7 @@ interface FilterSidebarProps {
     months: string[];
     competitions: string[];
     years: number[];
+    formats: string[];
   };
   startYear: number;
   setStartYear: (year: number) => void;
@@ -73,6 +74,8 @@ interface FilterSidebarProps {
   setSelectedMonths: (months: string[]) => void;
   selectedCompetitions: string[];
   setSelectedCompetitions: (competitions: string[]) => void;
+  selectedFormat: string;
+  setSelectedFormat: (format: string) => void;
   onResetFilters: () => void;
 }
 
@@ -88,15 +91,18 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   setSelectedMonths,
   selectedCompetitions,
   setSelectedCompetitions,
+  selectedFormat,
+  setSelectedFormat,
   onResetFilters,
 }) => {
-  const years = uniqueValues.years.sort((a, b) => b - a);
+  const years = [...uniqueValues.years].sort((a, b) => b - a);
   const isFiltered =
+    selectedFormat !== 'all' ||
     selectedDivisions.length > 0 ||
     selectedMonths.length > 0 ||
     selectedCompetitions.length > 0 ||
-    startYear !== uniqueValues.years[0] ||
-    endYear !== uniqueValues.years[uniqueValues.years.length -1];
+    startYear !== years[years.length - 1] ||
+    endYear !== years[0];
 
   return (
     <aside className="w-full md:w-64 lg:w-72">
@@ -154,6 +160,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 </Select>
               </div>
             </div>
+          </FilterSection>
+
+          <FilterSection title="Test format / topic">
+            <Select value={selectedFormat} onValueChange={setSelectedFormat}>
+              <SelectTrigger aria-label="Test format or topic"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All formats and topics</SelectItem>{uniqueValues.formats.map(format => <SelectItem key={format} value={format}>{format}</SelectItem>)}</SelectContent>
+            </Select>
           </FilterSection>
 
           <FilterSection title="Month">

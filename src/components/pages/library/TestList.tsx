@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   getTestName,
@@ -30,6 +30,8 @@ export const TestList: React.FC<TestListProps> = ({
   onToggleBookmark,
   isBookmarkSaving = false,
 }) => {
+  const [visibleCount, setVisibleCount] = useState(24);
+  useEffect(() => setVisibleCount(24), [tests, bookmarkedTestIds]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const { overridesByTestId } = useAnswerKeyOverridesContext();
 
@@ -46,7 +48,7 @@ export const TestList: React.FC<TestListProps> = ({
         <Button
           variant={showSavedOnly ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setShowSavedOnly((prev) => !prev)}
+          onClick={() => { setShowSavedOnly((prev) => !prev); setVisibleCount(24); }}
         >
           <Star
             className={cn(
@@ -59,7 +61,7 @@ export const TestList: React.FC<TestListProps> = ({
       </div>
       {displayedTests.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {displayedTests.map((test) => {
+          {displayedTests.slice(0, visibleCount).map((test) => {
             const hasHistory = test.history && test.history.length > 0;
             const solution = findSolutionForTest(test);
             const overrides = overridesByTestId[test.id];
@@ -154,6 +156,7 @@ export const TestList: React.FC<TestListProps> = ({
               </Card>
             );
           })}
+          {visibleCount < displayedTests.length && <div className="col-span-full flex justify-center py-4"><Button variant="outline" onClick={() => setVisibleCount(count => count + 24)}>Show more tests ({Math.min(visibleCount, displayedTests.length)} of {displayedTests.length})</Button></div>}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 py-20 text-center">
