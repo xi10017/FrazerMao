@@ -300,19 +300,22 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
       divisions,
       months,
       competitions: testTypes,
+      formats: [...new Set(tests.map(test => test.format))].sort(),
       years,
       minYear: years.length > 0 ? years[years.length - 1] : currentYear,
       maxYear: years.length > 0 ? years[0] : currentYear,
     };
   }, [tests]);
 
-  const [startYear, setStartYear] = useState(2013);
+  const [startYear, setStartYear] = useState(uniqueValues.minYear);
   const [endYear, setEndYear] = useState(uniqueValues.maxYear);
   const [selectedDivisions, setSelectedDivisions] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedCompetitions, setSelectedCompetitions] = useState<string[]>(
     []
   );
+
+  const [selectedFormat, setSelectedFormat] = useState('all');
 
   // Load filters from localStorage on initial render
   useEffect(() => {
@@ -326,6 +329,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           setSelectedDivisions(savedFilters.selectedDivisions);
         if (savedFilters.selectedMonths)
           setSelectedMonths(savedFilters.selectedMonths);
+        if (typeof savedFilters.selectedFormat === 'string') setSelectedFormat(savedFilters.selectedFormat);
         if (savedFilters.selectedCompetitions)
           setSelectedCompetitions(savedFilters.selectedCompetitions);
       }
@@ -344,6 +348,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           selectedDivisions,
           selectedMonths,
           selectedCompetitions,
+          selectedFormat,
         };
         localStorage.setItem('testFilters', JSON.stringify(filtersToSave));
       } catch (error) {
@@ -358,10 +363,12 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     selectedDivisions,
     selectedMonths,
     selectedCompetitions,
+    selectedFormat,
   ]);
 
   const handleResetFilters = () => {
-    setStartYear(2013);
+    setStartYear(uniqueValues.minYear);
+    setSelectedFormat('all');
     setEndYear(uniqueValues.maxYear);
     setSelectedDivisions([]);
     setSelectedMonths([]);
@@ -391,7 +398,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         const competitionMatch =
           selectedCompetitions.length === 0 ||
           selectedCompetitions.includes(test.test_type);
-        return yearMatch && divisionMatch && monthMatch && competitionMatch;
+        return yearMatch && divisionMatch && monthMatch && competitionMatch && (selectedFormat === 'all' || test.format === selectedFormat);
       })
       .sort((a, b) => b.year - a.year || a.division.localeCompare(b.division));
   }, [
@@ -401,6 +408,7 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
     selectedDivisions,
     selectedMonths,
     selectedCompetitions,
+    selectedFormat,
   ]);
 
   const handleSessionCancelled = (testId: string) => {
@@ -504,6 +512,8 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         setSelectedMonths={setSelectedMonths}
         selectedCompetitions={selectedCompetitions}
         setSelectedCompetitions={setSelectedCompetitions}
+        selectedFormat={selectedFormat}
+        setSelectedFormat={setSelectedFormat}
         onResetFilters={handleResetFilters}
       />
       <div className="flex-1 min-w-0">

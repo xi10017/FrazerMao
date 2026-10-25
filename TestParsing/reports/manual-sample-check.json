@@ -1,0 +1,83 @@
+{
+  "checked_tests": [
+    {
+      "key": [
+        "Alg1",
+        2020,
+        "January",
+        "Regional",
+        "Individual"
+      ],
+      "url": "https://tests.famat.org/docs/9858%20T_2020%20Jan%20Algebra%201%20Individual%20%20with%20solutions.pdf",
+      "answers_compared": 30,
+      "answer_page": 8,
+      "result": "match",
+      "note": "Q9 accepts A and E in both the PDF table and catalog."
+    },
+    {
+      "key": [
+        "Alg1",
+        2025,
+        "January",
+        "Invitational",
+        "Individual"
+      ],
+      "url": "https://drive.google.com/file/d/1U4h3hhmIzCToku8HdIThiYkgetURNql6/view",
+      "answers_compared": 30,
+      "answer_page": 1,
+      "result": "match"
+    },
+    {
+      "key": [
+        "Alpha",
+        2025,
+        null,
+        "States",
+        "Individual"
+      ],
+      "url": "https://drive.google.com/file/d/1AOYiZIPY3aYixLjQkB8YQIPRgfDEQmCA/view",
+      "answers_compared": 30,
+      "answer_page": 1,
+      "result": "spreadsheet/PDF discrepancy",
+      "differences": [
+        {
+          "question": 15,
+          "spreadsheet": "thrown out (all A-E accepted)",
+          "pdf": "A"
+        },
+        {
+          "question": 25,
+          "spreadsheet": "thrown out (all A-E accepted)",
+          "pdf": "D"
+        }
+      ]
+    },
+    {
+      "key": [
+        "Alpha",
+        2024,
+        null,
+        "Nationals",
+        "Individual"
+      ],
+      "url": "https://mualphatheta.org/sites/default/files/2025-01/alpha_individual_solutions_0.pdf",
+      "answers_compared": 30,
+      "answer_page": 1,
+      "result": "match"
+    },
+    {
+      "key": [
+        "Mu",
+        2024,
+        null,
+        "Nationals",
+        "Area and Volume"
+      ],
+      "url": "https://mualphatheta.org/sites/default/files/2025-01/mu_area_and_volume_solutions_0.pdf",
+      "answers_compared": 30,
+      "answer_page": 1,
+      "result": "match"
+    }
+  ],
+  "scope": "Visual inspection of official answer pages and comparison of all 30 imported answers per test; not independent mathematical re-solving."
+}
