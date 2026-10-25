@@ -47,6 +47,7 @@ function submissionFromRow(row: Record<string, any>): TestSubmission {
     answers: row.answers ?? {},
     score: row.score,
     submittedAt: new Date(row.submitted_at),
+    startedAt: row.started_at ?? null,
     division: row.division,
     testName: row.test_name,
     completionDate: row.completion_date,
@@ -148,7 +149,8 @@ export async function saveSubmission(
   scoreReport: ScoreReport,
   inProgressFlags: MarkedQuestions,
   isRetake?: boolean,
-  retakeSourceSubmissionId?: string
+  retakeSourceSubmissionId?: string,
+  startedAt?: string | null
 ): Promise<string | null> {
   if (typeof window === 'undefined' || !userId) return null;
 
@@ -158,6 +160,7 @@ export async function saveSubmission(
     score: scoreReport,
     test_id: test.id,
     submitted_at: new Date().toISOString(),
+    started_at: startedAt ?? null,
     division: test.division,
     test_name: getTestName(test),
     completion_date: new Date().toISOString(),
@@ -266,6 +269,10 @@ function clearFromLocalStorage(key: string) {
 
 
 // --- Key Prefixes ---
+const ATTEMPT_STARTED_PREFIX = 'attempt_started_';
+const getAttemptStartedKey = (userId: string, testId: string, retake = false) =>
+  `${ATTEMPT_STARTED_PREFIX}${userId}_${retake ? 'retake' : 'practice'}_${testId}`;
+
 const IN_PROGRESS_PREFIX = 'in_progress_';
 const IN_PROGRESS_FLAGS_PREFIX = 'in_progress_flags_';
 const REVIEW_MARKS_PREFIX = 'review_marks_';
@@ -398,6 +405,7 @@ export function getLocalInProgressBundle(
     timerState,
     updatedAt: new Date(updatedMs),
     sessionMode: 'practice',
+    startedAt: getFromLocalStorage<string | null>(getAttemptStartedKey(userId, testId), null),
   };
 }
 
@@ -406,6 +414,7 @@ export function persistInProgressLocally(
   testId: string,
   state: InProgressTestState
 ) {
+  saveToLocalStorage(getAttemptStartedKey(userId, testId), state.startedAt ?? null);
   saveInProgressAnswers(userId, testId, state.answers);
   saveInProgressFlags(userId, testId, state.flags);
   saveInProgressChecked(userId, testId, state.checked);
@@ -444,6 +453,7 @@ function cloudDocToInProgressState(
     timerState: (state.timerState as TimerState | null) ?? null,
     updatedAt: updatedAt ? new Date(updatedAt) : new Date(0),
     sessionMode,
+    startedAt: typeof state.startedAt === 'string' ? state.startedAt : null,
     sourceSubmissionId: state.sourceSubmissionId as string | undefined,
     sourceAnswers: state.sourceAnswers as UserAnswers | undefined,
     retakeOmittedQuestions: state.retakeOmittedQuestions as number[] | undefined,
@@ -739,6 +749,7 @@ export function getLocalRetakeInProgressBundle(
     timerState,
     updatedAt: new Date(updatedMs),
     sessionMode: 'retake',
+    startedAt: getFromLocalStorage<string | null>(getAttemptStartedKey(userId, testId, true), null),
     sourceSubmissionId: sourceMeta.sourceSubmissionId,
     sourceAnswers: sourceMeta.sourceAnswers,
     retakeOmittedQuestions: sourceMeta.retakeOmittedQuestions,
@@ -750,6 +761,7 @@ export function persistRetakeInProgressLocally(
   testId: string,
   state: InProgressTestState
 ) {
+  saveToLocalStorage(getAttemptStartedKey(userId, testId, true), state.startedAt ?? null);
   saveToLocalStorage(getRetakeInProgressKey(userId, testId), state.answers);
   saveToLocalStorage(getRetakeInProgressFlagsKey(userId, testId), state.flags);
   saveToLocalStorage(
@@ -839,6 +851,7 @@ export async function clearPracticeInProgressForTest(
   userId: string,
   testId: string
 ): Promise<void> {
+  clearFromLocalStorage(getAttemptStartedKey(userId, testId));
   clearInProgressAnswers(userId, testId);
   clearInProgressFlags(userId, testId);
   clearInProgressChecked(userId, testId);
@@ -854,6 +867,7 @@ export async function clearRetakeInProgressForTest(
   userId: string,
   testId: string
 ): Promise<void> {
+  clearFromLocalStorage(getAttemptStartedKey(userId, testId, true));
   clearFromLocalStorage(getRetakeInProgressKey(userId, testId));
   clearFromLocalStorage(getRetakeInProgressFlagsKey(userId, testId));
   clearFromLocalStorage(getRetakeInProgressCheckedKey(userId, testId));
@@ -883,6 +897,7 @@ export function clearAllLocalData(userId: string) {
   if (typeof window === 'undefined' || !userId) return;
   try {
     const prefixes = [
+        `${ATTEMPT_STARTED_PREFIX}${userId}_`,
         `${IN_PROGRESS_PREFIX}${userId}_`,
         `${IN_PROGRESS_FLAGS_PREFIX}${userId}_`,
         `${REVIEW_MARKS_PREFIX}${userId}_`,
@@ -981,10 +996,9 @@ export async function updateLeaderboardVisibility(
     return { saved: false };
   }
 
-  const { error } = await db
-    .from('profiles')
-    .update({ show_on_leaderboard: showOnLeaderboard })
-    .eq('id', user.uid);
+  const { error } = await db.rpc('set_season_participation', {
+    join_season: showOnLeaderboard,
+  });
   if (error) throw error;
   await updateUserLeaderboardEntries(db, user, showOnLeaderboard);
   recordProfileWrite(cooldownKey);
@@ -992,7 +1006,7 @@ export async function updateLeaderboardVisibility(
 }
 
 /**
- * Permanently deletes ALL cloud data belonging to the signed-in user only.
+ * Deletes cloud practice history for the signed-in user; season award records are preserved.
  * Does not touch any other user's documents.
  */
 export async function deleteAllUserCloudData(

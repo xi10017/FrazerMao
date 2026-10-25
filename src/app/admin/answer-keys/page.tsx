@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { AlertTriangle, Check, ExternalLink, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { RestoreOriginalKeyButton } from '@/components/pages/library/RestoreOriginalKeys';
 
 function ReportGroupCard({
   group,
@@ -217,6 +218,7 @@ function ArchiveReportCard({ report }: { report: AnswerKeyReport }) {
                 View test
               </a>
             </Button>
+            {isApproved && <RestoreOriginalKeyButton testId={report.testId} question={report.questionNumber} />}
             <Badge variant={isApproved ? 'default' : 'secondary'}>
               {isApproved ? 'Approved' : isSuperseded ? 'Auto-closed' : 'Rejected'}
             </Badge>

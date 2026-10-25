@@ -66,6 +66,7 @@ export default function SettingsPage() {
   const [cloudConfirmationText, setCloudConfirmationText] = useState('');
   const [isDeletingCloud, setIsDeletingCloud] = useState(false);
   const [isLeaderboardSaving, setIsLeaderboardSaving] = useState(false);
+  const [seasonParticipation, setSeasonParticipation] = useState<boolean | null>(null);
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -77,6 +78,10 @@ export default function SettingsPage() {
       return;
     }
     let cancelled = false;
+    setSeasonParticipation(null);
+    void supabase.rpc('get_season_activity_leaderboard').then(({ data, error }) => {
+      if (!cancelled && !error) setSeasonParticipation(Boolean(data?.participating));
+    });
     setIsProfileLoading(true);
     supabase
       .from('profiles')
@@ -159,14 +164,15 @@ export default function SettingsPage() {
         supabase,
         user,
         checked,
-        userProfile.showOnLeaderboard ?? true
+        seasonParticipation ?? false
       );
       if (result.saved) {
+        setSeasonParticipation(checked);
         toast({
           title: 'Privacy settings updated!',
           description: `You will now be ${
             checked ? 'shown on' : 'hidden from'
-          } leaderboards.`,
+          } this season’s leaderboard. Past seasons are unchanged.`,
         });
       }
     } catch (error) {
@@ -265,21 +271,22 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <Label htmlFor="leaderboard-switch" className="text-base">
-                  Show on Leaderboards
+                  Participate in This Season
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Allow your name and score to be publicly visible on
-                  leaderboards.
+                  Join to make your display name and season points public and enter
+                  consideration for the activity award after confirming your full name and school privately. Earlier practice this season counts.
+                  Turning this off leaves only the current season; past seasons stay unchanged.
                 </p>
               </div>
-              {userProfile && (
+              {userProfile && (seasonParticipation ? (
                 <Switch
                   id="leaderboard-switch"
-                  checked={userProfile.showOnLeaderboard ?? true}
-                  disabled={isLeaderboardSaving}
+                  checked={seasonParticipation ?? false}
+                  disabled={isLeaderboardSaving || seasonParticipation === null}
                   onCheckedChange={handleLeaderboardVisibilityChange}
                 />
-              )}
+              ) : <Button variant="outline" disabled={seasonParticipation === null} onClick={() => router.push('/?tab=leaderboard')}>Join leaderboard</Button>)}
             </div>
           </CardContent>
         </Card>
@@ -361,15 +368,16 @@ export default function SettingsPage() {
               <AlertDialogTrigger asChild>
                 <Button variant="destructive">
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Cloud History
+                  Delete Cloud Practice History
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete all cloud history?</AlertDialogTitle>
+                  <AlertDialogTitle>Delete cloud practice history?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This permanently deletes your submitted test results and
-                    removes you from leaderboards. It only affects your account (
+                    This permanently deletes your submitted test results and saved
+                    practice sessions. Season award points, participation, and private
+                    award details are preserved. It only affects your account (
                     {user.email}). Your sign-in account stays active. Type{' '}
                     <code className="font-mono bg-muted p-1 rounded-md text-foreground">
                       delete my cloud history
