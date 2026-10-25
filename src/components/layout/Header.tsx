@@ -90,10 +90,7 @@ function UserAuth() {
           </DropdownMenuItem>
           {isAdmin && (
             <DropdownMenuItem asChild>
-              <Link href="/admin/answer-keys">
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                <span>Answer key reports</span>
-              </Link>
+              <Link href="/admin"><ShieldCheck className="mr-2 h-4 w-4" /><span>Admin</span></Link>
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />

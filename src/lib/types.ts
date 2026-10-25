@@ -47,6 +47,8 @@ export type TestSubmission = {
   answers: UserAnswers;
   score: ScoreReport;
   submittedAt: Date;
+  /** Wall-clock attempt start; absent for attempts started before tracking. */
+  startedAt?: string | null;
   division: string;
   testName: string;
   completionDate: string;
@@ -115,6 +117,8 @@ export type GroupMembership = {
 export type MarkedQuestions = { [questionNumber: number]: string };
 
 export type TimerState = {
+  /** Chosen countdown duration; older sessions default to 60 minutes. */
+  durationSeconds?: number;
   timeRemaining: number;
   isRunning: boolean;
 };
@@ -128,6 +132,7 @@ export type InProgressTestState = {
   checked: InProgressChecked;
   timerState: TimerState | null;
   updatedAt: Date;
+  startedAt?: string | null;
   sessionMode?: 'practice' | 'retake';
   sourceSubmissionId?: string;
   sourceAnswers?: UserAnswers;

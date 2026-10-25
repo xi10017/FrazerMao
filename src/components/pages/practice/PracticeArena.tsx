@@ -33,10 +33,6 @@ import {
   saveSubmission,
   getReviewMarks,
   saveReviewMarks,
-  saveInProgressAnswers,
-  saveInProgressFlags,
-  saveInProgressChecked,
-  saveTimerState,
   clearPracticeInProgressForTest,
   clearRetakeInProgressForTest,
   syncInProgressIfNeeded,
@@ -158,6 +154,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   const retakeSourceSubmissionIdRef = useRef<string | undefined>(undefined);
   const retakeOmittedQuestionsRef = useRef<Set<number>>(new Set());
   const retakeInitializedRef = useRef(false);
+  const attemptStartedAtRef = useRef<string | null>(null);
 
   const keyOverrides = useAnswerKeyOverridesForTest(test.id);
   const overrideSignature = useMemo(
@@ -239,6 +236,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       flags,
       checked,
       timerState: ts,
+      startedAt: attemptStartedAtRef.current,
       updatedAt: new Date(),
     };
     if (isRetakeMode && retakeSourceAnswersRef.current) {
@@ -325,7 +323,8 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       report,
       markedQuestions,
       isRetakeMode,
-      isRetakeMode ? retakeSourceSubmissionIdRef.current : undefined
+      isRetakeMode ? retakeSourceSubmissionIdRef.current : undefined,
+      attemptStartedAtRef.current
     );
 
     if (newSubmissionId) {
@@ -383,6 +382,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       merged: InProgressTestState,
       correctAnswers: (string | string[])[]
     ) => {
+      attemptStartedAtRef.current = merged.startedAt ?? null;
       retakeSourceAnswersRef.current = merged.sourceAnswers ?? null;
       retakeSourceSubmissionIdRef.current = merged.sourceSubmissionId;
       retakeOmittedQuestionsRef.current = new Set(
@@ -399,10 +399,9 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
         )
       );
       setTimerState(
-        merged.timerState ?? {
-          timeRemaining: TIMER_DURATION_SECONDS,
-          isRunning: false,
-        }
+        merged.timerState
+          ? { ...merged.timerState, isRunning: false }
+          : { timeRemaining: TIMER_DURATION_SECONDS, isRunning: false }
       );
       setScoreReport(null);
       setCurrentSubmissionId(undefined);
@@ -424,6 +423,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
       if (cancelled) return;
 
+      attemptStartedAtRef.current = merged ? merged.startedAt ?? null : new Date().toISOString();
       const savedProgress = merged?.answers ?? {};
       const savedFlags = merged?.flags ?? {};
       const savedTimerState = merged?.timerState ?? null;
@@ -444,7 +444,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       }
 
       if (savedTimerState) {
-        setTimerState(savedTimerState);
+        setTimerState({ ...savedTimerState, isRunning: false });
       } else {
         setTimerState({
           timeRemaining: TIMER_DURATION_SECONDS,
@@ -488,6 +488,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
       if (!solution || !initialAnswers) return;
       if (retakeInitializedRef.current) return;
       retakeInitializedRef.current = true;
+      attemptStartedAtRef.current = new Date().toISOString();
       retakeSourceAnswersRef.current = initialAnswers;
       retakeSourceSubmissionIdRef.current = submissionIdProp;
       retakeOmittedQuestionsRef.current = new Set();
@@ -604,7 +605,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
 
   // Effect to save progress (answers or marks) to localStorage
   useEffect(() => {
-    if (!user || !isClient || isBrowseModeProp) return;
+    if (!user || !isClient || isBrowseModeProp || isProgressLoading) return;
 
     if (isReviewMode && currentSubmissionId) {
       saveReviewMarks(user.uid, currentSubmissionId, markedQuestions);
@@ -615,6 +616,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           flags: markedQuestions,
           checked: checkedQuestions,
           timerState,
+          startedAt: attemptStartedAtRef.current,
           updatedAt: new Date(),
           sessionMode: 'retake',
           sourceSubmissionId: retakeSourceSubmissionIdRef.current,
@@ -622,8 +624,16 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
           retakeOmittedQuestions: [...retakeOmittedQuestionsRef.current],
         });
       } else if (!isRetakeMode) {
-        saveInProgressAnswers(user.uid, test.id, userAnswers);
-        saveInProgressFlags(user.uid, test.id, markedQuestions);
+        // Save one consistent snapshot: a newer answer snapshot must never
+        // point at an older countdown when the session is resumed.
+        persistInProgressLocally(user.uid, test.id, {
+          answers: userAnswers,
+          flags: markedQuestions,
+          checked: checkedQuestions,
+          timerState,
+          startedAt: attemptStartedAtRef.current,
+          updatedAt: new Date(),
+        });
       }
     }
   }, [
@@ -636,6 +646,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     isReviewMode,
     isRetakeMode,
     currentSubmissionId,
+    isProgressLoading,
     isClient,
     isBrowseModeProp,
   ]);
@@ -650,7 +661,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   }, [userAnswers, markedQuestions, checkedQuestions, timerState]);
 
   const flushInProgress = useCallback(() => {
-    if (!user || !isClient || isReviewMode || isBrowseModeProp) return;
+    if (!user || !isClient || isReviewMode || isBrowseModeProp || isProgressLoading) return;
     const payload = buildInProgressPayload();
     if (isRetakeMode && retakeSourceAnswersRef.current) {
       persistRetakeInProgressLocally(user.uid, test.id, payload);
@@ -672,6 +683,7 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     isClient,
     isBrowseModeProp,
     buildInProgressPayload,
+    isProgressLoading,
   ]);
 
   // Cloud sync only when leaving the test (tab close, navigate away, etc.)
@@ -689,26 +701,6 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
     };
   }, [flushInProgress]);
   
-  // Effect to save checked questions to localStorage
-  useEffect(() => {
-    if (!user || !isClient || isReviewMode || isRetakeMode || isBrowseModeProp) return;
-    saveInProgressChecked(user.uid, test.id, checkedQuestions);
-  }, [checkedQuestions, user, test.id, isClient, isReviewMode, isRetakeMode, isBrowseModeProp]);
-
-  // Timer: save on start/pause and every 15s while running (not every second)
-  useEffect(() => {
-    if (!user || !isClient || isReviewMode || isRetakeMode || isBrowseModeProp) return;
-    saveTimerState(user.uid, test.id, latestProgressRef.current.timerState);
-  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode, isBrowseModeProp]);
-
-  useEffect(() => {
-    if (!user || !isClient || isReviewMode || isRetakeMode || isBrowseModeProp || !timerState.isRunning) return;
-    const intervalId = setInterval(() => {
-      saveTimerState(user.uid, test.id, latestProgressRef.current.timerState);
-    }, 15000);
-    return () => clearInterval(intervalId);
-  }, [timerState.isRunning, user, test.id, isClient, isReviewMode, isRetakeMode, isBrowseModeProp]);
-
   const handleAnswerSelect = (question: number, answer: string | null) => {
     if (isRetakeMode) {
       if (answer === null) {
@@ -875,10 +867,10 @@ const PracticeArena: React.FC<PracticeArenaProps> = ({
   ]);
 
   const headerActions = (
-    <div className="flex items-center gap-2">
-      {isPracticeMode && isClient && (
+    <div className="flex flex-wrap items-center gap-2">
+      {isPracticeMode && isClient && !isProgressLoading && (
         <Timer
-          duration={TIMER_DURATION_SECONDS}
+          duration={timerState.durationSeconds ?? TIMER_DURATION_SECONDS}
           initialTimeRemaining={timerState.timeRemaining}
           initialIsRunning={timerState.isRunning}
           onStateChange={setTimerState}

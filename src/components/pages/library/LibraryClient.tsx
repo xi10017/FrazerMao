@@ -31,6 +31,7 @@ import {
 } from '@/lib/user-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProgressGrid } from './ProgressGrid';
+import { SeasonLeaderboard } from './SeasonLeaderboard';
 import { LandingPage } from '@/components/pages/landing/LandingPage';
 import { LibraryHomeSections } from './LibraryHomeSections';
 import type { UserProfile } from '@/lib/types';
@@ -45,6 +46,10 @@ interface LibraryClientProps {
 }
 
 const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
+  const [activeTab, setActiveTab] = useState('library');
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'leaderboard') setActiveTab('leaderboard');
+  }, []);
   const { user, isUserLoading } = useUser();
   const { supabase } = useSupabase();
   const { toast } = useToast();
@@ -502,10 +507,11 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
         onResetFilters={handleResetFilters}
       />
       <div className="flex-1 min-w-0">
-        <Tabs defaultValue="library">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="library">Test Library</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           </TabsList>
           <TabsContent value="library" className="mt-4">
             <LibraryHomeSections
@@ -525,6 +531,9 @@ const LibraryClient: React.FC<LibraryClientProps> = ({ tests }) => {
           </TabsContent>
           <TabsContent value="progress" className="mt-4">
             <ProgressGrid tests={filteredTests} />
+          </TabsContent>
+          <TabsContent value="leaderboard" className="mt-4">
+            <SeasonLeaderboard />
           </TabsContent>
         </Tabs>
       </div>
