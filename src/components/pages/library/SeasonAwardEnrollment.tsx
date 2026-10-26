@@ -39,8 +39,8 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
     finally { setBusy(false); }
   };
   return <div className="space-y-3 rounded-md border p-4">
-    <p className="font-medium">{participating ? 'You’re participating this season.' : 'Join the season activity award'}</p>
-    <p className="text-sm text-muted-foreground">Your display name and season points will be public. Your full name and school are private and visible only to you and award administrators. Joining enters you into award consideration; earlier practice this season counts.</p>
+    <p className="font-medium">{participating ? 'You’re participating this season.' : 'Join the season leaderboard'}</p>
+    <p className="text-sm text-muted-foreground">Compete for the activity award at FAMAT States. Your display name and points appear on the leaderboard. Only you and site admins can see your full name and school.</p>
     {loading ? <p role="status">Loading your details…</p> : (!participating || !confirmed || editing) ? <form className="space-y-3" onSubmit={async event => {
       event.preventDefault(); setBusy(true); setError(null);
       try {
@@ -52,10 +52,10 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
     }}>
       <div className="space-y-2"><Label htmlFor="award-full-name">Full name (private)</Label><Input id="award-full-name" autoComplete="name" required maxLength={120} value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="award-school">School (private)</Label><Input id="award-school" autoComplete="organization" required maxLength={160} value={school} onChange={e=>setSchool(e.target.value)} /></div>
-      <p className="text-sm text-muted-foreground">Confirm these details each season. Your previous details are prefilled when available.</p>
-      <Button type="submit" disabled={busy}>{busy ? 'Saving…' : participating ? 'Confirm award details' : 'Confirm details and join'}</Button>
-    </form> : <div className="space-y-2"><p className="text-sm">Award details confirmed for this season.</p><Button variant="outline" disabled={busy} onClick={()=>setEditing(true)}>Edit private details</Button></div>}
-    {participating && <Button variant="outline" disabled={busy || loading} onClick={()=>void leave()}>Leave this season</Button>}
+      <p className="text-sm text-muted-foreground">Earlier practice this season counts. Participation must be renewed each season.</p>
+      <Button type="submit" disabled={busy}>{busy ? 'Saving…' : participating ? 'Save details' : 'Join the leaderboard'}</Button>
+    </form> : <div className="space-y-2"><p className="text-sm">Your details are saved for this season.</p><Button variant="outline" disabled={busy} onClick={()=>setEditing(true)}>Edit your details</Button></div>}
+    {participating && <Button variant="outline" disabled={busy || loading} onClick={()=>void leave()}>Leave the competition</Button>}
     {error && <div role="alert"><p className="text-sm text-destructive">{error}</p><Button variant="outline" disabled={busy} onClick={()=>setReload(n=>n+1)}>Reload details</Button></div>}
   </div>;
 }
