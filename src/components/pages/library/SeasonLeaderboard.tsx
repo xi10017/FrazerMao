@@ -19,16 +19,16 @@ interface Standings { myActivity?: PersonalActivity; currentSeason: number; part
 
 interface OwnRow { userId: string; displayName: string; photoURL: string | null; points: number; rank: number | null; participating: boolean }
 function Rankings({ season, own }: { season: Season; own?: OwnRow }) {
-  const others = season.entries.filter(entry => entry.userId !== own?.userId);
-  if (!own && others.length === 0) return <p className="py-6 text-center text-muted-foreground">No shared activity yet this season.</p>;
+  const others = season.entries.filter(entry => entry.points > 0 && entry.userId !== own?.userId);
+  if (!own && others.length === 0) return <p className="py-6 text-center text-muted-foreground">No points recorded yet this season.</p>;
   return <Table>
     <TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Student</TableHead><TableHead className="text-right">Season points</TableHead></TableRow></TableHeader>
     <TableBody>
       {own && <TableRow className="border-b-2 border-primary/30 bg-primary/10 hover:bg-primary/10">
-        <TableCell>{own.rank ?? '—'}{!own.participating && own.rank !== null && <span className="block text-xs text-muted-foreground">Preview</span>}</TableCell>
+        <TableCell>{own.rank ?? '—'}{!own.participating && own.rank !== null && <span className="block text-xs text-muted-foreground">If you join</span>}</TableCell>
         <TableCell><div className="flex items-center gap-3"><Avatar><AvatarImage src={own.photoURL ?? undefined} alt="" /><AvatarFallback>{getInitials(own.displayName)}</AvatarFallback></Avatar>
           <div><p className="font-medium">{own.displayName} <span className="text-muted-foreground">(You)</span></p>
-          <p className="text-xs text-muted-foreground">{own.participating ? 'Participating' : 'Private · join to enter the award'}</p></div>
+          <p className="text-xs text-muted-foreground">{own.points === 0 ? 'Complete a test to earn your first point' : own.participating ? 'Participating' : 'Not participating'}</p></div>
         </div></TableCell>
         <TableCell className="text-right font-semibold">{own.points}</TableCell>
       </TableRow>}
@@ -88,7 +88,7 @@ export function SeasonLeaderboard() {
       <Card>
         <CardHeader>
           <CardTitle>Season Activity Leaderboard</CardTitle>
-          <CardDescription>Earn 1 point per completed attempt, including retakes, up to 6 points per day. Days end at midnight Eastern. {standings?.nextRollover ? `Next season starts ${standings.nextRollover} at midnight Eastern.` : 'The default annual rollover is April 1.'}</CardDescription>
+          <CardDescription>Earn 1 point per completed attempt, including retakes, up to 6 points per day. Days end at midnight Eastern. {standings?.nextRollover ? `Next season starts ${standings.nextRollover} at midnight Eastern.` : ''}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {loading && <p role="status">Loading standings…</p>}
@@ -99,13 +99,13 @@ export function SeasonLeaderboard() {
             points: standings.myActivity.seasonPoints, rank: standings.myActivity.rank,
             participating: standings.participating,
           } : undefined} /></>}
-          {standings && !standings.participating && <p className="text-sm text-muted-foreground">Your pinned row is private. Preview rank shows where your points would place among joined students; it does not enter you into the award.</p>}
+          {standings && !standings.participating && <p className="text-sm text-muted-foreground">Your row is private until you join. The rank shown is where your points would place on the leaderboard.</p>}
           {standings && !error && <SeasonAwardEnrollment season={standings.currentSeason} participating={standings.participating} onChanged={() => setRefresh(value => value + 1)} />}
-          <p className="text-sm text-muted-foreground">Equal points share a rank. Participation applies to one season; earlier seasons keep their recorded participation. Standings refresh every minute.</p>
+          <p className="text-sm text-muted-foreground">Tied scores share the same rank.</p>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Past seasons</CardTitle><CardDescription>Completed seasons remain available here after each automatic rollover.</CardDescription></CardHeader>
+        <CardHeader><CardTitle>Past seasons</CardTitle><CardDescription>Final standings from previous seasons.</CardDescription></CardHeader>
         <CardContent className="space-y-4">
           {!loading && !error && past.length === 0 && <p className="text-muted-foreground">No completed seasons yet.</p>}
           {past.map(season => <details key={season.startYear} className="rounded-md border p-3"><summary className="cursor-pointer font-semibold">{label(season.startYear)} · Final standings</summary><Rankings season={season} /></details>)}

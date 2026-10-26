@@ -271,12 +271,12 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <Label htmlFor="leaderboard-switch" className="text-base">
-                  Participate in This Season
+                  Join this season’s leaderboard
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Join to make your display name and season points public and enter
-                  consideration for the activity award after confirming your full name and school privately. Earlier practice this season counts.
-                  Turning this off leaves only the current season; past seasons stay unchanged.
+                  Compete for the activity award with your display name and points on the leaderboard.
+                  Your full name and school are only visible to you and site admins.
+                  Turn this off to leave this season’s competition.
                 </p>
               </div>
               {userProfile && (seasonParticipation ? (

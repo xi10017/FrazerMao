@@ -44,8 +44,8 @@ function UserAuth() {
       console.error('Error during sign-in:', error);
       toast({
         variant: 'destructive',
-        title: 'Sign In Failed',
-        description: error.message || 'An unknown error occurred.',
+        title: 'Could not sign in',
+        description: 'Please try signing in again.',
       });
     } finally {
       setIsAuthLoading(false);
@@ -106,7 +106,7 @@ function UserAuth() {
   return (
     <Button onClick={handleSignIn} disabled={isAuthLoading}>
       <LogIn className="mr-2 h-4 w-4" />
-      Sign In with Google
+      Sign in with Google
     </Button>
   );
 }

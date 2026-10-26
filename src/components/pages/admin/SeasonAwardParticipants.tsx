@@ -20,7 +20,7 @@ export function SeasonAwardParticipants({ currentSeason }: { currentSeason: numb
     }
     setLoading(true); setError(null); setRows([]);
     const { data, error } = await supabase.rpc('get_season_award_participants', { target_season: season });
-    if (error) setError('Could not load private award details. Check the migration and try again.');
+    if (error) setError('Couldn’t load participant details. Please try again.');
     else setRows(data as Participant[]);
     setLoading(false);
   }, [supabase]);
