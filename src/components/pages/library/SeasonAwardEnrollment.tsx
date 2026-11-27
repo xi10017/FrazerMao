@@ -20,6 +20,7 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const needsDisplayName = !loading && participating && !displayNameConfirmed;
   useEffect(() => {
     let cancelled = false;
     setLoading(true); setError(null);
@@ -47,7 +48,11 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
     finally { setBusy(false); }
   };
   return <div className="space-y-3 rounded-md border p-4">
-    <p className="font-medium">{participating ? 'You’re participating this season.' : 'Join the season leaderboard'}</p>
+    {needsDisplayName && <div role="alert" className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3">
+      <p className="font-semibold text-amber-200">Action needed: choose a display name</p>
+      <p className="mt-1 text-sm text-amber-100/80">Your points are already being counted, but your leaderboard row will show “Anonymous User” until you choose a public display name.</p>
+    </div>}
+    {!needsDisplayName && <p className="font-medium">{participating ? 'You’re participating this season.' : 'Join the season leaderboard'}</p>}
     <p className="text-sm text-muted-foreground">Compete for the activity award at FAMAT States. Your display name and points appear on the leaderboard after you join. Your full name and school are only visible to you and site admins.</p>
     {loading ? <p role="status">Loading your details…</p> : (!participating || !confirmed || !displayNameConfirmed || editing) ? <form className="space-y-3" onSubmit={async event => {
       event.preventDefault(); setBusy(true); setError(null);
