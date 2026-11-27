@@ -64,6 +64,13 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
       finally { setBusy(false); }
     }}>
       <div className="space-y-2"><Label htmlFor="award-display-name">Display name (public)</Label><Input id="award-display-name" required maxLength={60} value={displayName} onChange={e=>setDisplayName(e.target.value)} /></div>
+      <div aria-live="polite" className="rounded-md border bg-muted/30 p-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Leaderboard preview</p>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold">{(displayName.trim() || 'Anonymous User').slice(0, 1).toUpperCase()}</div><span className="font-medium">{displayName.trim() || 'Anonymous User'}</span></div>
+          <span className="text-sm text-muted-foreground">Your points stay the same</span>
+        </div>
+      </div>
       <div className="space-y-2"><Label htmlFor="award-full-name">Full name (private)</Label><Input id="award-full-name" autoComplete="name" required maxLength={120} value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="award-school">School (private)</Label><Input id="award-school" autoComplete="organization" required maxLength={160} value={school} onChange={e=>setSchool(e.target.value)} /></div>
       <p className="text-sm text-muted-foreground">Earlier practice this season counts. Participation must be renewed each season.</p>
