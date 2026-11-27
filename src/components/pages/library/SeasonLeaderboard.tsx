@@ -51,6 +51,7 @@ export function SeasonLeaderboard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
+  const [displayNameDraft, setDisplayNameDraft] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +81,7 @@ export function SeasonLeaderboard() {
   }, [supabase, refresh]);
 
   const retry = useCallback(() => { setLoading(true); setRefresh(value => value + 1); }, []);
+  const handleDisplayNameDraftChange = useCallback((value: string) => setDisplayNameDraft(value), []);
   const current = standings?.seasons.find(season => season.startYear === standings.currentSeason);
   const past = standings?.seasons.filter(season => season.startYear >= FIRST_AWARD_SEASON && season.startYear < standings.currentSeason) ?? [];
 
@@ -96,9 +98,9 @@ export function SeasonLeaderboard() {
           {standings?.myActivity && !error && <PersonalSeasonActivity activity={standings.myActivity} />}
           {current && <>
             <h3 className="font-semibold">Current season · {label(current.startYear)}</h3>
-            {standings && !error && <SeasonAwardEnrollment season={standings.currentSeason} participating={standings.participating} onChanged={() => setRefresh(value => value + 1)} />}
+            {standings && !error && <SeasonAwardEnrollment season={standings.currentSeason} participating={standings.participating} onChanged={() => setRefresh(value => value + 1)} onDisplayNameDraftChange={handleDisplayNameDraftChange} />}
             <Rankings season={current} own={user && standings?.myActivity ? {
-              userId: user.uid, displayName: standings.myActivity.displayName || 'Anonymous User', photoURL: user.photoURL,
+              userId: user.uid, displayName: displayNameDraft !== null ? displayNameDraft.trim() || 'Anonymous User' : standings.myActivity.displayName || 'Anonymous User', photoURL: user.photoURL,
               points: standings.myActivity.seasonPoints, rank: standings.myActivity.rank,
               participating: standings.participating,
             } : undefined} />

@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export function SeasonAwardEnrollment({ season, participating, onChanged }: {
-  season: number; participating: boolean; onChanged: () => void;
+export function SeasonAwardEnrollment({ season, participating, onChanged, onDisplayNameDraftChange }: {
+  season: number; participating: boolean; onChanged: () => void; onDisplayNameDraftChange?: (value: string) => void;
 }) {
   const { supabase } = useSupabase();
   const [displayName, setDisplayName] = useState('');
@@ -29,6 +29,7 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
       if (error || !data || data.seasonYear !== season) setError('Could not load award details. Refresh and try again.');
       else {
         setDisplayName(data.displayName ?? '');
+        onDisplayNameDraftChange?.(data.displayName ?? '');
         setFullName(data.fullName);
         setSchool(data.school);
         setConfirmed(data.confirmed);
@@ -37,7 +38,7 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
       setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [supabase, season, reload]);
+  }, [supabase, season, reload, onDisplayNameDraftChange]);
   const leave = async () => {
     setBusy(true); setError(null);
     try {
@@ -63,7 +64,7 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
       } catch (error) { setError((error as { message?: string })?.message ?? 'Could not confirm your details.'); }
       finally { setBusy(false); }
     }}>
-      <div className="space-y-2"><Label htmlFor="award-display-name">Display name (public)</Label><Input id="award-display-name" required maxLength={60} value={displayName} onChange={e=>setDisplayName(e.target.value)} /></div>
+      <div className="space-y-2"><Label htmlFor="award-display-name">Display name (public)</Label><Input id="award-display-name" required maxLength={60} value={displayName} onChange={e=>{ setDisplayName(e.target.value); onDisplayNameDraftChange?.(e.target.value); }} /></div>
       <div className="space-y-2"><Label htmlFor="award-full-name">Full name (private)</Label><Input id="award-full-name" autoComplete="name" required maxLength={120} value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="award-school">School (private)</Label><Input id="award-school" autoComplete="organization" required maxLength={160} value={school} onChange={e=>setSchool(e.target.value)} /></div>
       <p className="text-sm text-muted-foreground">Earlier practice this season counts. Participation must be renewed each season.</p>
