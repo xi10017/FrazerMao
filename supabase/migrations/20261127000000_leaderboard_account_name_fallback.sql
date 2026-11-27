@@ -19,9 +19,7 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     from daily group by user_id, public.season_year_for_date(day)
   ), ranked as (
     select t.year, t.user_id, coalesce(
-        nullif(btrim(p.display_name), ''),
-        nullif(btrim(u.raw_user_meta_data->>'full_name'), ''),
-        nullif(btrim(u.raw_user_meta_data->>'name'), ''),
+        nullif(btrim(sp.full_name), ''),
         'Anonymous User'
       ) as display_name,
       coalesce(
@@ -73,7 +71,7 @@ $$;
 revoke all on function public.get_season_activity_leaderboard() from public, anon;
 grant execute on function public.get_season_activity_leaderboard() to authenticated;
 
--- Public preview exposes only opted-in display names and points, never award identities.
+-- Public preview exposes only opted-in full names and points.
 create or replace function public.get_public_season_preview()
 returns jsonb language sql stable security definer set search_path = '' as $$
   with season as (
@@ -93,14 +91,12 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     group by d.user_id having sum(d.points)>0
   ), ranked as (
     select coalesce(
-        nullif(btrim(p.display_name), ''),
-        nullif(btrim(u.raw_user_meta_data->>'full_name'), ''),
-        nullif(btrim(u.raw_user_meta_data->>'name'), ''),
+        nullif(btrim(sp.full_name), ''),
         'Anonymous User'
       ) as display_name, t.points, rank() over(order by t.points desc) as rank
     from totals t
-    left join public.profiles p on p.id = t.user_id
-    left join auth.users u on u.id = t.user_id
+    join public.season_participation sp on sp.user_id = t.user_id
+      and sp.season_year = (select year from season) and sp.participating = true
   )
   select jsonb_build_object('currentSeason',(select year from season),
     'entries',coalesce((select jsonb_agg(jsonb_build_object(

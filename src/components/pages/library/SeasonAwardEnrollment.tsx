@@ -40,7 +40,7 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
   };
   return <div className="space-y-3 rounded-md border p-4">
     <p className="font-medium">{participating ? 'You’re participating this season.' : 'Join the season leaderboard'}</p>
-    <p className="text-sm text-muted-foreground">Compete for the activity award at FAMAT States. Your display name and points appear on the leaderboard. Only you and site admins can see your full name and school.</p>
+    <p className="text-sm text-muted-foreground">Compete for the activity award at FAMAT States. Your full name and points appear on the leaderboard after you join. Your school is only visible to you and site admins.</p>
     {loading ? <p role="status">Loading your details…</p> : (!participating || !confirmed || editing) ? <form className="space-y-3" onSubmit={async event => {
       event.preventDefault(); setBusy(true); setError(null);
       try {
@@ -50,7 +50,7 @@ export function SeasonAwardEnrollment({ season, participating, onChanged }: {
       } catch (error) { setError((error as { message?: string })?.message ?? 'Could not confirm your details.'); }
       finally { setBusy(false); }
     }}>
-      <div className="space-y-2"><Label htmlFor="award-full-name">Full name (private)</Label><Input id="award-full-name" autoComplete="name" required maxLength={120} value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
+      <div className="space-y-2"><Label htmlFor="award-full-name">Full name (public)</Label><Input id="award-full-name" autoComplete="name" required maxLength={120} value={fullName} onChange={e=>setFullName(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="award-school">School (private)</Label><Input id="award-school" autoComplete="organization" required maxLength={160} value={school} onChange={e=>setSchool(e.target.value)} /></div>
       <p className="text-sm text-muted-foreground">Earlier practice this season counts. Participation must be renewed each season.</p>
       <Button type="submit" disabled={busy}>{busy ? 'Saving…' : participating ? 'Save details' : 'Join the leaderboard'}</Button>
