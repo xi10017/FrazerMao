@@ -94,13 +94,16 @@ export function SeasonLeaderboard() {
           {loading && <p role="status">Loading standings…</p>}
           {error && <div role="alert" className="space-y-2"><p>{error}</p><Button variant="outline" onClick={retry}>Try again</Button></div>}
           {standings?.myActivity && !error && <PersonalSeasonActivity activity={standings.myActivity} />}
-          {current && <><h3 className="font-semibold">Current season · {label(current.startYear)}</h3><Rankings season={current} own={user && standings?.myActivity ? {
-            userId: user.uid, displayName: user.displayName || 'You', photoURL: user.photoURL,
-            points: standings.myActivity.seasonPoints, rank: standings.myActivity.rank,
-            participating: standings.participating,
-          } : undefined} /></>}
+          {current && <>
+            <h3 className="font-semibold">Current season · {label(current.startYear)}</h3>
+            {standings && !error && <SeasonAwardEnrollment season={standings.currentSeason} participating={standings.participating} onChanged={() => setRefresh(value => value + 1)} />}
+            <Rankings season={current} own={user && standings?.myActivity ? {
+              userId: user.uid, displayName: user.displayName || 'You', photoURL: user.photoURL,
+              points: standings.myActivity.seasonPoints, rank: standings.myActivity.rank,
+              participating: standings.participating,
+            } : undefined} />
+          </>}
           {standings && !standings.participating && <p className="text-sm text-muted-foreground">Your row is private until you join. The rank shown is where your points would place on the leaderboard.</p>}
-          {standings && !error && <SeasonAwardEnrollment season={standings.currentSeason} participating={standings.participating} onChanged={() => setRefresh(value => value + 1)} />}
           <p className="text-sm text-muted-foreground">Tied scores share the same rank.</p>
         </CardContent>
       </Card>
