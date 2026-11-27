@@ -98,7 +98,7 @@ export function SeasonLeaderboard() {
             <h3 className="font-semibold">Current season · {label(current.startYear)}</h3>
             {standings && !error && <SeasonAwardEnrollment season={standings.currentSeason} participating={standings.participating} onChanged={() => setRefresh(value => value + 1)} />}
             <Rankings season={current} own={user && standings?.myActivity ? {
-              userId: user.uid, displayName: standings.myActivity.displayName || user.displayName || 'You', photoURL: user.photoURL,
+              userId: user.uid, displayName: standings.myActivity.displayName || 'Anonymous User', photoURL: user.photoURL,
               points: standings.myActivity.seasonPoints, rank: standings.myActivity.rank,
               participating: standings.participating,
             } : undefined} />
