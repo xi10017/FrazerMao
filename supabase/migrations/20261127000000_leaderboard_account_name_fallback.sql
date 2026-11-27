@@ -71,7 +71,7 @@ $$;
 revoke all on function public.get_season_activity_leaderboard() from public, anon;
 grant execute on function public.get_season_activity_leaderboard() to authenticated;
 
--- Public preview exposes only opted-in full names and points.
+-- Public preview exposes only opted-in display names and points.
 create or replace function public.get_public_season_preview()
 returns jsonb language sql stable security definer set search_path = '' as $$
   with season as (

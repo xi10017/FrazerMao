@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export interface PersonalActivity {
+  displayName?: string;
   rank: number | null; todayCompleted: number; todayPoints: number; seasonPoints: number; dailyCap: number;
   days: { date: string; completed: number; points: number }[];
 }
